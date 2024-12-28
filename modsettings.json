@@ -1,0 +1,22 @@
+{
+    "Version": "1.0.0",
+    "Sections": [
+        {
+            "Name": "ExteriorMap",
+            "Description": null,
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Min": 1,
+                    "Max": 100,
+                    "Value": 4,
+                    "Name": "MapArrowSize",
+                    "Description": "Change the size of the player map marker/arrow.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                }
+            ],
+            "$version": "v1"
+        }
+    ]
+}

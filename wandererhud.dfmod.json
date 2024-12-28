@@ -1,0 +1,17 @@
+{
+    "ModTitle": "WandererHud",
+    "ModVersion": "1.0.0",
+    "ModAuthor": "aristidetorchia717 & Arshvir Goraya",
+    "ContactInfo": "arshvir.dev@gmail.com",
+    "DFUnity_Version": "1.1.1",
+    "ModDescription": "Provides a more modern looking hud",
+    "GUID": "0563f166-1958-467b-a579-05d5ec9e5c4c",
+    "Files": [
+        "Assets/Game/Mods/WandererHud/Scripts/MapArrow.cs",
+        "Assets/Game/Mods/WandererHud/ModAssets/Player Arrow Material.mat",
+        "Assets/Game/Mods/WandererHud/modsettings.json",
+        "Assets/Game/Mods/WandererHud/Textures/Img/TOWN00I0.IMG.png",
+        "Assets/Game/Mods/WandererHud/Textures/Img/AMAP00I0.IMG.png",
+        "Assets/Game/Mods/WandererHud/wandererhud.dfmod.json"
+    ]
+}
