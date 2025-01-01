@@ -16,7 +16,7 @@ namespace ExteriorMapOverwritesMod
         private static Mod mod;
 
         public DaggerfallExteriorAutomapWindow ExteriorMapWindow;
-        public bool ButtonsDisabled = false;
+        public bool ComponentsDisabled = false;
         public Vector2 LastScreen = new Vector2(0, 0);
         public float ResizeWaitSecs = 0f;
         public bool ResizeWaiting = false;
@@ -26,18 +26,15 @@ namespace ExteriorMapOverwritesMod
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams){
             mod = initParams.Mod;
-
             var go = new GameObject(mod.Title);
             go.AddComponent<ExteriorMapOverwrites>();
-
             mod.IsReady = true;
         }
 
         private void Start(){
             DaggerfallUI.UIManager.OnWindowChange += UIManager_OnWindowChangeHandler;
             ExteriorMapWindow = DaggerfallUI.Instance.ExteriorAutomapWindow;
-            LastScreen.x = Screen.width;
-            LastScreen.y = Screen.height;
+            SetLastScreen();
        }
 
         private void Update(){
@@ -50,10 +47,14 @@ namespace ExteriorMapOverwritesMod
             }
         }
 
-        private IEnumerator WaitSeconds(float seconds){
-            ForceResizeMap();
+        private void SetLastScreen(){
             LastScreen.x = Screen.width; 
             LastScreen.y = Screen.height;
+        }
+
+        private IEnumerator WaitSeconds(float seconds){
+            ForceResizeMap();
+            SetLastScreen();
             ResizeWaiting = true;
             yield return new WaitForSecondsRealtime(seconds);
             ResizeWaiting = false;
@@ -61,21 +62,7 @@ namespace ExteriorMapOverwritesMod
 
         public void ForceResizeMap(){
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow){
-                Debug.Log($"updating map size");
-                // ExteriorMapWindow.Update();
-                // ExteriorMapWindow.UpdateAutomapView();
-                // ExteriorMapWindow.OnPop();
-                // ExteriorMapWindow.OnPush();
-                // ExteriorMapWindow.Draw(); // ! cant call outside of an GUI function
-                // exteriorAutomap.UpdateAutomapStateOnWindowPush()
-
                 ExteriorMapWindow.NativePanel.Size = ExteriorMapWindow.ParentPanel.Rectangle.size;
-                // DummyPanelAutomap.Size = ExteriorMapWindow.ParentPanel.Rectangle.size;
-                // PanelRenderAutomap.Size = ExteriorMapWindow.ParentPanel.Rectangle.size;
-                // Debug.Log($"WandererHud ExteriorMap: ParentPanel.Rectangle: {ExteriorMapWindow.ParentPanel.Rectangle.width}"); // ! Call component.Rectangle for autosize to apply!
-                // Debug.Log($"WandererHud ExteriorMap: NativePanel.Rectangle: {ExteriorMapWindow.NativePanel.Rectangle.width}"); // ! Call component.Rectangle for autosize to apply!
-                // Debug.Log($"WandererHud ExteriorMap: DummyPanelAutomap.Rectangle: {DummyPanelAutomap.Rectangle.width}"); // ! Call component.Rectangle for autosize to apply!
-                // Debug.Log($"WandererHud ExteriorMap: PanelRenderAutomap.Rectangle: {PanelRenderAutomap.Rectangle.width}"); // ! Call component.Rectangle for autosize to apply!
             }
         }
 
@@ -85,7 +72,9 @@ namespace ExteriorMapOverwritesMod
                     component.Enabled = false;
                     continue;
                 }
-                // TODO: find better way to select these panels?
+                // TODO: find better way to select these panels? 
+                    // todo: If this works for different screen sizes than is fine? 
+                    // todo: Make a PR to make these public?
                 if (component is Panel && $"{component.Size}".Equals("(320.0, 10.0)")){ // * panelCaption (map legend)
                     component.Enabled = false;
                     continue;
@@ -99,13 +88,10 @@ namespace ExteriorMapOverwritesMod
 
         public void ResizeMapPanels(){
             ExteriorMapWindow.NativePanel.AutoSize = AutoSizeModes.ResizeToFill;
-            Debug.Log($"WandererHud ExteriorMap Resize: NativePanel.Rectangle: {ExteriorMapWindow.NativePanel.Rectangle.width}"); // ! Call component.Rectangle for autosize to apply!
 
             foreach (BaseScreenComponent component in ExteriorMapWindow.ParentPanel.Components){
                 if (component.Enabled && component is Panel){
-                    // Debug.Log($"component size: {component.Size}");
-                    // Debug.Log($"screen size: {Screen.width}, {Screen.height}");
-                    if (!$"{component.Size}".Equals($"({Screen.width}, {Screen.height})")){ // * panelRenderAutomap (scales with DummyPanelAutomap so doesn't matter)
+                    if (!$"{component.Size}".Equals($"({Screen.width}, {Screen.height})")){ // * panelRenderAutomap (map texture) (scales with DummyPanelAutomap)
                         PanelRenderAutomap = component as Panel;
                     }
                 }
@@ -116,23 +102,29 @@ namespace ExteriorMapOverwritesMod
                 if (component.Enabled && component is Panel){
                     if ($"{component.Size}".Equals("(318.0, 169.0)")){ // * is DummyPanelAutomap: buildingNamePlates
                         DummyPanelAutomap = component as Panel;
-                        // component.AutoSize = AutoSizeModes.ResizeToFill; // ! Stretches map texture
-                        // component.AutoSize = AutoSizeModes.ScaleToFit; // ! Has bars on the sides.
-                        // component.AutoSize = AutoSizeModes.Scale; // ! Doesn't scale up
-                        // component.AutoSize = AutoSizeModes.None; // ! Doesn't scale up
-                        component.AutoSize = AutoSizeModes.ScaleFreely; // * Scales perfectly, without bars on side and without stretching the texture.
+                        component.AutoSize = AutoSizeModes.ScaleFreely;
                         component.HorizontalAlignment = HorizontalAlignment.Center;
                         component.VerticalAlignment = VerticalAlignment.Middle;
-                        Debug.Log($"WandererHud ExteriorMap Resize: DummyPanelAutomap.Rectangle: {component.Rectangle.width}"); // ! Call component.Rectangle for autosize to apply!
-                        // TODO: fix nameplates
-                        // foreach (TextLabel SubComponent in ExteriorMapWindow.PanelRenderAutomap.Components.Cast<TextLabel>()){}
                     }
                 }
             }
 
-            ExteriorMapWindow.UpdateAutomapView();
+            ForceResizeMap(); // ! Set size to apply autoscaling!
         }
 
+        public void UIManager_OnWindowChangeHandler(object sender, EventArgs e){
+            // if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){}
+            if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow){
+                if (!ComponentsDisabled){ 
+                    DisableComponents();
+                    ComponentsDisabled = true;
+                }
+                ResizeMapPanels();
+                // PrintDebug();
+            }
+        }
+
+        // DEBUGGING:
         public void PrintDebug(){
             // * ExteriorMapWindow.ParentPanel
                 // * 320.0, 200.0: native Panel
@@ -142,32 +134,20 @@ namespace ExteriorMapOverwritesMod
                 // * 320.0, 10.0: panelCaption (map legend)
                 // * 76.0, 17.0: dummyPanelCompass (map click function)
             
-            foreach (BaseScreenComponent component in ExteriorMapWindow.ParentPanel.Components){
-                if ($"{component.Size}".Equals("(1144.8, 608.4)")){ // * panelRenderAutomap (scales with DummyPanelAutomap so doesn't matter)
-                    component.BackgroundColor = Color.magenta;
-                    BaseComponentLog(component, "panelRenderAutomap");
-                }
-            }
-            foreach (BaseScreenComponent component in ExteriorMapWindow.NativePanel.Components){
-                if (component.Enabled && component is Panel){
-                    if ($"{component.Size}".Equals("(318.0, 169.0)")){ // * DummyPanelAutomap
-                        // component.BackgroundColor = Color.green;
-                        BaseComponentLog(component, "DummyPanelAutomap");
-                    }
-                }
-            }
-        }
-
-        public void UIManager_OnWindowChangeHandler(object sender, EventArgs e){
-            // if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){}
-            if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow){
-                if (!ButtonsDisabled){ 
-                    DisableComponents();
-                    ButtonsDisabled = true;
-                }
-                ResizeMapPanels();
-                // PrintDebug();
-            }
+            // foreach (BaseScreenComponent component in ExteriorMapWindow.ParentPanel.Components){
+            //     if ($"{component.Size}".Equals("(1144.8, 608.4)")){ // * panelRenderAutomap (scales with DummyPanelAutomap so doesn't matter)
+            //         component.BackgroundColor = Color.magenta;
+            //         BaseComponentLog(component, "panelRenderAutomap");
+            //     }
+            // }
+            // foreach (BaseScreenComponent component in ExteriorMapWindow.NativePanel.Components){
+            //     if (component.Enabled && component is Panel){
+            //         if ($"{component.Size}".Equals("(318.0, 169.0)")){ // * DummyPanelAutomap
+            //             // component.BackgroundColor = Color.green;
+            //             BaseComponentLog(component, "DummyPanelAutomap");
+            //         }
+            //     }
+            // }
         }
         public void BaseComponentLog(BaseScreenComponent component, string Prefix = ""){
             PrefixLog(Prefix, $"| Component: {component}");
@@ -187,7 +167,6 @@ namespace ExteriorMapOverwritesMod
             PrefixLog(Prefix, $"| LocalScale: {component.LocalScale}");
             PrefixLog(Prefix, $"===");
         }
-
         public void PrefixLog(string Prefix, string LogComponent){
             Debug.Log(Prefix + LogComponent);
         }
