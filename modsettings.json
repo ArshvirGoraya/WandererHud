@@ -7,9 +7,9 @@
             "IsAdvanced": false,
             "Keys": [
                 {
-                    "Min": 1,
-                    "Max": 100,
-                    "Value": 4,
+                    "Min": 4,
+                    "Max": 8,
+                    "Value": 6,
                     "Name": "MapArrowSize",
                     "Description": "Change the size of the player map marker/arrow.",
                     "$version": "v1",
