@@ -3,6 +3,7 @@ using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
 using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
+using static DaggerfallWorkshop.Game.PlayerEnterExit;
 
 namespace MapArrowMod
 {
@@ -11,11 +12,13 @@ namespace MapArrowMod
         public Mesh Cube;
         public Material ArrowMaterial;
 
-        private string ArrowMaterialName = "Player Arrow Material";
+        public string ArrowMaterialName = "Player Arrow Material";
 
         public static GameObject GameobjectPlayerMarkerArrow;
         public GameObject GameobjectPlayerMarkerArrowStamp;
         public GameObject GameobjectPlayerMarkerCircle;
+
+        public bool ImplementedPlayerMarkerChange = false;
 
         public static float ARROW_ASPECT_RATIO;
 
@@ -41,7 +44,8 @@ namespace MapArrowMod
 
         private void Start()
         {
-            SaveLoadManager.OnLoad += SaveLoadManager_OnLoad;
+            PlayerEnterExit.OnTransitionExterior += ExteriorTransition;
+            // SaveLoadManager.OnLoad += SaveLoadManager_OnLoad;
             //
             GameObject CubeOb = GameObject.CreatePrimitive(PrimitiveType.Cube); 
             Cube = CubeOb.GetComponent<MeshFilter>().mesh; 
@@ -50,8 +54,11 @@ namespace MapArrowMod
             ARROW_ASPECT_RATIO = GetAspectRatio(ArrowMaterial.mainTexture as Texture2D);
         }
 
-        private void SaveLoadManager_OnLoad(SaveData_v1 saveData){
-            ImplementArrowElement();
+        private void ExteriorTransition(TransitionEventArgs args){
+            if (!ImplementedPlayerMarkerChange){
+                ImplementArrowElement();
+                ImplementedPlayerMarkerChange = true;
+            }
         }
 
         public void ImplementArrowElement(){
