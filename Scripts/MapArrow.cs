@@ -45,7 +45,7 @@ namespace MapArrowMod
         private void Start()
         {
             PlayerEnterExit.OnTransitionExterior += ExteriorTransition;
-            // SaveLoadManager.OnLoad += SaveLoadManager_OnLoad;
+            SaveLoadManager.OnLoad += SaveLoadManager_OnLoad;
             //
             GameObject CubeOb = GameObject.CreatePrimitive(PrimitiveType.Cube); 
             Cube = CubeOb.GetComponent<MeshFilter>().mesh; 
@@ -53,17 +53,21 @@ namespace MapArrowMod
             ArrowMaterial = mod.GetAsset<Material>(ArrowMaterialName, false);
             ARROW_ASPECT_RATIO = GetAspectRatio(ArrowMaterial.mainTexture as Texture2D);
         }
-
-        private void ExteriorTransition(TransitionEventArgs args){
-            if (!ImplementedPlayerMarkerChange){
+        private void SaveLoadManager_OnLoad(SaveData_v1 saveData){
+            if (!GameManager.Instance.PlayerEnterExit.IsPlayerInside){
                 ImplementArrowElement();
-                ImplementedPlayerMarkerChange = true;
             }
         }
-
+        private void ExteriorTransition(TransitionEventArgs args){
+            ImplementArrowElement();
+        }
         public void ImplementArrowElement(){
-            RemoveUnneededPlayerMarkerArrowElements();
-            ChangePlayerMarkerTexture();            
+            if (!ImplementedPlayerMarkerChange){
+                RemoveUnneededPlayerMarkerArrowElements();
+                ChangePlayerMarkerTexture();            
+                Debug.Log($"WandererHud: ImplementArrowElement");
+                ImplementedPlayerMarkerChange = true;
+            }
         }
 
         public void RemoveUnneededPlayerMarkerArrowElements(){

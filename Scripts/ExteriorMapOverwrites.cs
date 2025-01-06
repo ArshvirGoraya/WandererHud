@@ -15,11 +15,15 @@ namespace ExteriorMapOverwritesMod
     {
         private static Mod mod;
         // 
-        public DaggerfallAutomapWindow InteriorMapWindow;
+        public DaggerfallAutomapWindow InteriorMapWindow {
+            get {return DaggerfallUI.Instance.AutomapWindow;}
+        }
         public bool InteriorMapComponentsDisabled = false;
         public Panel PanelRenderAutomapInterior;
         // 
-        public DaggerfallExteriorAutomapWindow ExteriorMapWindow;
+        public DaggerfallExteriorAutomapWindow ExteriorMapWindow {
+            get {return DaggerfallUI.Instance.ExteriorAutomapWindow;}
+        }
         public bool ExteriorMapComponentsDisabled = false;
         public Panel PanelRenderAutomapExterior;
         // 
@@ -37,8 +41,6 @@ namespace ExteriorMapOverwritesMod
 
         private void Start(){
             DaggerfallUI.UIManager.OnWindowChange += UIManager_OnWindowChangeHandler;
-            ExteriorMapWindow = DaggerfallUI.Instance.ExteriorAutomapWindow;
-            InteriorMapWindow = DaggerfallUI.Instance.AutomapWindow;
             SetLastScreen();
        }
 
@@ -73,7 +75,6 @@ namespace ExteriorMapOverwritesMod
                 InteriorMapWindow.NativePanel.Size = InteriorMapWindow.ParentPanel.Rectangle.size;
             }
         }
-
 
         public void DisableInteriorMapComponents(){
             foreach (BaseScreenComponent component in InteriorMapWindow.ParentPanel.Components){
@@ -173,6 +174,9 @@ namespace ExteriorMapOverwritesMod
         }
 
         public void UIManager_OnWindowChangeHandler(object sender, EventArgs e){
+            // if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow){
+            //     DebugLog();
+            // }
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 if (!InteriorMapComponentsDisabled){ 
                     DisableInteriorMapComponents();
@@ -212,33 +216,109 @@ namespace ExteriorMapOverwritesMod
                 // * 0.0, 7.0: TextLabel (labelHoverText)
         
         public void DebugLog(){
+            Debug.Log($"WandererHud: DEBUG.LOG======");
+            Debug.Log($"\nWandererHud: INTERIOR========\n");
+            BaseComponentLog(InteriorMapWindow.ParentPanel, "WandererHud: INTERIOR-ParentPanel: ");
             foreach (BaseScreenComponent component in InteriorMapWindow.ParentPanel.Components){
                 if (component is Outline){ continue; }
                 if (component == InteriorMapWindow.NativePanel){ continue; }
                 if (component.Enabled && component is Panel){
-                    Debug.Log($"Screen size: {Screen.width}, {Screen.height}");
-                    BaseComponentLog(component, "ParentPanel Component: ");
+                    if (!component.BackgroundTexture){
+                        BaseComponentLog(InteriorMapWindow.ParentPanel, "WandererHud: INTERIOR-ParentPanel: MicroMap: ");
+                    }else{
+                        BaseComponentLog(InteriorMapWindow.ParentPanel, "WandererHud: INTERIOR-ParentPanel: panelRenderAutomap (map texture): ");
+                    }
                 }
+                continue;
+            }
+            BaseComponentLog(InteriorMapWindow.NativePanel, "WandererHud: INTERIOR-NativePanel: ");
+            foreach (BaseScreenComponent component in InteriorMapWindow.NativePanel.Components){
+                if (component is Outline){ continue; }
+                if (component is Button || component is HUDCompass || component is TextLabel){ // * Buttons and Compass Texture
+                    BaseComponentLog(component, "WandererHud: INTERIOR-NativePanel: Button/HudCompass/Text: ");
+                    continue;
+                }
+                if (component is Panel && $"{component.Size}".Equals("(76.0, 17.0)")){ // * is dummyPanelCompass (controls click function like a button)
+                    BaseComponentLog(component, "WandererHud: INTERIOR-NativePanel: dummyPanelCompass (compass click)): ");
+                    continue;
+                }
+                if (component is Panel && $"{component.Size}".Equals("(28.0, 28.0)")){ // * is dummyPanelCompass (controls click function like a button)
+                    BaseComponentLog(component, "WandererHud: INTERIOR-NativePanel: dummyPanelOverlay (micro-map panel)): ");
+                    continue;
+                }
+                if (component is Panel && $"{component.Size}".Equals("(318.0, 169.0)")){ // * is DummyPanelAutomap: buildingNamePlates
+                    BaseComponentLog(component, "WandererHud: INTERIOR-NativePanel: DummyPanelAutomap (buildingNamePlates)): ");
+                    continue;
+                }
+            }
+
+            // Debug.Log($"\nWandererHud: EXTERIOR========\n");
+            // BaseComponentLog(ExteriorMapWindow.ParentPanel, "WandererHud: EXTERIOR-ParentPanel: ");
+            // foreach (BaseScreenComponent component in ExteriorMapWindow.ParentPanel.Components){
+            //     if (component.Enabled && component is Panel){
+            //         if (!$"{component.Size}".Equals($"({Screen.width}, {Screen.height})")){ // * panelRenderAutomap (map texture) (scales with DummyPanelAutomap)
+            //             BaseComponentLog(component, "WandererHud: EXTERIOR-ParentPanel: panelRenderAutomap (map texture)");
+            //         }
+            //     }
+            // }
+            // BaseComponentLog(ExteriorMapWindow.NativePanel, "WandererHud: EXTERIOR-NativePanel: ");
+            // foreach (BaseScreenComponent component in ExteriorMapWindow.NativePanel.Components){
+            //     if (component is Outline){ continue; }
+            //     if (component is Button || component is HUDCompass){ // * Buttons and Compass Texture
+            //         BaseComponentLog(component, "WandererHud: EXTERIOR-NativePanel: Button/HudCompass: ");
+            //         continue;
+            //     }
+            //     if (component is Panel && $"{component.Size}".Equals("(320.0, 10.0)")){ // * panelCaption (map legend)
+            //         BaseComponentLog(component, "WandererHud: EXTERIOR-NativePanel: panelCaption: ");
+            //         continue;
+            //     }
+            //     if (component is Panel && $"{component.Size}".Equals("(76.0, 17.0)")){ // * is dummyPanelCompass (controls click function like a button)
+            //         BaseComponentLog(component, "WandererHud: EXTERIOR-NativePanel: dummyPanelCompass (click): ");
+            //         continue;
+            //     }
+            //     if (component is Panel && $"{component.Size}".Equals("(318.0, 169.0)")){ // * is DummyPanelAutomap: buildingNamePlates
+            //         BaseComponentLog(component, "WandererHud: EXTERIOR-NativePanel: DummyPanelAutomap (buildingNamePlates): ");
+            //         continue;
+            //     }
+            // }
+        }
+        public void PanelChildrenLog(Panel panel, string Prefix = ""){
+            foreach (BaseScreenComponent component in panel.Components){
+                if (!component.Enabled){
+                    Debug.Log($"===");
+                    PrefixLog(Prefix, $"Panel Child (disabled): {component}");
+                    continue;
+                }
+                if (component is Outline || component is Button){
+                    Debug.Log($"===");
+                    PrefixLog(Prefix, $"Panel Child: {component}");
+                    continue;
+                }
+                BaseComponentLog(component, Prefix + "Panel Child: ");
             }
         }
 
         public void BaseComponentLog(BaseScreenComponent component, string Prefix = ""){
+            Debug.Log($"===");
             PrefixLog(Prefix, $"| Component: {component}");
             PrefixLog(Prefix, $"| Enabled: {component.Enabled}");
             PrefixLog(Prefix, $"| Size: {component.Size}");
             PrefixLog(Prefix, $"| AutoSize: {component.AutoSize}");
-            PrefixLog(Prefix, $"| BackgroundColor: {component.BackgroundColor}");
+            // PrefixLog(Prefix, $"| BackgroundColor: {component.BackgroundColor}");
             PrefixLog(Prefix, $"| BackgroundTexture: {component.BackgroundTexture}");
-            PrefixLog(Prefix, $"| BackgroundTextureLayout: {component.BackgroundTextureLayout}");
-            PrefixLog(Prefix, $"| BackgroundCroppedRect: {component.BackgroundCroppedRect}");
+            // PrefixLog(Prefix, $"| BackgroundTextureLayout: {component.BackgroundTextureLayout}");
+            // PrefixLog(Prefix, $"| BackgroundCroppedRect: {component.BackgroundCroppedRect}");
             PrefixLog(Prefix, $"| HorizontalAlignment: {component.HorizontalAlignment}");
             PrefixLog(Prefix, $"| VerticalAlignment: {component.VerticalAlignment}");
-            PrefixLog(Prefix, $"| UseRestrictedRenderArea: {component.UseRestrictedRenderArea}");
-            PrefixLog(Prefix, $"| MinAutoScale: {component.MinAutoScale}");
-            PrefixLog(Prefix, $"| MaxAutoScale: {component.MaxAutoScale}");
-            PrefixLog(Prefix, $"| Scale: {component.Scale}");
-            PrefixLog(Prefix, $"| LocalScale: {component.LocalScale}");
-            PrefixLog(Prefix, $"===");
+            // PrefixLog(Prefix, $"| UseRestrictedRenderArea: {component.UseRestrictedRenderArea}");
+            // PrefixLog(Prefix, $"| MinAutoScale: {component.MinAutoScale}");
+            // PrefixLog(Prefix, $"| MaxAutoScale: {component.MaxAutoScale}");
+            // PrefixLog(Prefix, $"| Scale: {component.Scale}");
+            // PrefixLog(Prefix, $"| LocalScale: {component.LocalScale}");
+            if (component is Panel panel){
+                PrefixLog(Prefix, $"| Panel Child Count: {panel.Components.Count}");
+                // PanelChildrenLog(panel, "\t");
+            }
         }
         public void PrefixLog(string Prefix, string LogComponent){
             Debug.Log(Prefix + LogComponent);
