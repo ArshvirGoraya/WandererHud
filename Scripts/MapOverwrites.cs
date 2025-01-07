@@ -6,6 +6,8 @@ using System;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using System.Collections;
 using System.Linq;
+using DaggerfallWorkshop.Game.Serialization;
+using DaggerfallWorkshop;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
@@ -28,6 +30,8 @@ namespace MapOverwritesMod
         public bool ExteriorMapComponentsDisabled = false;
         public Panel PanelRenderAutomapExterior;
         // 
+        public bool InteriorMapInnerComponentsDisabled = false;
+        ///
         public Vector2 LastScreen = new Vector2(0, 0);
         public float ResizeWaitSecs = 0f;
         public bool ResizeWaiting = false;
@@ -41,6 +45,10 @@ namespace MapOverwritesMod
         }
 
         private void Start(){
+            SaveLoadManager.OnLoad += (_) => ResetInteriorMapInnerComponents();
+            PlayerEnterExit.OnTransitionInterior += (_) => ResetInteriorMapInnerComponents();
+            PlayerEnterExit.OnTransitionDungeonInterior += (_) => ResetInteriorMapInnerComponents();
+
             DaggerfallUI.UIManager.OnWindowChange += UIManager_OnWindowChangeHandler;
             SetLastScreen();
        }
@@ -74,6 +82,29 @@ namespace MapOverwritesMod
             }
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 InteriorMapWindow.NativePanel.Size = InteriorMapWindow.ParentPanel.Rectangle.size;
+            }
+        }
+
+        public void ResetInteriorMapInnerComponents(){
+            InteriorMapInnerComponentsDisabled = false;
+        }
+
+        public void DisableInnerInteriorMapComponents(){
+            if (!GameManager.Instance.PlayerEnterExit.IsPlayerInside){
+                return;
+            }
+            // * Beacons/Markers:
+            foreach (Transform child in GameObject.Find("Automap/InteriorAutomap/Beacons").transform){
+                if (child.name == "BeaconEntrancePosition"){
+                    child.gameObject.transform.GetChild(0).gameObject.SetActive(false); // * BeaconEntrancePositionMarker
+                    // child.gameObject.transform.GetChild(1).gameObject; // * CubeEntrancePositionMarker
+                    // todo: change color
+                }
+                if (child.name == "PlayerMarkerArrow"){
+                    // todo: change color
+                    continue;
+                }
+                child.gameObject.SetActive(false);
             }
         }
 
@@ -161,6 +192,10 @@ namespace MapOverwritesMod
 
         public void UIManager_OnWindowChangeHandler(object sender, EventArgs e){
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
+                if (!InteriorMapInnerComponentsDisabled){
+                    DisableInnerInteriorMapComponents();
+                    InteriorMapInnerComponentsDisabled = true;
+                }
                 if (!InteriorMapComponentsDisabled){ 
                     DisableInteriorMapComponents();
                     InteriorMapComponentsDisabled = true;
