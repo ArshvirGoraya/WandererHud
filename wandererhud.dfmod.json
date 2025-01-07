@@ -12,6 +12,8 @@
         "Assets/Game/Mods/WandererHud/modsettings.json",
         "Assets/Game/Mods/WandererHud/wandererhud.dfmod.json",
         "Assets/Game/Mods/WandererHud/Textures/Img/AMAP00I0.IMG.png",
-        "Assets/Game/Mods/WandererHud/Scripts/MapOverwrites.cs"
+        "Assets/Game/Mods/WandererHud/Scripts/MapOverwrites.cs",
+        "Assets/Game/Mods/WandererHud/ModAssets/PlayerArrowInterior.mat",
+        "Assets/Game/Mods/WandererHud/ModAssets/ExitBoxInterior.mat"
     ]
 }

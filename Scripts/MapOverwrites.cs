@@ -35,6 +35,11 @@ namespace MapOverwritesMod
         public Vector2 LastScreen = new Vector2(0, 0);
         public float ResizeWaitSecs = 0f;
         public bool ResizeWaiting = false;
+        //
+        Material PlayerArrowInteriorMat;
+        readonly String PlayerArrowInteriorName = "PlayerArrowInterior";
+        Material ExitBoxInteriorMat;
+        readonly String ExitBoxInteriorName = "ExitBoxInterior";
 
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams){
@@ -45,11 +50,14 @@ namespace MapOverwritesMod
         }
 
         private void Start(){
+            DaggerfallUI.UIManager.OnWindowChange += UIManager_OnWindowChangeHandler;
+            //
             SaveLoadManager.OnLoad += (_) => ResetInteriorMapInnerComponents();
             PlayerEnterExit.OnTransitionInterior += (_) => ResetInteriorMapInnerComponents();
             PlayerEnterExit.OnTransitionDungeonInterior += (_) => ResetInteriorMapInnerComponents();
-
-            DaggerfallUI.UIManager.OnWindowChange += UIManager_OnWindowChangeHandler;
+            //
+            PlayerArrowInteriorMat = mod.GetAsset<Material>(PlayerArrowInteriorName, false);
+            ExitBoxInteriorMat = mod.GetAsset<Material>(ExitBoxInteriorName, false);
             SetLastScreen();
        }
 
@@ -96,12 +104,14 @@ namespace MapOverwritesMod
             // * Beacons/Markers:
             foreach (Transform child in GameObject.Find("Automap/InteriorAutomap/Beacons").transform){
                 if (child.name == "BeaconEntrancePosition"){
-                    child.gameObject.transform.GetChild(0).gameObject.SetActive(false); // * BeaconEntrancePositionMarker
-                    // child.gameObject.transform.GetChild(1).gameObject; // * CubeEntrancePositionMarker
-                    // todo: change color
+                    // * BeaconEntrancePositionMarker
+                    child.gameObject.transform.GetChild(0).gameObject.SetActive(false); 
+                    // * CubeEntrancePositionMarker
+                    child.gameObject.transform.GetChild(1).GetComponent<MeshRenderer>().material = ExitBoxInteriorMat;
+                    continue;
                 }
                 if (child.name == "PlayerMarkerArrow"){
-                    // todo: change color
+                    child.GetComponent<MeshRenderer>().material = PlayerArrowInteriorMat;
                     continue;
                 }
                 child.gameObject.SetActive(false);
