@@ -45,6 +45,7 @@ namespace MapArrowMod
         private void Start()
         {
             PlayerEnterExit.OnTransitionExterior += ExteriorTransition;
+            PlayerEnterExit.OnTransitionDungeonExterior += ExteriorTransition;
             SaveLoadManager.OnLoad += SaveLoadManager_OnLoad;
             //
             GameObject CubeOb = GameObject.CreatePrimitive(PrimitiveType.Cube); 
