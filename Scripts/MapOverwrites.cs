@@ -4,10 +4,11 @@ using DaggerfallWorkshop.Game.Utility.ModSupport;
 using DaggerfallWorkshop.Game.UserInterface;
 using System;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
-using System.Net.NetworkInformation;
-using System.Text.RegularExpressions;
-using System.Linq;
 using System.Collections;
+using System.Linq;
+
+// * Makes maps fullscreen (with autoscaling and size setting).
+// * Disables unnessary ui elements in exterior/interior maps..
 
 namespace MapOverwritesMod
 {
@@ -77,21 +78,10 @@ namespace MapOverwritesMod
         }
 
         public void DisableInteriorMapComponents(){
-            foreach (BaseScreenComponent component in InteriorMapWindow.ParentPanel.Components){
-                if (component is Outline){ continue; }
-                if (component == InteriorMapWindow.NativePanel){ continue; }
-                if (component.Enabled && component is Panel){
-                    if (!component.BackgroundTexture){
-                        component.Enabled = false; // * Micro-Map
-                        continue;
-                    }
-                }
-            }
+            InteriorMapWindow.ParentPanel.Components.OfType<Panel>().LastOrDefault().Enabled = false; // * Last panel = MicroMap/panelRenderOverlay.
 
             foreach (BaseScreenComponent component in InteriorMapWindow.NativePanel.Components){
                 if (component is Outline){ continue; }
-                // TODO: Find and disable hotkeys to toggle 3D/2D view.
-                // TODO: Find and disable hotkeys to toggle wiremesh.
                 else if (component is Button || component is HUDCompass || component is TextLabel){ // * Buttons and Compass Texture
                     component.Enabled = false; 
                     continue;
@@ -100,7 +90,7 @@ namespace MapOverwritesMod
                     component.Enabled = false;
                     continue;
                 }
-                else if (component is Panel && $"{component.Size}".Equals("(28.0, 28.0)")){ // * is dummyPanelCompass (controls click function like a button)
+                else if (component is Panel && $"{component.Size}".Equals("(28.0, 28.0)")){ // * dummyPanelOverlay -> for PanelRenderOverlay (micro-map).
                     component.Enabled = false;
                     continue;
                 }
@@ -115,8 +105,6 @@ namespace MapOverwritesMod
                     continue;
                 }
                 // TODO: find better way to select these panels? 
-                    // todo: If this works for different screen sizes than is fine? 
-                    // todo: Make a PR to make these public?
                 else if (component is Panel && $"{component.Size}".Equals("(320.0, 10.0)")){ // * panelCaption (map legend)
                     component.Enabled = false;
                     continue;
@@ -133,9 +121,7 @@ namespace MapOverwritesMod
                 if (component is Outline){ continue; }
                 if (component == InteriorMapWindow.NativePanel){ continue; }
                 if (component.Enabled && component is Panel){
-                    if (component.BackgroundTexture){
-                        PanelRenderAutomapInterior = component as Panel; // * panelRenderAutomap (map texture) (scales with DummyPanelAutomap)
-                    }
+                    PanelRenderAutomapInterior = component as Panel; // * panelRenderAutomap (map texture) (scales with DummyPanelAutomap)
                 }
             }
             // 
@@ -174,9 +160,6 @@ namespace MapOverwritesMod
         }
 
         public void UIManager_OnWindowChangeHandler(object sender, EventArgs e){
-            // if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow){
-            //     DebugLog();
-            // }
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 if (!InteriorMapComponentsDisabled){ 
                     DisableInteriorMapComponents();
@@ -206,97 +189,16 @@ namespace MapOverwritesMod
             // * InteriorMapWindow.ParentPanel
                 // * 320.0, 200.0: native Panel (ScaleToFit by default)
                 // * 974.7, 518.0: panelRenderAutomap (map texture) Scales with DummyPanelAutomap. Has texture2d
-                    // ! Inconsistent Sizing: has a texture2D
+                    // ! Inconsistent Sizing: has a texture2D.
                 //  * 85.8, 85.8: panelRenderOverlay (micro-map).
-                    // ! Inconsistent Sizing
+                    // ! Inconsistent Sizing: has a texture2D.
+                    // ! Always smaller than panelRenderAutomap.
+                    // ! Always last in the components collection.
             // * InteriorMapWindow.NativePanel
                 // * 318.0, 169.0: DummyPanelAutomap (nameplates)
                 //  * 28.0, 28.0: (dummyPanelOverlay) -> for PanelRenderOverlay (micro-map).
                 // * 76.0, 17.0: dummyPanelCompass (map click function)
                 // * 0.0, 7.0: TextLabel (labelHoverText)
-        
-        public void DebugLog(){
-            Debug.Log($"WandererHud: DEBUG.LOG======");
-            Debug.Log($"\nWandererHud: INTERIOR========\n");
-            BaseComponentLog(InteriorMapWindow.ParentPanel, "WandererHud: INTERIOR-ParentPanel: ");
-            foreach (BaseScreenComponent component in InteriorMapWindow.ParentPanel.Components){
-                if (component is Outline){ continue; }
-                if (component == InteriorMapWindow.NativePanel){ continue; }
-                if (component.Enabled && component is Panel){
-                    if (!component.BackgroundTexture){
-                        BaseComponentLog(InteriorMapWindow.ParentPanel, "WandererHud: INTERIOR-ParentPanel: MicroMap: ");
-                    }else{
-                        BaseComponentLog(InteriorMapWindow.ParentPanel, "WandererHud: INTERIOR-ParentPanel: panelRenderAutomap (map texture): ");
-                    }
-                }
-                continue;
-            }
-            BaseComponentLog(InteriorMapWindow.NativePanel, "WandererHud: INTERIOR-NativePanel: ");
-            foreach (BaseScreenComponent component in InteriorMapWindow.NativePanel.Components){
-                if (component is Outline){ continue; }
-                if (component is Button || component is HUDCompass || component is TextLabel){ // * Buttons and Compass Texture
-                    BaseComponentLog(component, "WandererHud: INTERIOR-NativePanel: Button/HudCompass/Text: ");
-                    continue;
-                }
-                if (component is Panel && $"{component.Size}".Equals("(76.0, 17.0)")){ // * is dummyPanelCompass (controls click function like a button)
-                    BaseComponentLog(component, "WandererHud: INTERIOR-NativePanel: dummyPanelCompass (compass click)): ");
-                    continue;
-                }
-                if (component is Panel && $"{component.Size}".Equals("(28.0, 28.0)")){ // * is dummyPanelCompass (controls click function like a button)
-                    BaseComponentLog(component, "WandererHud: INTERIOR-NativePanel: dummyPanelOverlay (micro-map panel)): ");
-                    continue;
-                }
-                if (component is Panel && $"{component.Size}".Equals("(318.0, 169.0)")){ // * is DummyPanelAutomap: buildingNamePlates
-                    BaseComponentLog(component, "WandererHud: INTERIOR-NativePanel: DummyPanelAutomap (buildingNamePlates)): ");
-                    continue;
-                }
-            }
-
-            // Debug.Log($"\nWandererHud: EXTERIOR========\n");
-            // BaseComponentLog(ExteriorMapWindow.ParentPanel, "WandererHud: EXTERIOR-ParentPanel: ");
-            // foreach (BaseScreenComponent component in ExteriorMapWindow.ParentPanel.Components){
-            //     if (component.Enabled && component is Panel){
-            //         if (!$"{component.Size}".Equals($"({Screen.width}, {Screen.height})")){ // * panelRenderAutomap (map texture) (scales with DummyPanelAutomap)
-            //             BaseComponentLog(component, "WandererHud: EXTERIOR-ParentPanel: panelRenderAutomap (map texture)");
-            //         }
-            //     }
-            // }
-            // BaseComponentLog(ExteriorMapWindow.NativePanel, "WandererHud: EXTERIOR-NativePanel: ");
-            // foreach (BaseScreenComponent component in ExteriorMapWindow.NativePanel.Components){
-            //     if (component is Outline){ continue; }
-            //     if (component is Button || component is HUDCompass){ // * Buttons and Compass Texture
-            //         BaseComponentLog(component, "WandererHud: EXTERIOR-NativePanel: Button/HudCompass: ");
-            //         continue;
-            //     }
-            //     if (component is Panel && $"{component.Size}".Equals("(320.0, 10.0)")){ // * panelCaption (map legend)
-            //         BaseComponentLog(component, "WandererHud: EXTERIOR-NativePanel: panelCaption: ");
-            //         continue;
-            //     }
-            //     if (component is Panel && $"{component.Size}".Equals("(76.0, 17.0)")){ // * is dummyPanelCompass (controls click function like a button)
-            //         BaseComponentLog(component, "WandererHud: EXTERIOR-NativePanel: dummyPanelCompass (click): ");
-            //         continue;
-            //     }
-            //     if (component is Panel && $"{component.Size}".Equals("(318.0, 169.0)")){ // * is DummyPanelAutomap: buildingNamePlates
-            //         BaseComponentLog(component, "WandererHud: EXTERIOR-NativePanel: DummyPanelAutomap (buildingNamePlates): ");
-            //         continue;
-            //     }
-            // }
-        }
-        public void PanelChildrenLog(Panel panel, string Prefix = ""){
-            foreach (BaseScreenComponent component in panel.Components){
-                if (!component.Enabled){
-                    Debug.Log($"===");
-                    PrefixLog(Prefix, $"Panel Child (disabled): {component}");
-                    continue;
-                }
-                if (component is Outline || component is Button){
-                    Debug.Log($"===");
-                    PrefixLog(Prefix, $"Panel Child: {component}");
-                    continue;
-                }
-                BaseComponentLog(component, Prefix + "Panel Child: ");
-            }
-        }
 
         public void BaseComponentLog(BaseScreenComponent component, string Prefix = ""){
             Debug.Log($"===");
