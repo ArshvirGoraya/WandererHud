@@ -9,9 +9,9 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using System.Collections;
 
-namespace ExteriorMapOverwritesMod
+namespace MapOverwritesMod
 {
-    public class ExteriorMapOverwrites : MonoBehaviour
+    public class MapOverwrites : MonoBehaviour
     {
         private static Mod mod;
         // 
@@ -35,7 +35,7 @@ namespace ExteriorMapOverwritesMod
         public static void Init(InitParams initParams){
             mod = initParams.Mod;
             var go = new GameObject(mod.Title);
-            go.AddComponent<ExteriorMapOverwrites>();
+            go.AddComponent<MapOverwrites>();
             mod.IsReady = true;
         }
 

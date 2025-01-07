@@ -61,6 +61,7 @@ namespace MapArrowMod
         private void ExteriorTransition(TransitionEventArgs args){
             ImplementArrowElement();
         }
+        
         public void ImplementArrowElement(){
             if (!ImplementedPlayerMarkerChange){
                 RemoveUnneededPlayerMarkerArrowElements();
