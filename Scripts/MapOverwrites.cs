@@ -7,10 +7,10 @@ using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using System.Collections;
 using System.Linq;
 using DaggerfallWorkshop.Game.Serialization;
-using DaggerfallWorkshop;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
+// * Disabled inner components of interior map (e.g., beacons)
 
 namespace MapOverwritesMod
 {
