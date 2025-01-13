@@ -115,7 +115,6 @@ namespace MapOverwritesMod
 
         public void ForceWireFrame(){
             if (WandererHudSettings.GetBool("InteriorMap", "ForceWireFrame")){
-                Debug.Log($"setting to wireframe");
                 Automap.instance.SwitchToAutomapRenderModeWireframe();
                 Automap.instance.SlicingBiasY = float.NegativeInfinity;
             }            
@@ -126,7 +125,6 @@ namespace MapOverwritesMod
             if (GameManager.Instance.IsPlayerInsideDungeon || GameManager.Instance.IsPlayerInsideCastle){
                 // ForceWireFrame();
                 if (WandererHudSettings.GetBool("InteriorMap", "RevealAllOnEnter")){
-                    Debug.Log($"revealing all dungeon");
                     ConsoleCommandsDatabase.ExecuteCommand("map_revealall");
                 }
             }
