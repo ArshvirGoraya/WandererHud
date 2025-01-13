@@ -15,6 +15,7 @@
         "Assets/Game/Mods/WandererHud/Scripts/MapOverwrites.cs",
         "Assets/Game/Mods/WandererHud/ModAssets/PlayerArrowInterior.mat",
         "Assets/Game/Mods/WandererHud/ModAssets/ExitBoxInterior.mat",
-        "Assets/Game/Mods/WandererHud/ModAssets/InteriorArrow.prefab"
+        "Assets/Game/Mods/WandererHud/ModAssets/InteriorArrow.prefab",
+        "Assets/Game/Mods/WandererHud/ModAssets/Cursor.png"
     ]
 }

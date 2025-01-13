@@ -65,7 +65,6 @@ namespace MapOverwritesMod
             //
             ExitBoxInteriorMat = mod.GetAsset<Material>(ExitBoxInteriorName, false);
             PlayerArrowPrefab = mod.GetAsset<GameObject>(PlayerArrowPrefabName, false);
-            Debug.Log($"PlayerArrowPrefab: {PlayerArrowPrefab}");
             SetLastScreen();
        }
 
