@@ -43,6 +43,7 @@ namespace MapOverwritesMod
         readonly String ExitBoxInteriorName = "ExitBoxInterior";
         readonly String PlayerArrowPrefabName = "InteriorArrow";
         GameObject PlayerArrowPrefab;
+        GameObject PlayerArrowObj;
         // 
         static ModSettings WandererHudSettings;
 
@@ -146,19 +147,19 @@ namespace MapOverwritesMod
                 }
                 if (child.name == "PlayerMarkerArrow"){
                     child.GetComponent<MeshRenderer>().enabled = false; // * Make Default player marker invisible.
-
                     // * Create and Child new Player Marker:
-                    GameObject PlayerArrowObj = Instantiate(PlayerArrowPrefab);
-                    // * Use new Player Marker:
-                    PlayerArrowObj.transform.position = child.transform.position;
-                    PlayerArrowObj.transform.Rotate(0, 90, 0); // * Set y angle to 90 to follow parent correctly.
-                    PlayerArrowObj.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
-                    PlayerArrowObj.transform.SetParent(child.transform);
+                    PlayerArrowObj = Instantiate(PlayerArrowPrefab);
                     // * Set layer to automap to make it properly visible in the automap.
                     PlayerArrowObj.layer = child.gameObject.layer;
                     foreach (Transform ArrowChild in PlayerArrowObj.transform){
                         ArrowChild.gameObject.layer = child.gameObject.layer;
                     }
+                    // * Use new Player Marker:
+                    PlayerArrowObj.transform.SetPositionAndRotation(child.transform.position, child.transform.rotation);
+                    // * Rotate another -90 degrees to correct the rotation.
+                    PlayerArrowObj.transform.eulerAngles = new Vector3(0, PlayerArrowObj.transform.eulerAngles.y -90, 0);
+                    PlayerArrowObj.transform.SetParent(child.transform);
+                    PlayerArrowObj.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
                     continue;
                 }
                 child.gameObject.SetActive(false);
