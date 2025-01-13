@@ -9,6 +9,7 @@ using System.Linq;
 using DaggerfallWorkshop.Game.Serialization;
 using Wenzil.Console;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
+using UnityEditor;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
@@ -38,10 +39,10 @@ namespace MapOverwritesMod
         public float ResizeWaitSecs = 0f;
         public bool ResizeWaiting = false;
         //
-        Material PlayerArrowInteriorMat;
-        readonly String PlayerArrowInteriorName = "PlayerArrowInterior";
         Material ExitBoxInteriorMat;
         readonly String ExitBoxInteriorName = "ExitBoxInterior";
+        readonly String PlayerArrowPrefabName = "InteriorArrow";
+        GameObject PlayerArrowPrefab;
         // 
         static ModSettings WandererHudSettings;
 
@@ -62,8 +63,9 @@ namespace MapOverwritesMod
             PlayerEnterExit.OnTransitionInterior += (_) => OnTransitionToAnyInterior();
             PlayerEnterExit.OnTransitionDungeonInterior += (_) => OnTransitionToAnyInterior();
             //
-            PlayerArrowInteriorMat = mod.GetAsset<Material>(PlayerArrowInteriorName, false);
             ExitBoxInteriorMat = mod.GetAsset<Material>(ExitBoxInteriorName, false);
+            PlayerArrowPrefab = mod.GetAsset<GameObject>(PlayerArrowPrefabName, false);
+            Debug.Log($"PlayerArrowPrefab: {PlayerArrowPrefab}");
             SetLastScreen();
        }
 
@@ -144,7 +146,20 @@ namespace MapOverwritesMod
                     continue;
                 }
                 if (child.name == "PlayerMarkerArrow"){
-                    child.GetComponent<MeshRenderer>().material = PlayerArrowInteriorMat;
+                    child.GetComponent<MeshRenderer>().enabled = false; // * Make Default player marker invisible.
+
+                    // * Create and Child new Player Marker:
+                    GameObject PlayerArrowObj = Instantiate(PlayerArrowPrefab);
+                    // * Use new Player Marker:
+                    PlayerArrowObj.transform.position = child.transform.position;
+                    PlayerArrowObj.transform.Rotate(0, 90, 0); // * Set y angle to 90 to follow parent correctly.
+                    PlayerArrowObj.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
+                    PlayerArrowObj.transform.SetParent(child.transform);
+                    // * Set layer to automap to make it properly visible in the automap.
+                    PlayerArrowObj.layer = child.gameObject.layer;
+                    foreach (Transform ArrowChild in PlayerArrowObj.transform){
+                        ArrowChild.gameObject.layer = child.gameObject.layer;
+                    }
                     continue;
                 }
                 child.gameObject.SetActive(false);
