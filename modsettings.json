@@ -17,6 +17,28 @@
                 }
             ],
             "$version": "v1"
+        },
+        {
+            "Name": "InteriorMap",
+            "Description": null,
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "RevealAllOnEnter",
+                    "Description": "Reveals entire dungeon on enter",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "ForceWireFrame",
+                    "Description": "Forces wire frame view in interiors",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                }
+            ],
+            "$version": "v1"
         }
     ]
 }

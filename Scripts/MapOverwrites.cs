@@ -7,6 +7,8 @@ using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using System.Collections;
 using System.Linq;
 using DaggerfallWorkshop.Game.Serialization;
+using Wenzil.Console;
+using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
@@ -40,26 +42,34 @@ namespace MapOverwritesMod
         readonly String PlayerArrowInteriorName = "PlayerArrowInterior";
         Material ExitBoxInteriorMat;
         readonly String ExitBoxInteriorName = "ExitBoxInterior";
+        // 
+        static ModSettings WandererHudSettings;
 
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams){
             mod = initParams.Mod;
             var go = new GameObject(mod.Title);
             go.AddComponent<MapOverwrites>();
+            mod.LoadSettingsCallback = LoadSettings;
+            mod.LoadSettings();
             mod.IsReady = true;
         }
 
         private void Start(){
             DaggerfallUI.UIManager.OnWindowChange += UIManager_OnWindowChangeHandler;
             //
-            SaveLoadManager.OnLoad += (_) => ResetInteriorMapInnerComponents();
-            PlayerEnterExit.OnTransitionInterior += (_) => ResetInteriorMapInnerComponents();
-            PlayerEnterExit.OnTransitionDungeonInterior += (_) => ResetInteriorMapInnerComponents();
+            SaveLoadManager.OnLoad += (_) => SaveLoadManager_OnLoad();
+            PlayerEnterExit.OnTransitionInterior += (_) => OnTransitionToAnyInterior();
+            PlayerEnterExit.OnTransitionDungeonInterior += (_) => OnTransitionToAnyInterior();
             //
             PlayerArrowInteriorMat = mod.GetAsset<Material>(PlayerArrowInteriorName, false);
             ExitBoxInteriorMat = mod.GetAsset<Material>(ExitBoxInteriorName, false);
             SetLastScreen();
        }
+
+        static void LoadSettings(ModSettings modSettings, ModSettingsChange change){
+            WandererHudSettings = modSettings;
+        }
 
         private void Update(){
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
@@ -93,8 +103,33 @@ namespace MapOverwritesMod
             }
         }
 
+        public void OnTransitionToAnyInterior(){
+            ResetInteriorMapInnerComponents();
+        }
+
+        public void SaveLoadManager_OnLoad(){
+            if (GameManager.Instance.IsPlayerInside || GameManager.Instance.IsPlayerInsideDungeon || GameManager.Instance.IsPlayerInsideCastle){
+                ResetInteriorMapInnerComponents();
+            }
+        }
+
+        public void ForceWireFrame(){
+            if (WandererHudSettings.GetBool("InteriorMap", "ForceWireFrame")){
+                Debug.Log($"setting to wireframe");
+                Automap.instance.SwitchToAutomapRenderModeWireframe();
+                Automap.instance.SlicingBiasY = float.NegativeInfinity;
+            }            
+        }
+
         public void ResetInteriorMapInnerComponents(){
             InteriorMapInnerComponentsDisabled = false;
+            if (GameManager.Instance.IsPlayerInsideDungeon || GameManager.Instance.IsPlayerInsideCastle){
+                // ForceWireFrame();
+                if (WandererHudSettings.GetBool("InteriorMap", "RevealAllOnEnter")){
+                    Debug.Log($"revealing all dungeon");
+                    ConsoleCommandsDatabase.ExecuteCommand("map_revealall");
+                }
+            }
         }
 
         public void DisableInnerInteriorMapComponents(){
@@ -202,6 +237,7 @@ namespace MapOverwritesMod
 
         public void UIManager_OnWindowChangeHandler(object sender, EventArgs e){
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
+                ForceWireFrame();
                 if (!InteriorMapInnerComponentsDisabled){
                     DisableInnerInteriorMapComponents();
                     InteriorMapInnerComponentsDisabled = true;
