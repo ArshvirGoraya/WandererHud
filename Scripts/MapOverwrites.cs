@@ -41,6 +41,7 @@ namespace MapOverwritesMod
         readonly String PlayerArrowPrefabName = "InteriorArrow";
         GameObject PlayerArrowPrefab;
         GameObject PlayerArrowObj;
+        GameObject PlayerArrowObjExterior;
         // 
         readonly String ExitDoorPrefabName = "DungeonExit";
         GameObject ExitDoorPrefab;
@@ -66,6 +67,7 @@ namespace MapOverwritesMod
             PlayerEnterExit.OnTransitionDungeonInterior += (_) => OnTransitionToAnyInterior();
             //
             PlayerArrowPrefab = mod.GetAsset<GameObject>(PlayerArrowPrefabName, false);
+            // * Create and Child new Player Marker:
             ExitDoorPrefab = mod.GetAsset<GameObject>(ExitDoorPrefabName, false);
             SetLastScreen();
        }
@@ -198,7 +200,6 @@ namespace MapOverwritesMod
                 }
                 if (child.name == "PlayerMarkerArrow"){
                     child.GetComponent<MeshRenderer>().enabled = false; // * Make Default player marker invisible.
-                    // * Create and Child new Player Marker:
                     PlayerArrowObj = Instantiate(PlayerArrowPrefab);
                     // * Set layer to automap to make it properly visible in the automap.
                     ChangeObjectLayer(PlayerArrowObj, child.gameObject.layer);
@@ -234,7 +235,27 @@ namespace MapOverwritesMod
             }
         }
 
+
+        public void ReplaceExteriorPlayerMarker(){
+            // * Simply scales them to 0 so we cannot see them anymore.
+            GameObject.Find("Automap/ExteriorAutomap/PlayerMarkerArrowStamp").GetComponent<Transform>().localScale = Vector3.zero;
+            GameObject.Find("Automap/ExteriorAutomap/PlayerMarkerCircle").GetComponent<Transform>().localScale = Vector3.zero;
+            ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.GetComponent<MeshRenderer>().enabled = false;
+            // * Child new 3D marker:
+            PlayerArrowObjExterior = Instantiate(PlayerArrowPrefab);
+            // * Set layer to automap to make it properly visible in the automap.
+            ChangeObjectLayer(PlayerArrowObjExterior, ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.layer);
+            // * Use new Player Marker:
+            PlayerArrowObjExterior.transform.SetPositionAndRotation(ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.transform.position, ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.transform.rotation);
+            // * Rotate another -90 degrees to correct the rotation.
+            PlayerArrowObjExterior.transform.Rotate(0, -90, 0);
+            PlayerArrowObjExterior.transform.SetParent(ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.transform);
+            // PlayerArrowObjExterior.transform.localScale = new Vector3(1, 1, 1);
+        }
+
         public void DisableExteriorMapComponents(){
+            ReplaceExteriorPlayerMarker();
+
             foreach (BaseScreenComponent component in ExteriorMapWindow.NativePanel.Components){
                 if (component is Outline){ continue; }
                 else if (component is Button || component is HUDCompass){ // * Buttons and Compass Texture
