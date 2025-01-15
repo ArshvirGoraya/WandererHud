@@ -37,9 +37,6 @@ namespace MapOverwritesMod
         public Vector2 LastScreen = new Vector2(0, 0);
         public float ResizeWaitSecs = 0f;
         public bool ResizeWaiting = false;
-        //
-        Material ExitBoxInteriorMat;
-        readonly String ExitBoxInteriorName = "ExitBoxInterior";
         // 
         readonly String PlayerArrowPrefabName = "InteriorArrow";
         GameObject PlayerArrowPrefab;
@@ -68,7 +65,6 @@ namespace MapOverwritesMod
             PlayerEnterExit.OnTransitionInterior += (_) => OnTransitionToAnyInterior();
             PlayerEnterExit.OnTransitionDungeonInterior += (_) => OnTransitionToAnyInterior();
             //
-            ExitBoxInteriorMat = mod.GetAsset<Material>(ExitBoxInteriorName, false);
             PlayerArrowPrefab = mod.GetAsset<GameObject>(PlayerArrowPrefabName, false);
             ExitDoorPrefab = mod.GetAsset<GameObject>(ExitDoorPrefabName, false);
             SetLastScreen();
@@ -129,12 +125,6 @@ namespace MapOverwritesMod
 
         public void ResetInteriorMapInnerComponents(){
             InteriorMapInnerComponentsDisabled = false;
-            // if (GameManager.Instance.IsPlayerInsideDungeon || GameManager.Instance.IsPlayerInsideCastle){
-            //     // ForceWireFrame();
-            //     if (WandererHudSettings.GetBool("InteriorMap", "RevealAllOnEnter")){
-            //         ConsoleCommandsDatabase.ExecuteCommand("map_revealall");
-            //     }
-            // }
         }
 
         public void ChangeObjectLayer(GameObject obj, int layer){
@@ -149,7 +139,6 @@ namespace MapOverwritesMod
         }
 
         public void ChangeObjectDirectionToNormal(GameObject obj, Vector3 normal){
-            // Debug.Log($"original scale: {obj.transform.localScale}");
             Debug.Log($"normal: {normal}");
             // if (normal.x == 1){} // No rotation needed
             if (normal.x == -1){
@@ -161,16 +150,6 @@ namespace MapOverwritesMod
             else if (normal.z == -1){
                 obj.transform.Rotate(0, 90, 0);
             }
-            // if (normal.y == 1){} if (normal.y == -1){}
-            // float newX = obj.transform.localScale.x;
-            // float newY = obj.transform.localScale.y;
-            // float newZ = obj.transform.localScale.z;
-            // if ((int)normal.x != 0){ newX = obj.transform.localScale.x * (int)normal.x; }
-            // if ((int)normal.y != 0){ newY = obj.transform.localScale.y * (int)normal.y; }
-            // if ((int)normal.z != 0){ newZ = obj.transform.localScale.z * -(int)normal.z; }
-            // Vector3 newScale = new Vector3( newX, newY, newZ );
-            // obj.transform.localScale = newScale;
-            // Debug.Log($"newScale: {newScale}");
         }
 
         public void DisableInnerInteriorMapComponents(){
@@ -183,12 +162,10 @@ namespace MapOverwritesMod
                     // * BeaconEntrancePositionMarker
                     child.gameObject.transform.GetChild(0).gameObject.SetActive(false);
                     // * CubeEntrancePositionMarker
-                    // child.gameObject.transform.GetChild(1).GetComponent<MeshRenderer>().material = ExitBoxInteriorMat;
                     child.gameObject.transform.GetChild(1).GetComponent<MeshRenderer>().enabled = false;
                     ExitDoorObj = Instantiate(ExitDoorPrefab);
                     ChangeObjectLayer(ExitDoorObj, child.gameObject.transform.GetChild(1).gameObject.layer);
                     // 
-                    // ExitDoorObj.transform.SetPositionAndRotation(child.gameObject.transform.GetChild(1).transform.position, child.gameObject.transform.GetChild(1).transform.rotation);
                     ExitDoorObj.transform.position = child.gameObject.transform.GetChild(1).transform.position;
                     ExitDoorObj.transform.SetParent(child.gameObject.transform.GetChild(1).transform);
 
@@ -206,47 +183,15 @@ namespace MapOverwritesMod
                         Vector3 doorNormal = DaggerfallStaticDoors.GetDoorNormal(DungeonExitDoor);
                         Vector3 doorEuler = NormalToEuler(doorNormal);
 
-                        Debug.Log($"door normal: {doorNormal}");
-                        Debug.Log($"door euler: {doorEuler}");
-
                         if ((int)doorEuler.y != 0){
                             Vector3 DoorRotation = new Vector3 (0, doorEuler.y + 180, 0);
                             ExitDoorObj.transform.position = GameManager.Instance.PlayerEnterExit.Dungeon.StartMarker.transform.position;
                             ExitDoorObj.transform.eulerAngles = DoorRotation;
                         }
-                        Debug.Log($"eulerAngles: {ExitDoorObj.transform.eulerAngles}");
-
-                        // ChangeObjectDirectionToNormal(ExitDoorObj, doorNormal);
-
-                        // Debug.Log($"doors: {GameManager.Instance.PlayerEnterExit.ExteriorDoors.Length}");
-                        // foreach (StaticDoor door in GameManager.Instance.PlayerEnterExit.ExteriorDoors){
-                        //     Debug.Log($"door: ---");
-                        //     Debug.Log($"door position: {DaggerfallStaticDoors.GetDoorPosition(door)}");
-                        //     Debug.Log($"door doorType: {door.doorType}");
-                        //     Debug.Log($"door doorType: {door.doorType}");
-                        // }
-                        // StaticDoor closestDoor;
-                        // Vector3 closestDoorPosition = DaggerfallStaticDoors.FindClosestDoor(GameManager.Instance.PlayerEnterExit.transform.position, GameManager.Instance.PlayerEnterExit.ExteriorDoors, out closestDoor);
-                        // Debug.Log($"== closestDoorPosition: {closestDoorPosition}");
-
-                        // Debug.Log($"doors: {GameManager.Instance.PlayerEnterExit.ExteriorDoors.Length}");
-                        // if (GameManager.Instance.PlayerEnterExit.Dungeon.StartMarker){
-                        //     Debug.Log($"StartMarker position: {GameManager.Instance.PlayerEnterExit.Dungeon.StartMarker.transform.position}");
-                        //     Debug.Log($"dungeon euler: {GameManager.Instance.PlayerEnterExit.Dungeon.transform.eulerAngles}");
-                        //     Debug.Log($"dungeon local euler: {GameManager.Instance.PlayerEnterExit.Dungeon.transform.localEulerAngles}");
-                        //     Debug.Log($"dungeon rotation: {GameManager.Instance.PlayerEnterExit.Dungeon.transform.rotation}");
-                        //     Debug.Log($"dungeon local rotation: {GameManager.Instance.PlayerEnterExit.Dungeon.transform.localRotation}");
-                        //     ExitDoorObj.transform.eulerAngles = GameManager.Instance.PlayerEnterExit.Dungeon.transform.eulerAngles;
-
-                        //     Debug.Log($"dungeon position: {GameManager.Instance.DungeonParent.transform.position}");
-                        //     Debug.Log($"dungeon euler: {GameManager.Instance.DungeonParent.transform.eulerAngles}");
-                        //     Debug.Log($"dungeon local euler: {GameManager.Instance.DungeonParent.transform.localEulerAngles}");
-                        // }
                     }
                     // ! If In building:
                     else{
                         // * Use the direction of the normal to scale the object that way (will face that direction)
-                        // Vector3 doorNormal = DaggerfallStaticDoors.GetDoorNormal(GameManager.Instance.PlayerEnterExit.Interior.EntryDoor);
                         ChangeObjectDirectionToNormal(ExitDoorObj, DaggerfallStaticDoors.GetDoorNormal(GameManager.Instance.PlayerEnterExit.Interior.EntryDoor));
                     }
                     continue;
