@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using DaggerfallWorkshop;
 using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
 using DaggerfallWorkshop.Game.UserInterface;
@@ -7,9 +8,7 @@ using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using System.Collections;
 using System.Linq;
 using DaggerfallWorkshop.Game.Serialization;
-using Wenzil.Console;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
-using UnityEditor;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
@@ -41,9 +40,14 @@ namespace MapOverwritesMod
         //
         Material ExitBoxInteriorMat;
         readonly String ExitBoxInteriorName = "ExitBoxInterior";
+        // 
         readonly String PlayerArrowPrefabName = "InteriorArrow";
         GameObject PlayerArrowPrefab;
         GameObject PlayerArrowObj;
+        // 
+        readonly String ExitDoorPrefabName = "DungeonExit";
+        GameObject ExitDoorPrefab;
+        GameObject ExitDoorObj;
         // 
         static ModSettings WandererHudSettings;
 
@@ -66,6 +70,7 @@ namespace MapOverwritesMod
             //
             ExitBoxInteriorMat = mod.GetAsset<Material>(ExitBoxInteriorName, false);
             PlayerArrowPrefab = mod.GetAsset<GameObject>(PlayerArrowPrefabName, false);
+            ExitDoorPrefab = mod.GetAsset<GameObject>(ExitDoorPrefabName, false);
             SetLastScreen();
        }
 
@@ -132,6 +137,38 @@ namespace MapOverwritesMod
             // }
         }
 
+        public void ChangeObjectLayer(GameObject obj, int layer){
+            obj.layer = layer;
+            foreach (Transform ObjChild in obj.transform){
+                ObjChild.gameObject.layer = obj.layer;
+            }
+        }
+
+        public void ChangeObjectDirectionToNormal(GameObject obj, Vector3 normal){
+            // Debug.Log($"original scale: {obj.transform.localScale}");
+            Debug.Log($"normal: {normal}");
+            // if (normal.x == 1){} // No rotation needed
+            if (normal.x == -1){
+                obj.transform.Rotate(0, 180, 0);
+            }
+            if (normal.z == 1){
+                obj.transform.Rotate(0, -90, 0);
+            }
+            else if (normal.z == -1){
+                obj.transform.Rotate(0, 90, 0);
+            }
+            // if (normal.y == 1){} if (normal.y == -1){}
+            // float newX = obj.transform.localScale.x;
+            // float newY = obj.transform.localScale.y;
+            // float newZ = obj.transform.localScale.z;
+            // if ((int)normal.x != 0){ newX = obj.transform.localScale.x * (int)normal.x; }
+            // if ((int)normal.y != 0){ newY = obj.transform.localScale.y * (int)normal.y; }
+            // if ((int)normal.z != 0){ newZ = obj.transform.localScale.z * -(int)normal.z; }
+            // Vector3 newScale = new Vector3( newX, newY, newZ );
+            // obj.transform.localScale = newScale;
+            // Debug.Log($"newScale: {newScale}");
+        }
+
         public void DisableInnerInteriorMapComponents(){
             if (!GameManager.Instance.PlayerEnterExit.IsPlayerInside){
                 return;
@@ -140,9 +177,45 @@ namespace MapOverwritesMod
             foreach (Transform child in GameObject.Find("Automap/InteriorAutomap/Beacons").transform){
                 if (child.name == "BeaconEntrancePosition"){
                     // * BeaconEntrancePositionMarker
-                    child.gameObject.transform.GetChild(0).gameObject.SetActive(false); 
+                    child.gameObject.transform.GetChild(0).gameObject.SetActive(false);
                     // * CubeEntrancePositionMarker
-                    child.gameObject.transform.GetChild(1).GetComponent<MeshRenderer>().material = ExitBoxInteriorMat;
+                    // child.gameObject.transform.GetChild(1).GetComponent<MeshRenderer>().material = ExitBoxInteriorMat;
+                    child.gameObject.transform.GetChild(1).GetComponent<MeshRenderer>().enabled = false;
+                    ExitDoorObj = Instantiate(ExitDoorPrefab);
+                    ChangeObjectLayer(ExitDoorObj, child.gameObject.transform.GetChild(1).gameObject.layer);
+                    // 
+                    // ExitDoorObj.transform.SetPositionAndRotation(child.gameObject.transform.GetChild(1).transform.position, child.gameObject.transform.GetChild(1).transform.rotation);
+                    ExitDoorObj.transform.position = child.gameObject.transform.GetChild(1).transform.position;
+                    ExitDoorObj.transform.SetParent(child.gameObject.transform.GetChild(1).transform);
+
+                    // * Set Rotation/Direction of door:
+
+                    // foreach (StaticDoor door in GameManager.Instance.PlayerEnterExit.ExteriorDoors){
+                    //     Debug.Log($"door: ---");
+                    //     Debug.Log($"door position: {DaggerfallStaticDoors.GetDoorPosition(door)}");
+                    //     Debug.Log($"door doorType: {door.doorType}");
+                    //     Debug.Log($"door doorType: {door.doorType}");
+                    // }
+
+                    // StaticDoor closestDoor;
+                    // Vector3 closestDoorPosition = DaggerfallStaticDoors.FindClosestDoor(GameManager.Instance.PlayerEnterExit.transform.position, GameManager.Instance.PlayerEnterExit.ExteriorDoors, out closestDoor);
+                    // // Debug.Log($"closestDoor: {closestDoor}");
+                    // // Debug.Log($"closestDoor position: {closestDoor.ownerPosition}");
+                    // Debug.Log($"door: ---");
+                    // Debug.Log($"closestDoorPosition: {closestDoorPosition}");
+                    
+                    
+
+                    // ! If in dungeon:
+                    if ((GameManager.Instance.IsPlayerInsideDungeon) || (GameManager.Instance.IsPlayerInsideCastle)){
+                        // not sure if we need to do anything with dungeons...
+                    }
+                    // ! If In building:
+                    else{
+                        // * Use the direction of the normal to scale the object that way (will face that direction)
+                        // Vector3 doorNormal = DaggerfallStaticDoors.GetDoorNormal(GameManager.Instance.PlayerEnterExit.Interior.EntryDoor);
+                        ChangeObjectDirectionToNormal(ExitDoorObj, DaggerfallStaticDoors.GetDoorNormal(GameManager.Instance.PlayerEnterExit.Interior.EntryDoor));
+                    }
                     continue;
                 }
                 if (child.name == "PlayerMarkerArrow"){
@@ -150,14 +223,11 @@ namespace MapOverwritesMod
                     // * Create and Child new Player Marker:
                     PlayerArrowObj = Instantiate(PlayerArrowPrefab);
                     // * Set layer to automap to make it properly visible in the automap.
-                    PlayerArrowObj.layer = child.gameObject.layer;
-                    foreach (Transform ArrowChild in PlayerArrowObj.transform){
-                        ArrowChild.gameObject.layer = child.gameObject.layer;
-                    }
+                    ChangeObjectLayer(PlayerArrowObj, child.gameObject.layer);
                     // * Use new Player Marker:
                     PlayerArrowObj.transform.SetPositionAndRotation(child.transform.position, child.transform.rotation);
                     // * Rotate another -90 degrees to correct the rotation.
-                    PlayerArrowObj.transform.eulerAngles = new Vector3(0, PlayerArrowObj.transform.eulerAngles.y -90, 0);
+                    PlayerArrowObj.transform.Rotate(0, -90, 0);
                     PlayerArrowObj.transform.SetParent(child.transform);
                     PlayerArrowObj.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
                     continue;
