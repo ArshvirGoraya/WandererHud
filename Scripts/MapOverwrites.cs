@@ -41,6 +41,9 @@ namespace MapOverwritesMod
         readonly String PlayerArrowPrefabName = "InteriorArrow";
         GameObject PlayerArrowPrefab;
         GameObject PlayerArrowObj;
+        // 
+        readonly String PlayerArrowPrefabNameExterior = "ExteriorArrow";
+        GameObject PlayerArrowPrefabExterior;
         GameObject PlayerArrowObjExterior;
         // 
         readonly String ExitDoorPrefabName = "DungeonExit";
@@ -67,6 +70,7 @@ namespace MapOverwritesMod
             PlayerEnterExit.OnTransitionDungeonInterior += (_) => OnTransitionToAnyInterior();
             //
             PlayerArrowPrefab = mod.GetAsset<GameObject>(PlayerArrowPrefabName, false);
+            PlayerArrowPrefabExterior = mod.GetAsset<GameObject>(PlayerArrowPrefabNameExterior, false);
             // * Create and Child new Player Marker:
             ExitDoorPrefab = mod.GetAsset<GameObject>(ExitDoorPrefabName, false);
             SetLastScreen();
@@ -141,7 +145,6 @@ namespace MapOverwritesMod
         }
 
         public void ChangeObjectDirectionToNormal(GameObject obj, Vector3 normal){
-            Debug.Log($"normal: {normal}");
             // if (normal.x == 1){} // No rotation needed
             if (normal.x == -1){
                 obj.transform.Rotate(0, 180, 0);
@@ -242,7 +245,7 @@ namespace MapOverwritesMod
             GameObject.Find("Automap/ExteriorAutomap/PlayerMarkerCircle").GetComponent<Transform>().localScale = Vector3.zero;
             ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.GetComponent<MeshRenderer>().enabled = false;
             // * Child new 3D marker:
-            PlayerArrowObjExterior = Instantiate(PlayerArrowPrefab);
+            PlayerArrowObjExterior = Instantiate(PlayerArrowPrefabExterior);
             // * Set layer to automap to make it properly visible in the automap.
             ChangeObjectLayer(PlayerArrowObjExterior, ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.layer);
             // * Use new Player Marker:
@@ -250,7 +253,7 @@ namespace MapOverwritesMod
             // * Rotate another -90 degrees to correct the rotation.
             PlayerArrowObjExterior.transform.Rotate(0, -90, 0);
             PlayerArrowObjExterior.transform.SetParent(ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.transform);
-            // PlayerArrowObjExterior.transform.localScale = new Vector3(1, 1, 1);
+            PlayerArrowObjExterior.transform.localScale = new Vector3(1, 1, 1);
         }
 
         public void DisableExteriorMapComponents(){

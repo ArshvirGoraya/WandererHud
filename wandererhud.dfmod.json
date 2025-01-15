@@ -13,6 +13,7 @@
         "Assets/Game/Mods/WandererHud/Scripts/MapOverwrites.cs",
         "Assets/Game/Mods/WandererHud/ModAssets/InteriorArrow.prefab",
         "Assets/Game/Mods/WandererHud/ModAssets/Cursor.png",
-        "Assets/Game/Mods/WandererHud/ModAssets/DungeonExit.prefab"
+        "Assets/Game/Mods/WandererHud/ModAssets/DungeonExit.prefab",
+        "Assets/Game/Mods/WandererHud/ModAssets/ExteriorArrow.prefab"
     ]
 }
