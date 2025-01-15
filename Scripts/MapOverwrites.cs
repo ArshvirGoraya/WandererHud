@@ -124,12 +124,12 @@ namespace MapOverwritesMod
 
         public void ResetInteriorMapInnerComponents(){
             InteriorMapInnerComponentsDisabled = false;
-            if (GameManager.Instance.IsPlayerInsideDungeon || GameManager.Instance.IsPlayerInsideCastle){
-                // ForceWireFrame();
-                if (WandererHudSettings.GetBool("InteriorMap", "RevealAllOnEnter")){
-                    ConsoleCommandsDatabase.ExecuteCommand("map_revealall");
-                }
-            }
+            // if (GameManager.Instance.IsPlayerInsideDungeon || GameManager.Instance.IsPlayerInsideCastle){
+            //     // ForceWireFrame();
+            //     if (WandererHudSettings.GetBool("InteriorMap", "RevealAllOnEnter")){
+            //         ConsoleCommandsDatabase.ExecuteCommand("map_revealall");
+            //     }
+            // }
         }
 
         public void DisableInnerInteriorMapComponents(){
