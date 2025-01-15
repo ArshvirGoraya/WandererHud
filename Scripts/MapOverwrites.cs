@@ -144,6 +144,10 @@ namespace MapOverwritesMod
             }
         }
 
+        public Vector3 NormalToEuler(Vector3 normal){
+            return Quaternion.FromToRotation(Vector3.up, normal).eulerAngles;
+        }
+
         public void ChangeObjectDirectionToNormal(GameObject obj, Vector3 normal){
             // Debug.Log($"original scale: {obj.transform.localScale}");
             Debug.Log($"normal: {normal}");
@@ -190,25 +194,54 @@ namespace MapOverwritesMod
 
                     // * Set Rotation/Direction of door:
 
-                    // foreach (StaticDoor door in GameManager.Instance.PlayerEnterExit.ExteriorDoors){
-                    //     Debug.Log($"door: ---");
-                    //     Debug.Log($"door position: {DaggerfallStaticDoors.GetDoorPosition(door)}");
-                    //     Debug.Log($"door doorType: {door.doorType}");
-                    //     Debug.Log($"door doorType: {door.doorType}");
-                    // }
-
-                    // StaticDoor closestDoor;
-                    // Vector3 closestDoorPosition = DaggerfallStaticDoors.FindClosestDoor(GameManager.Instance.PlayerEnterExit.transform.position, GameManager.Instance.PlayerEnterExit.ExteriorDoors, out closestDoor);
-                    // // Debug.Log($"closestDoor: {closestDoor}");
-                    // // Debug.Log($"closestDoor position: {closestDoor.ownerPosition}");
-                    // Debug.Log($"door: ---");
-                    // Debug.Log($"closestDoorPosition: {closestDoorPosition}");
-                    
-                    
-
                     // ! If in dungeon:
                     if ((GameManager.Instance.IsPlayerInsideDungeon) || (GameManager.Instance.IsPlayerInsideCastle)){
-                        // not sure if we need to do anything with dungeons...
+                        StaticDoor[] DungeonExitDoors = DaggerfallStaticDoors.FindDoorsInCollections(GameManager.Instance.PlayerEnterExit.Dungeon.StaticDoorCollections, DoorTypes.DungeonExit);
+                        DaggerfallStaticDoors.FindClosestDoor(
+                            GameManager.Instance.PlayerEnterExit.Dungeon.StartMarker.transform.position,
+                            DungeonExitDoors,
+                            out StaticDoor DungeonExitDoor
+                        );
+
+                        Vector3 doorNormal = DaggerfallStaticDoors.GetDoorNormal(DungeonExitDoor);
+                        Vector3 doorEuler = NormalToEuler(doorNormal);
+
+                        Debug.Log($"door normal: {doorNormal}");
+                        Debug.Log($"door euler: {doorEuler}");
+
+                        if ((int)doorEuler.y != 0){
+                            Vector3 DoorRotation = new Vector3 (0, doorEuler.y + 180, 0);
+                            ExitDoorObj.transform.position = GameManager.Instance.PlayerEnterExit.Dungeon.StartMarker.transform.position;
+                            ExitDoorObj.transform.eulerAngles = DoorRotation;
+                        }
+                        Debug.Log($"eulerAngles: {ExitDoorObj.transform.eulerAngles}");
+
+                        // ChangeObjectDirectionToNormal(ExitDoorObj, doorNormal);
+
+                        // Debug.Log($"doors: {GameManager.Instance.PlayerEnterExit.ExteriorDoors.Length}");
+                        // foreach (StaticDoor door in GameManager.Instance.PlayerEnterExit.ExteriorDoors){
+                        //     Debug.Log($"door: ---");
+                        //     Debug.Log($"door position: {DaggerfallStaticDoors.GetDoorPosition(door)}");
+                        //     Debug.Log($"door doorType: {door.doorType}");
+                        //     Debug.Log($"door doorType: {door.doorType}");
+                        // }
+                        // StaticDoor closestDoor;
+                        // Vector3 closestDoorPosition = DaggerfallStaticDoors.FindClosestDoor(GameManager.Instance.PlayerEnterExit.transform.position, GameManager.Instance.PlayerEnterExit.ExteriorDoors, out closestDoor);
+                        // Debug.Log($"== closestDoorPosition: {closestDoorPosition}");
+
+                        // Debug.Log($"doors: {GameManager.Instance.PlayerEnterExit.ExteriorDoors.Length}");
+                        // if (GameManager.Instance.PlayerEnterExit.Dungeon.StartMarker){
+                        //     Debug.Log($"StartMarker position: {GameManager.Instance.PlayerEnterExit.Dungeon.StartMarker.transform.position}");
+                        //     Debug.Log($"dungeon euler: {GameManager.Instance.PlayerEnterExit.Dungeon.transform.eulerAngles}");
+                        //     Debug.Log($"dungeon local euler: {GameManager.Instance.PlayerEnterExit.Dungeon.transform.localEulerAngles}");
+                        //     Debug.Log($"dungeon rotation: {GameManager.Instance.PlayerEnterExit.Dungeon.transform.rotation}");
+                        //     Debug.Log($"dungeon local rotation: {GameManager.Instance.PlayerEnterExit.Dungeon.transform.localRotation}");
+                        //     ExitDoorObj.transform.eulerAngles = GameManager.Instance.PlayerEnterExit.Dungeon.transform.eulerAngles;
+
+                        //     Debug.Log($"dungeon position: {GameManager.Instance.DungeonParent.transform.position}");
+                        //     Debug.Log($"dungeon euler: {GameManager.Instance.DungeonParent.transform.eulerAngles}");
+                        //     Debug.Log($"dungeon local euler: {GameManager.Instance.DungeonParent.transform.localEulerAngles}");
+                        // }
                     }
                     // ! If In building:
                     else{
