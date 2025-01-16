@@ -157,8 +157,6 @@ namespace MapOverwritesMod
             }
         }
 
-
-
         public void SlideObjectPosition(GameObject Obj, Vector3 posChange){
             Obj.transform.position = new Vector3(
                 Obj.transform.position.x + posChange.x,
@@ -166,15 +164,6 @@ namespace MapOverwritesMod
                 Obj.transform.position.z + posChange.z
             );
         }
-
-        // public void SetObjectYPosition(GameObject Obj, float yPos){
-        //     Obj.transform.position = new Vector3(
-        //         Obj.transform.position.x,
-        //         yPos,
-        //         Obj.transform.position.z
-        //     );
-        // }
-
 
         public void DisableInnerInteriorMapComponents(){
             if (!GameManager.Instance.PlayerEnterExit.IsPlayerInside){

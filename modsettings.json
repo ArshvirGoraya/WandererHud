@@ -7,13 +7,13 @@
             "IsAdvanced": false,
             "Keys": [
                 {
-                    "Min": 4,
-                    "Max": 8,
-                    "Value": 6,
-                    "Name": "MapArrowSize",
-                    "Description": "Change the size of the player map marker/arrow.",
+                    "Min": 0.0,
+                    "Max": 50.0,
+                    "Value": 20.0,
+                    "Name": "ZoomSpeed",
+                    "Description": "Additive to base zoom speed.",
                     "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 }
             ],
             "$version": "v1"
@@ -24,11 +24,13 @@
             "IsAdvanced": false,
             "Keys": [
                 {
-                    "Value": true,
-                    "Name": "RevealAllOnEnter",
-                    "Description": "Reveals entire dungeon on enter",
+                    "Min": 0.0,
+                    "Max": 1.0,
+                    "Value": 0.3,
+                    "Name": "ZoomSpeed",
+                    "Description": "Additive to base zoom speed.",
                     "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 },
                 {
                     "Value": true,
