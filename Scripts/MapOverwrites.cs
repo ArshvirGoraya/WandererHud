@@ -157,6 +157,25 @@ namespace MapOverwritesMod
             }
         }
 
+
+
+        public void SlideObjectPosition(GameObject Obj, Vector3 posChange){
+            Obj.transform.position = new Vector3(
+                Obj.transform.position.x + posChange.x,
+                Obj.transform.position.y + posChange.y,
+                Obj.transform.position.z + posChange.z
+            );
+        }
+
+        // public void SetObjectYPosition(GameObject Obj, float yPos){
+        //     Obj.transform.position = new Vector3(
+        //         Obj.transform.position.x,
+        //         yPos,
+        //         Obj.transform.position.z
+        //     );
+        // }
+
+
         public void DisableInnerInteriorMapComponents(){
             if (!GameManager.Instance.PlayerEnterExit.IsPlayerInside){
                 return;
@@ -198,6 +217,9 @@ namespace MapOverwritesMod
                     else{
                         // * Use the direction of the normal to scale the object that way (will face that direction)
                         ChangeObjectDirectionToNormal(ExitDoorObj, DaggerfallStaticDoors.GetDoorNormal(GameManager.Instance.PlayerEnterExit.Interior.EntryDoor));
+
+                        // * Slide Door downwards, just for buildings (not dungeons)
+                        SlideObjectPosition(ExitDoorObj, new Vector3(0, -1f, 0));
                     }
                     continue;
                 }
@@ -212,6 +234,9 @@ namespace MapOverwritesMod
                     PlayerArrowObj.transform.Rotate(0, -90, 0);
                     PlayerArrowObj.transform.SetParent(child.transform);
                     PlayerArrowObj.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
+
+                    // * Slide Interior Cursor downwards
+                    SlideObjectPosition(PlayerArrowObj, new Vector3(0, -0.6f, 0));
                     continue;
                 }
                 child.gameObject.SetActive(false);
