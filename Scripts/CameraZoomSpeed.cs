@@ -12,9 +12,6 @@ namespace CameraZoomSpeedMod
         private static Mod mod;
         static ModSettings WandererHudSettings;
 
-        // public float InteriorZoomSpeed = 0.3f;
-        // public float ExteriorZoomSpeed = 20f;
-
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams){
             mod = initParams.Mod;
@@ -30,8 +27,6 @@ namespace CameraZoomSpeedMod
         static void LoadSettings(ModSettings modSettings, ModSettingsChange change){
             WandererHudSettings = modSettings;
         }
-        // 
-        private void Start(){}
         // 
         public void Update(){
             if (!(DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow)){
@@ -83,19 +78,13 @@ namespace CameraZoomSpeedMod
             cameraExteriorAutomap.orthographicSize += zoomSpeedCompensated;
             
             cameraExteriorAutomap.orthographicSize = Math.Min(minZoom * exteriorAutomap.LayoutMultiplier, (Math.Max(maxZoom * exteriorAutomap.LayoutMultiplier, cameraExteriorAutomap.orthographicSize)));
-            
-            // DaggerfallExteriorAutomapWindow exteriorAutomapWindow = DaggerfallUI.UIManager.TopWindow as DaggerfallExteriorAutomapWindow;
-            // exteriorAutomapWindow.UpdateAutomapView();
         }
 
         public void InteriorZoom(bool ZoomIn = true){
             float zoomSpeed = WandererHudSettings.GetFloat("InteriorMap", "ZoomSpeed");
-            // float zoomSpeed = InteriorZoomSpeed;
             Camera cameraAutomap = Automap.instance.CameraAutomap;
             // 
             float magnitude = Vector3.Magnitude(Camera.main.transform.position - cameraAutomap.transform.position);
-            // const float maxMagnitude = 20; // Arbitrary clamp
-            // magnitude = Mathf.Min(magnitude, maxMagnitude);
 
 	        float zoomSpeedCompensated = zoomSpeed * magnitude;
 
@@ -123,43 +112,9 @@ namespace CameraZoomSpeedMod
                 newPosition.y < -max ||
                 newPosition.z < -max)
                 ){
-                    Debug.Log($"IGNORED interior camera position: {newPosition}");
                     return;
             }
             cameraAutomap.transform.position = newPosition;
-            Debug.Log($"interior camera position: {cameraAutomap.transform.position}");
-
-            // DaggerfallAutomapWindow automapWindow = DaggerfallUI.UIManager.TopWindow as DaggerfallAutomapWindow;
-            // automapWindow.UpdateAutomapView();
-            // UpdateInteriorAutomapView(DaggerfallUI.UIManager.TopWindow as DaggerfallAutomapWindow);
         }
-
-        // * Public version of DaggerfallAutomapWindow.UpdateAutomapView()
-        // public void UpdateInteriorAutomapView(DaggerfallAutomapWindow automapWindow){
-        //     Automap automap = Automap.instance;
-        //     Camera cameraAutomap = Automap.instance.CameraAutomap;
-
-        //     automap.ForceUpdate();
-        //     automap.RotationPivotAxisRotation = Quaternion.Euler(0.0f, cameraAutomap.transform.rotation.eulerAngles.y, 0.0f);
-
-        //     // if ((!cameraAutomap) || (!renderTextureAutomap))
-        //     //     return;
-
-        //     cameraAutomap.Render();
-
-        //     // RenderTexture.active = renderTextureAutomap;
-        //     // textureAutomap.ReadPixels(new Rect(0, 0, renderTextureAutomap.width, renderTextureAutomap.height), 0, 0);
-        //     // textureAutomap.Apply(false);
-        //     // RenderTexture.active = null;
-
-        //     // panelRenderAutomap.BackgroundTexture = textureAutomap;
-
-        //     // panelRenderOverlay.BackgroundTexture = automap.TextureMicroMap;
-
-        // }
-
-
-
-
     }
 }
