@@ -168,12 +168,8 @@ namespace MapOverwritesMod
         public void SetInitialInteriorCameraZoom(){
             Camera cameraAutomap = Automap.instance.CameraAutomap;
             const float zoomOutMagnitude = 20;
-
             Vector3 translation = -cameraAutomap.transform.forward * zoomOutMagnitude;
-            
-            Debug.Log($"BEFORE zoom out: {cameraAutomap.transform.position}");            
             cameraAutomap.transform.position += translation;
-            Debug.Log($"AFTER zoom out: {cameraAutomap.transform.position}");
         }
 
         public void DisableInnerInteriorMapComponents(){
