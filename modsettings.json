@@ -8,8 +8,8 @@
             "Keys": [
                 {
                     "Min": 0.0,
-                    "Max": 50.0,
-                    "Value": 20.0,
+                    "Max": 100.0,
+                    "Value": 40.0,
                     "Name": "ZoomSpeed",
                     "Description": "Additive to base zoom speed.",
                     "$version": "v1",
@@ -25,8 +25,8 @@
             "Keys": [
                 {
                     "Min": 0.0,
-                    "Max": 1.0,
-                    "Value": 0.3,
+                    "Max": 2.0,
+                    "Value": 0.6,
                     "Name": "ZoomSpeed",
                     "Description": "Additive to base zoom speed.",
                     "$version": "v1",
@@ -38,6 +38,15 @@
                     "Description": "Forces wire frame view in interiors",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Min": 0.0,
+                    "Max": 500.0,
+                    "Value": 30.0,
+                    "Name": "DefaultZoomOut",
+                    "Description": "How far the camera is zoomed out when first opening the map view",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 }
             ],
             "$version": "v1"

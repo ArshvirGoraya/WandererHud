@@ -50,7 +50,7 @@ namespace MapOverwritesMod
         GameObject ExitDoorPrefab;
         GameObject ExitDoorObj;
         // 
-        static ModSettings WandererHudSettings;
+        public static ModSettings WandererHudSettings;
 
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams){
@@ -167,8 +167,8 @@ namespace MapOverwritesMod
 
         public void SetInitialInteriorCameraZoom(){
             Camera cameraAutomap = Automap.instance.CameraAutomap;
-            const float zoomOutMagnitude = 20;
-            Vector3 translation = -cameraAutomap.transform.forward * zoomOutMagnitude;
+            float zoomOutMagnitude = WandererHudSettings.GetFloat("InteriorMap", "DefaultZoomOut");
+            Vector3 translation = -cameraAutomap.transform.forward * (int)zoomOutMagnitude;
             cameraAutomap.transform.position += translation;
         }
 

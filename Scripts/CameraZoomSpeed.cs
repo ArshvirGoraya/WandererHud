@@ -4,13 +4,13 @@ using DaggerfallWorkshop.Game.Utility.ModSupport;
 using System;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
+using MapOverwritesMod;
 
 namespace CameraZoomSpeedMod
 {
     public class CameraZoomSpeed : MonoBehaviour
     {
         private static Mod mod;
-        static ModSettings WandererHudSettings;
 
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams){
@@ -19,13 +19,7 @@ namespace CameraZoomSpeedMod
             var go = new GameObject(mod.Title);
             go.AddComponent<CameraZoomSpeed>();
 
-            mod.LoadSettingsCallback = LoadSettings;
-            mod.LoadSettings();
-
             mod.IsReady = true;
-        }
-        static void LoadSettings(ModSettings modSettings, ModSettingsChange change){
-            WandererHudSettings = modSettings;
         }
         // 
         public void Update(){
@@ -64,7 +58,7 @@ namespace CameraZoomSpeedMod
         }
 
         public void ExteriorZoom(bool ZoomIn = true){
-            float speed = WandererHudSettings.GetFloat("ExteriorMap", "ZoomSpeed");
+            float speed = MapOverwrites.WandererHudSettings.GetFloat("ExteriorMap", "ZoomSpeed");
             // float speed = ExteriorZoomSpeed;
             if (ZoomIn){
                 speed = -speed;
@@ -81,7 +75,7 @@ namespace CameraZoomSpeedMod
         }
 
         public void InteriorZoom(bool ZoomIn = true){
-            float zoomSpeed = WandererHudSettings.GetFloat("InteriorMap", "ZoomSpeed");
+            float zoomSpeed = MapOverwrites.WandererHudSettings.GetFloat("InteriorMap", "ZoomSpeed");
             Camera cameraAutomap = Automap.instance.CameraAutomap;
             // 
             float magnitude = Vector3.Magnitude(Camera.main.transform.position - cameraAutomap.transform.position);
