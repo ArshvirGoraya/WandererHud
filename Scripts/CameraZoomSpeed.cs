@@ -5,6 +5,8 @@ using System;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 using MapOverwritesMod;
+using System.Reflection;
+using static DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallAutomapWindow;
 
 namespace CameraZoomSpeedMod
 {
@@ -33,6 +35,12 @@ namespace CameraZoomSpeedMod
             else if (mouseScroll < 0f){
                 MouseScrollDown();
             }
+        }
+
+        public static T GetNonPublicVariable<T>(object instance, string var){
+            Type type = instance.GetType();
+            FieldInfo fieldInfo = type.GetField(var, BindingFlags.NonPublic | BindingFlags.Instance);
+            return (T)fieldInfo.GetValue(instance);
         }
 
         public void MouseScrollUp(){
@@ -75,10 +83,35 @@ namespace CameraZoomSpeedMod
         }
 
         public void InteriorZoom(bool ZoomIn = true){
-            float zoomSpeed = MapOverwrites.WandererHudSettings.GetFloat("InteriorMap", "ZoomSpeed");
+            float zoomSpeed = MapOverwrites.WandererHudSettings.GetFloat("InteriorMap", "ZoomSpeed"); // must be normalized: 0 - 0.9
             Camera cameraAutomap = Automap.instance.CameraAutomap;
-            // 
-            float magnitude = Vector3.Magnitude(Camera.main.transform.position - cameraAutomap.transform.position);
+            // float magnitude = Vector3.Magnitude(Camera.main.transform.position - cameraAutomap.transform.position);
+
+            Transform BeaconRotationPivot = GameObject.Find("Automap/InteriorAutomap/Beacons/BeaconRotationPivotAxis").transform;
+            float magnitude = Vector3.Magnitude(BeaconRotationPivot.position - cameraAutomap.transform.position);
+            
+            AutomapViewMode automapViewMode = GetNonPublicVariable<AutomapViewMode>(
+                DaggerfallUI.UIManager.TopWindow,
+                "automapViewMode"
+                );
+
+            // * incremental zoom when zoomed very close
+            if (automapViewMode == AutomapViewMode.View2D){
+                if (magnitude <= 150){
+                    magnitude *= 0.2f;
+                }
+            }else{
+                if (magnitude <= 30){
+                    magnitude *= 0.2f;
+                }
+            }
+            
+            // Debug.Log($"magnitude: {magnitude}");
+
+            // * Only apply base zoom
+            if (magnitude <= 0 || magnitude >= 10_000) { return; }
+
+
 
 	        float zoomSpeedCompensated = zoomSpeed * magnitude;
 
@@ -90,25 +123,10 @@ namespace CameraZoomSpeedMod
                 translation = -cameraAutomap.transform.forward * zoomSpeedCompensated;
             }
             // 
-            Vector3 newPosition = cameraAutomap.transform.position;
-            newPosition += translation;
-
-            const float max = 1_000; // Arbitrary clamp
-
-            if (
-                // Any above maximum
-                (newPosition.x > max ||
-                newPosition.y > max ||
-                newPosition.z > max)
-                ||
-                // Any below minimum
-                (newPosition.x < -max ||
-                newPosition.y < -max ||
-                newPosition.z < -max)
-                ){
-                    return;
-            }
-            cameraAutomap.transform.position = newPosition;
+            // Vector3 newPosition = cameraAutomap.transform.position;
+            // newPosition += translation;
+            // cameraAutomap.transform.position = newPosition;
+            cameraAutomap.transform.position += translation;
         }
     }
 }
