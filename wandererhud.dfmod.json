@@ -15,6 +15,7 @@
         "Assets/Game/Mods/WandererHud/ModAssets/Cursor.png",
         "Assets/Game/Mods/WandererHud/ModAssets/DungeonExit.prefab",
         "Assets/Game/Mods/WandererHud/ModAssets/ExteriorArrow.prefab",
-        "Assets/Game/Mods/WandererHud/Scripts/CameraZoomSpeed.cs"
+        "Assets/Game/Mods/WandererHud/Scripts/CameraZoomSpeed.cs",
+        "Assets/Game/Mods/WandererHud/ModAssets/Note.prefab"
     ]
 }

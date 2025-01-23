@@ -50,6 +50,10 @@ namespace MapOverwritesMod
         GameObject ExitDoorPrefab;
         GameObject ExitDoorObj;
         // 
+        readonly String NotePrefabName = "Note";
+        GameObject NotePrefab;
+        GameObject NoteObj;
+        // 
         public static ModSettings WandererHudSettings;
 
         [Invoke(StateManager.StateTypes.Start, 0)]
@@ -73,6 +77,7 @@ namespace MapOverwritesMod
             PlayerArrowPrefabExterior = mod.GetAsset<GameObject>(PlayerArrowPrefabNameExterior, false);
             // * Create and Child new Player Marker:
             ExitDoorPrefab = mod.GetAsset<GameObject>(ExitDoorPrefabName, false);
+            NotePrefab = mod.GetAsset<GameObject>(NotePrefabName, false);
             SetLastScreen();
        }
 
