@@ -52,6 +52,7 @@ namespace MapOverwritesMod
         GameObject ExitDoorPrefab;
         GameObject ExitDoorObj;
         // 
+        const string NameGameobjectUserNoteMarkerSubStringStart = "UserNoteMarker_"; // Notes must have this as a starting name
         readonly String NotePrefabName = "Note";
         GameObject NotePrefab;
         GameObject NoteObj;
@@ -214,33 +215,28 @@ namespace MapOverwritesMod
 
         public void ReplaceNotesMesh(){
             foreach (Transform child in GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes").transform){
-                // * Find if child has subchild with customNote
-                // bool hasCustomNote = false;
-                // for (int i = 0; i < child.gameObject.transform.childCount; i++){
-                //     Transform subChild = child.GetChild(i);
-                //     if (!subChild.name.StartsWith(NotePrefabName)){ 
-                //         hasCustomNote = true;
-                //         continue; 
-                //     }
-                // }
-                // if (hasCustomNote) { continue; }
-
                 // * Mesh Renderer Disabled: heuristic that it already has a CustomNote.
-                Debug.Log($"checking child: {child}");
-                
                 if (!child.GetComponent<MeshRenderer>().enabled){ continue; }
-                
-                Debug.Log($"adding note!");
-                
+
+                child.GetComponent<MeshRenderer>().enabled = false;
+
                 // * Not CustomNote Found, child one to this:
                 NoteObj = Instantiate(NotePrefab);
                 ChangeObjectLayer(NoteObj, child.gameObject.layer);
                 NoteObj.transform.position = child.transform.position;
                 NoteObj.transform.SetParent(child.transform);
-                // NoteObj.transform.localScale = new Vector3(4, 4, 4);
 
+                // Transform collisionBox = NoteObj.transform.GetChild(NoteObj.transform.childCount-1);
+                // collisionBox.name = child.name;
+                // NoteObj.name = NameGameobjectUserNoteMarkerSubStringStart;
+                // NoteObj.transform.name = NameGameobjectUserNoteMarkerSubStringStart;
+
+                foreach (Transform subChild in NoteObj.transform){
+                    subChild.transform.name = child.name;
+                }
                 // * Disable parents render:
-                child.GetComponent<MeshRenderer>().enabled = false;
+
+                // child.GetComponent<MeshFilter>().sharedMesh = 
             }
         }
 
