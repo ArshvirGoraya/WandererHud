@@ -9,6 +9,8 @@ using System.Collections;
 using System.Linq;
 using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
+using System.Collections.Generic;
+using static DaggerfallWorkshop.Game.Automap;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
@@ -54,6 +56,10 @@ namespace MapOverwritesMod
         GameObject NotePrefab;
         GameObject NoteObj;
         // 
+        int notesCount = 0;
+        Dictionary<string, Automap.AutomapDungeonState> automapState;
+        public SortedList<int, NoteMarker> listUserNoteMarkers = null;
+        // 
         public static ModSettings WandererHudSettings;
 
         [Invoke(StateManager.StateTypes.Start, 0)]
@@ -72,6 +78,7 @@ namespace MapOverwritesMod
             SaveLoadManager.OnLoad += (_) => SaveLoadManager_OnLoad();
             PlayerEnterExit.OnTransitionInterior += (_) => OnTransitionToAnyInterior();
             PlayerEnterExit.OnTransitionDungeonInterior += (_) => OnTransitionToAnyInterior();
+            // PlayerEnterExit.OnTransitionExterior += (_) => OnTransitionToExterior();
             //
             PlayerArrowPrefab = mod.GetAsset<GameObject>(PlayerArrowPrefabName, false);
             PlayerArrowPrefabExterior = mod.GetAsset<GameObject>(PlayerArrowPrefabNameExterior, false);
@@ -86,6 +93,33 @@ namespace MapOverwritesMod
         }
 
         private void Update(){
+            if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
+                int newCount = GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes").transform.childCount;
+                if (newCount != notesCount){
+                    Debug.Log($"new count: {newCount}");
+                    notesCount = newCount;
+                    ReplaceNotesMesh();
+                }
+            }
+            // SortedList<int, NoteMarker> newListUserNoteMarkers;
+            // automapState.TryGetValue("listUserNoteMarkers", out newListUserNoteMarkers);
+            // newListUserNoteMarkers = automapState["listUserNoteMarkers"];
+            // Debug.Log($"automapState {automapState}");
+
+            // if (listUserNoteMarkers == null && DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
+            //     // Debug.Log($"Current location: {GameManager.Instance.PlayerGPS.CurrentLocation.Name}");
+            //     foreach (KeyValuePair<string, Automap.AutomapDungeonState> kvp in GameManager.Instance.InteriorAutomap.GetState()){
+            //         if (kvp.Value.locationName.Contains(GameManager.Instance.PlayerGPS.CurrentLocation.Name)){
+            //             kvp.Value.listUserNoteMarkers = listUserNoteMarkers;
+            //             break;
+            //         }
+            //     }
+            // }
+
+            if (listUserNoteMarkers != null && DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
+                Debug.Log($"listUserNoteMarkers: {listUserNoteMarkers.Count}");
+            }
+
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 if (Screen.width != LastScreen.x || Screen.height != LastScreen.y){
                     if (!ResizeWaiting){
@@ -136,6 +170,7 @@ namespace MapOverwritesMod
 
         public void ResetInteriorMapInnerComponents(){
             InteriorMapInnerComponentsDisabled = false;
+            notesCount = 0;
         }
 
         public void ChangeObjectLayer(GameObject obj, int layer){
@@ -175,6 +210,38 @@ namespace MapOverwritesMod
             float zoomOutMagnitude = WandererHudSettings.GetFloat("InteriorMap", "DefaultZoomOut");
             Vector3 translation = -cameraAutomap.transform.forward * (int)zoomOutMagnitude;
             cameraAutomap.transform.position += translation;
+        }
+
+        public void ReplaceNotesMesh(){
+            foreach (Transform child in GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes").transform){
+                // * Find if child has subchild with customNote
+                // bool hasCustomNote = false;
+                // for (int i = 0; i < child.gameObject.transform.childCount; i++){
+                //     Transform subChild = child.GetChild(i);
+                //     if (!subChild.name.StartsWith(NotePrefabName)){ 
+                //         hasCustomNote = true;
+                //         continue; 
+                //     }
+                // }
+                // if (hasCustomNote) { continue; }
+
+                // * Mesh Renderer Disabled: heuristic that it already has a CustomNote.
+                Debug.Log($"checking child: {child}");
+                
+                if (!child.GetComponent<MeshRenderer>().enabled){ continue; }
+                
+                Debug.Log($"adding note!");
+                
+                // * Not CustomNote Found, child one to this:
+                NoteObj = Instantiate(NotePrefab);
+                ChangeObjectLayer(NoteObj, child.gameObject.layer);
+                NoteObj.transform.position = child.transform.position;
+                NoteObj.transform.SetParent(child.transform);
+                // NoteObj.transform.localScale = new Vector3(4, 4, 4);
+
+                // * Disable parents render:
+                child.GetComponent<MeshRenderer>().enabled = false;
+            }
         }
 
         public void DisableInnerInteriorMapComponents(){
@@ -242,6 +309,7 @@ namespace MapOverwritesMod
                 }
                 child.gameObject.SetActive(false);
             }
+            // ReplaceNotesMesh();
             SetInitialInteriorCameraZoom();
         }
 
