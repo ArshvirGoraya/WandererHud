@@ -11,6 +11,7 @@ using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 using System.Collections.Generic;
 using static DaggerfallWorkshop.Game.Automap;
+using UnityEngine.PlayerLoop;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
@@ -52,14 +53,11 @@ namespace MapOverwritesMod
         GameObject ExitDoorPrefab;
         GameObject ExitDoorObj;
         // 
-        const string NameGameobjectUserNoteMarkerSubStringStart = "UserNoteMarker_"; // Notes must have this as a starting name
         readonly String NotePrefabName = "Note";
         GameObject NotePrefab;
         GameObject NoteObj;
         // 
         int notesCount = 0;
-        Dictionary<string, Automap.AutomapDungeonState> automapState;
-        public SortedList<int, NoteMarker> listUserNoteMarkers = null;
         // 
         public static ModSettings WandererHudSettings;
 
@@ -79,7 +77,6 @@ namespace MapOverwritesMod
             SaveLoadManager.OnLoad += (_) => SaveLoadManager_OnLoad();
             PlayerEnterExit.OnTransitionInterior += (_) => OnTransitionToAnyInterior();
             PlayerEnterExit.OnTransitionDungeonInterior += (_) => OnTransitionToAnyInterior();
-            // PlayerEnterExit.OnTransitionExterior += (_) => OnTransitionToExterior();
             //
             PlayerArrowPrefab = mod.GetAsset<GameObject>(PlayerArrowPrefabName, false);
             PlayerArrowPrefabExterior = mod.GetAsset<GameObject>(PlayerArrowPrefabNameExterior, false);
@@ -97,30 +94,10 @@ namespace MapOverwritesMod
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 int newCount = GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes").transform.childCount;
                 if (newCount != notesCount){
-                    Debug.Log($"new count: {newCount}");
                     notesCount = newCount;
                     ReplaceNotesMesh();
                 }
             }
-            // SortedList<int, NoteMarker> newListUserNoteMarkers;
-            // automapState.TryGetValue("listUserNoteMarkers", out newListUserNoteMarkers);
-            // newListUserNoteMarkers = automapState["listUserNoteMarkers"];
-            // Debug.Log($"automapState {automapState}");
-
-            // if (listUserNoteMarkers == null && DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
-            //     // Debug.Log($"Current location: {GameManager.Instance.PlayerGPS.CurrentLocation.Name}");
-            //     foreach (KeyValuePair<string, Automap.AutomapDungeonState> kvp in GameManager.Instance.InteriorAutomap.GetState()){
-            //         if (kvp.Value.locationName.Contains(GameManager.Instance.PlayerGPS.CurrentLocation.Name)){
-            //             kvp.Value.listUserNoteMarkers = listUserNoteMarkers;
-            //             break;
-            //         }
-            //     }
-            // }
-
-            if (listUserNoteMarkers != null && DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
-                Debug.Log($"listUserNoteMarkers: {listUserNoteMarkers.Count}");
-            }
-
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 if (Screen.width != LastScreen.x || Screen.height != LastScreen.y){
                     if (!ResizeWaiting){
@@ -226,17 +203,12 @@ namespace MapOverwritesMod
                 NoteObj.transform.position = child.transform.position;
                 NoteObj.transform.SetParent(child.transform);
 
-                // Transform collisionBox = NoteObj.transform.GetChild(NoteObj.transform.childCount-1);
-                // collisionBox.name = child.name;
-                // NoteObj.name = NameGameobjectUserNoteMarkerSubStringStart;
-                // NoteObj.transform.name = NameGameobjectUserNoteMarkerSubStringStart;
-
                 foreach (Transform subChild in NoteObj.transform){
                     subChild.transform.name = child.name;
                 }
-                // * Disable parents render:
 
-                // child.GetComponent<MeshFilter>().sharedMesh = 
+                // * Change shared mesh:
+                // child.GetComponent<MeshFilter>().sharedMesh = NoteObj.transform.GetChild(0).GetComponent<MeshFilter>().sharedMesh;
             }
         }
 
@@ -305,7 +277,6 @@ namespace MapOverwritesMod
                 }
                 child.gameObject.SetActive(false);
             }
-            // ReplaceNotesMesh();
             SetInitialInteriorCameraZoom();
         }
 
