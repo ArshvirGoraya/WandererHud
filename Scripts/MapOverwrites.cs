@@ -184,6 +184,7 @@ namespace MapOverwritesMod
         public void ResetInteriorMapInnerComponents(){
             InteriorMapInnerComponentsDisabled = false;
             notesCount = 0;
+            teleporterCount = 0;
         }
 
         public void ChangeObjectLayer(GameObject obj, int layer){
