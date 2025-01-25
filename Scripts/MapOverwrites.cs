@@ -126,8 +126,6 @@ namespace MapOverwritesMod
                 // Change color of teleporter connection
                 if (GameObject.Find("Automap/InteriorAutomap/Teleporter Connection") != null && !ChangedConnectionColor){
                     GameObject.Find("Automap/InteriorAutomap/Teleporter Connection").GetComponent<MeshRenderer>().material = TeleporterConnectionColor;
-                    // ! Update the automap window or will have to wait for user to update it...
-                    // DaggerfallUI.UIManager.TopWindow.Update();
                     CallNonPublicFunction(DaggerfallUI.UIManager.TopWindow as DaggerfallAutomapWindow, "UpdateAutomapView");
                     ChangedConnectionColor = true;
                 }else{
@@ -251,6 +249,9 @@ namespace MapOverwritesMod
                 telporter.transform.name = portalMarker.name;
                 // * Rotation:
                 telporter.transform.localEulerAngles = new Vector3 (0, -90, 0);
+
+                // * Slide down 1 unit
+                SlideObjectPosition(telporter, new Vector3(0, -0.6f, 0)); 
             }
         }
 
@@ -270,7 +271,6 @@ namespace MapOverwritesMod
                 foreach (Transform subChild in NoteObj.transform){
                     subChild.transform.name = child.name;
                 }
-
                 // * Change shared mesh:
                 // child.GetComponent<MeshFilter>().sharedMesh = NoteObj.transform.GetChild(0).GetComponent<MeshFilter>().sharedMesh;
             }
@@ -297,6 +297,7 @@ namespace MapOverwritesMod
 
                     // ! If in dungeon:
                     if ((GameManager.Instance.IsPlayerInsideDungeon) || (GameManager.Instance.IsPlayerInsideCastle)){
+                        ExitDoorObj.transform.position = GameManager.Instance.PlayerEnterExit.Dungeon.StartMarker.transform.position;
                         StaticDoor[] DungeonExitDoors = DaggerfallStaticDoors.FindDoorsInCollections(GameManager.Instance.PlayerEnterExit.Dungeon.StaticDoorCollections, DoorTypes.DungeonExit);
                         DaggerfallStaticDoors.FindClosestDoor(
                             GameManager.Instance.PlayerEnterExit.Dungeon.StartMarker.transform.position,
@@ -304,13 +305,13 @@ namespace MapOverwritesMod
                             out StaticDoor DungeonExitDoor
                         );
 
+                        // * Dungeon/Castle Rotations:
                         Vector3 doorNormal = DaggerfallStaticDoors.GetDoorNormal(DungeonExitDoor);
-                        Vector3 doorEuler = NormalToEuler(doorNormal);
+                        ExitDoorObj.transform.rotation = Quaternion.LookRotation(doorNormal, Vector3.up);
+                        ExitDoorObj.transform.Rotate(0, 90, 0);
 
-                        if ((int)doorEuler.y != 0){
-                            Vector3 DoorRotation = new Vector3 (0, doorEuler.y + 180, 0);
-                            ExitDoorObj.transform.position = GameManager.Instance.PlayerEnterExit.Dungeon.StartMarker.transform.position;
-                            ExitDoorObj.transform.eulerAngles = DoorRotation;
+                        if (GameManager.Instance.IsPlayerInsideDungeon){
+                            SlideObjectPosition(ExitDoorObj, new Vector3(0, -0.6f, 0)); // * Slide down a unit: not in castles?
                         }
                     }
                     // ! If In building:
