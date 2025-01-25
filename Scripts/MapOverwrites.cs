@@ -57,6 +57,14 @@ namespace MapOverwritesMod
         GameObject NotePrefab;
         GameObject NoteObj;
         // 
+        readonly String TeleportEnterName = "TeleportEnter";
+        GameObject TeleportEnterPrefab;
+        GameObject TeleportEnterObj;
+        // 
+        readonly String TeleportExitName = "TeleportExit";
+        GameObject TeleportExitPrefab;
+        GameObject TeleportExitObj;
+        // 
         int notesCount = 0;
         // 
         public static ModSettings WandererHudSettings;
@@ -83,6 +91,9 @@ namespace MapOverwritesMod
             // * Create and Child new Player Marker:
             ExitDoorPrefab = mod.GetAsset<GameObject>(ExitDoorPrefabName, false);
             NotePrefab = mod.GetAsset<GameObject>(NotePrefabName, false);
+            TeleportEnterPrefab = mod.GetAsset<GameObject>(TeleportEnterName, false);
+            TeleportExitPrefab = mod.GetAsset<GameObject>(TeleportExitName, false);
+
             SetLastScreen();
        }
 
@@ -97,6 +108,8 @@ namespace MapOverwritesMod
                     notesCount = newCount;
                     ReplaceNotesMesh();
                 }
+                // TODO: code for replacing teleport doors:
+                
             }
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 if (Screen.width != LastScreen.x || Screen.height != LastScreen.y){
