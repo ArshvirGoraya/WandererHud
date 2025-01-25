@@ -18,6 +18,7 @@
         "Assets/Game/Mods/WandererHud/Scripts/CameraZoomSpeed.cs",
         "Assets/Game/Mods/WandererHud/ModAssets/Note.prefab",
         "Assets/Game/Mods/WandererHud/ModAssets/TeleportEnter.prefab",
-        "Assets/Game/Mods/WandererHud/ModAssets/TeleportExit.prefab"
+        "Assets/Game/Mods/WandererHud/ModAssets/TeleportExit.prefab",
+        "Assets/Game/Mods/WandererHud/ModAssets/Materials/Door_Inner_Blue.mat"
     ]
 }

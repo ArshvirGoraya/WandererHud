@@ -12,6 +12,7 @@ using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 using System.Collections.Generic;
 using static DaggerfallWorkshop.Game.Automap;
 using UnityEngine.PlayerLoop;
+using System.Reflection;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
@@ -59,13 +60,15 @@ namespace MapOverwritesMod
         // 
         readonly String TeleportEnterName = "TeleportEnter";
         GameObject TeleportEnterPrefab;
-        GameObject TeleportEnterObj;
+        string TeleporterConnectionColorName = "Door_Inner_Blue";
+        Material TeleporterConnectionColor;
+        bool ChangedConnectionColor = false;
         // 
         readonly String TeleportExitName = "TeleportExit";
         GameObject TeleportExitPrefab;
-        GameObject TeleportExitObj;
         // 
         int notesCount = 0;
+        int teleporterCount = 0;
         // 
         public static ModSettings WandererHudSettings;
 
@@ -93,12 +96,19 @@ namespace MapOverwritesMod
             NotePrefab = mod.GetAsset<GameObject>(NotePrefabName, false);
             TeleportEnterPrefab = mod.GetAsset<GameObject>(TeleportEnterName, false);
             TeleportExitPrefab = mod.GetAsset<GameObject>(TeleportExitName, false);
+            TeleporterConnectionColor = mod.GetAsset<Material>(TeleporterConnectionColorName, false);
 
             SetLastScreen();
        }
 
         static void LoadSettings(ModSettings modSettings, ModSettingsChange change){
             WandererHudSettings = modSettings;
+        }
+
+        public static void CallNonPublicFunction(object targetObject, string methodName, object[] parameters = null){
+            Type type = targetObject.GetType();
+            MethodInfo methodInfo = type.GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
+            methodInfo.Invoke(targetObject, parameters);
         }
 
         private void Update(){
@@ -108,7 +118,21 @@ namespace MapOverwritesMod
                     notesCount = newCount;
                     ReplaceNotesMesh();
                 }
-                // TODO: code for replacing teleport doors:
+                int newTeleporterCount = GameObject.Find("Automap/InteriorAutomap/TeleporterMarkers").transform.childCount;
+                if (newTeleporterCount != teleporterCount){
+                    teleporterCount = newTeleporterCount;
+                    ReplaceTeleporters();
+                }
+                // Change color of teleporter connection
+                if (GameObject.Find("Automap/InteriorAutomap/Teleporter Connection") != null && !ChangedConnectionColor){
+                    GameObject.Find("Automap/InteriorAutomap/Teleporter Connection").GetComponent<MeshRenderer>().material = TeleporterConnectionColor;
+                    // ! Update the automap window or will have to wait for user to update it...
+                    // DaggerfallUI.UIManager.TopWindow.Update();
+                    CallNonPublicFunction(DaggerfallUI.UIManager.TopWindow as DaggerfallAutomapWindow, "UpdateAutomapView");
+                    ChangedConnectionColor = true;
+                }else{
+                    ChangedConnectionColor = false;
+                }
                 
             }
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
@@ -201,6 +225,33 @@ namespace MapOverwritesMod
             float zoomOutMagnitude = WandererHudSettings.GetFloat("InteriorMap", "DefaultZoomOut");
             Vector3 translation = -cameraAutomap.transform.forward * (int)zoomOutMagnitude;
             cameraAutomap.transform.position += translation;
+        }
+
+        public void ReplaceTeleporters(){
+            foreach (Transform child in GameObject.Find("Automap/InteriorAutomap/TeleporterMarkers").transform){
+                // * Heuristic for already having replaced the teleporter
+                if (child.transform.GetChild(0).transform.childCount > 1){
+                    continue;
+                }
+                // * Disable Mesh Renderer
+                Transform portalMarker = child.transform.GetChild(0).transform;
+                portalMarker.GetComponent<MeshRenderer>().enabled = false;
+
+                // * Replace
+                GameObject telporter;
+                if (child.name.EndsWith("Entrance")){
+                    telporter = Instantiate(TeleportEnterPrefab);
+                }else{
+                    telporter = Instantiate(TeleportExitPrefab);
+                }
+                ChangeObjectLayer(telporter, portalMarker.gameObject.layer);
+                telporter.transform.position = portalMarker.position;
+                telporter.transform.SetParent(child); // * dont child to portalMarker (for correct rotation).
+                // * Rename:
+                telporter.transform.name = portalMarker.name;
+                // * Rotation:
+                telporter.transform.localEulerAngles = new Vector3 (0, -90, 0);
+            }
         }
 
         public void ReplaceNotesMesh(){
