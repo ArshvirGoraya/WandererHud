@@ -383,7 +383,11 @@ namespace MapOverwritesMod
                     // ! If In building:
                     else{
                         // * Use the direction of the normal to scale the object that way (will face that direction)
-                        ChangeObjectDirectionToNormal(ExitDoorObj, DaggerfallStaticDoors.GetDoorNormal(GameManager.Instance.PlayerEnterExit.Interior.EntryDoor));
+                        // ChangeObjectDirectionToNormal(ExitDoorObj, DaggerfallStaticDoors.GetDoorNormal(GameManager.Instance.PlayerEnterExit.Interior.EntryDoor));
+
+                        Vector3 doorNormal = DaggerfallStaticDoors.GetDoorNormal(GameManager.Instance.PlayerEnterExit.Interior.EntryDoor);
+                        ExitDoorObj.transform.rotation = Quaternion.LookRotation(doorNormal, Vector3.up);
+                        ExitDoorObj.transform.Rotate(0, -90, 0);
 
                         // * Slide Door downwards, just for buildings (not dungeons)
                         SlideObjectPosition(ExitDoorObj, new Vector3(0, -1f, 0));
