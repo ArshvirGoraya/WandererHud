@@ -121,10 +121,12 @@ namespace MapOverwritesMod
 
         private void Update(){
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
-                int newCount = GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes").transform.childCount;
-                if (newCount != notesCount){
-                    notesCount = newCount;
-                    ReplaceNotesMesh();
+                if (GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes")){
+                    int newCount = GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes").transform.childCount;
+                    if (newCount != notesCount){
+                        notesCount = newCount;
+                        ReplaceNotesMesh();
+                    }
                 }
                 if (GameObject.Find("Automap/InteriorAutomap/TeleporterMarkers")){
                     int newTeleporterCount = GameObject.Find("Automap/InteriorAutomap/TeleporterMarkers").transform.childCount;
