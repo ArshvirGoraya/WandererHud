@@ -126,11 +126,13 @@ namespace MapOverwritesMod
                     notesCount = newCount;
                     ReplaceNotesMesh();
                 }
-                int newTeleporterCount = GameObject.Find("Automap/InteriorAutomap/TeleporterMarkers").transform.childCount;
-                if (newTeleporterCount != teleporterCount){
-                    teleporterCount = newTeleporterCount;
-                    ReplaceTeleporters();
-                    CorrectExitTeleportersRotation();
+                if (GameObject.Find("Automap/InteriorAutomap/TeleporterMarkers")){
+                    int newTeleporterCount = GameObject.Find("Automap/InteriorAutomap/TeleporterMarkers").transform.childCount;
+                    if (newTeleporterCount != teleporterCount){
+                        teleporterCount = newTeleporterCount;
+                        ReplaceTeleporters();
+                        CorrectExitTeleportersRotation();
+                    }
                 }
                 // Change color of teleporter connection
                 if (GameObject.Find("Automap/InteriorAutomap/Teleporter Connection") != null && !ChangedConnectionColor){
