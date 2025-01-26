@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using static DaggerfallWorkshop.Game.Automap;
 using UnityEngine.PlayerLoop;
 using System.Reflection;
+using DaggerfallConnect;
+using Boo.Lang;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
@@ -63,6 +65,12 @@ namespace MapOverwritesMod
         string TeleporterConnectionColorName = "Door_Inner_Blue";
         Material TeleporterConnectionColor;
         bool ChangedConnectionColor = false;
+        Dictionary<string, Transform> exitDoorRotationCorrectHelper = new Dictionary<string, Transform>();
+
+        const int exitStringLength = 4;
+        // const int entranceStringLength = 8;
+
+        // System.Collections.Generic.List<string> exitDoorRotationCorrectHelper = new List<string>();
         // 
         readonly String TeleportExitName = "TeleportExit";
         GameObject TeleportExitPrefab;
@@ -122,6 +130,7 @@ namespace MapOverwritesMod
                 if (newTeleporterCount != teleporterCount){
                     teleporterCount = newTeleporterCount;
                     ReplaceTeleporters();
+                    CorrectExitTeleportersRotation();
                 }
                 // Change color of teleporter connection
                 if (GameObject.Find("Automap/InteriorAutomap/Teleporter Connection") != null && !ChangedConnectionColor){
@@ -226,33 +235,85 @@ namespace MapOverwritesMod
             cameraAutomap.transform.position += translation;
         }
 
+        public Vector3 ParseStringToVector3(string stringifiedVector3){
+            string[] vectorValue = stringifiedVector3.Split(',');
+            return new Vector3(
+                float.Parse(vectorValue[0].Trim()),
+                float.Parse(vectorValue[1].Trim()),
+                float.Parse(vectorValue[2].Trim())
+            );
+        }
+
+        public void CorrectExitTeleportersRotation(){
+            foreach (KeyValuePair<string, Transform> exitDoor in exitDoorRotationCorrectHelper){
+                string entranceParentName = exitDoor.Key + "Entrance";
+                Transform exitTeleporter = exitDoor.Value;
+                foreach (Transform child in GameObject.Find($"Automap/InteriorAutomap/TeleporterMarkers/{entranceParentName}").transform){
+                    if (child.childCount <= 0){ continue; }
+                    exitTeleporter.eulerAngles = child.eulerAngles;
+                    exitTeleporter.Rotate(0, 180, 0); // Face opposite direction as entrance teleporter
+                }
+            }
+        }
+
         public void ReplaceTeleporters(){
             foreach (Transform child in GameObject.Find("Automap/InteriorAutomap/TeleporterMarkers").transform){
                 // * Heuristic for already having replaced the teleporter
-                if (child.transform.GetChild(0).transform.childCount > 1){
-                    continue;
-                }
+                if (child.transform.GetChild(0).transform.childCount > 1){ continue; }
                 // * Disable Mesh Renderer
                 Transform portalMarker = child.transform.GetChild(0).transform;
                 portalMarker.GetComponent<MeshRenderer>().enabled = false;
 
                 // * Replace
-                GameObject telporter;
+                GameObject teleporter;
                 if (child.name.EndsWith("Entrance")){
-                    telporter = Instantiate(TeleportEnterPrefab);
+                    teleporter = Instantiate(TeleportEnterPrefab);
                 }else{
-                    telporter = Instantiate(TeleportExitPrefab);
+                    teleporter = Instantiate(TeleportExitPrefab);
                 }
-                ChangeObjectLayer(telporter, portalMarker.gameObject.layer);
-                telporter.transform.position = portalMarker.position;
-                telporter.transform.SetParent(child); // * dont child to portalMarker (for correct rotation).
+                ChangeObjectLayer(teleporter, portalMarker.gameObject.layer);
+                teleporter.transform.position = portalMarker.position;
+                teleporter.transform.SetParent(child); // * dont child to portalMarker (for correct rotation).
                 // * Rename:
-                telporter.transform.name = portalMarker.name;
+                teleporter.transform.name = portalMarker.name;
                 // * Rotation:
-                telporter.transform.localEulerAngles = new Vector3 (0, -90, 0);
+                if (child.name.EndsWith("Exit")){ 
+                    // * Rotate Exit doors seperately.
+                    exitDoorRotationCorrectHelper.Add(child.name.Substring(0, child.name.Length - exitStringLength), teleporter.transform);
+                    continue; 
+                }
 
+                // * Find matching door:
+                Transform foundMatchingDoor = null;
+                string dungeonName = DaggerfallDungeon.GetSceneName(GameManager.Instance.PlayerGPS.CurrentLocation);
+                foreach (Transform daggerfallBlock in GameObject.Find($"Dungeon/{dungeonName}").transform){
+                    if (daggerfallBlock.GetComponent<DaggerfallRDBBlock>() == null){ continue; }
+                    Transform ActionModels = daggerfallBlock.Find("Action Models");
+
+                    foreach (Transform actionModel in ActionModels){
+                        DaggerfallAction daggerfallAction;
+                        if (!actionModel.TryGetComponent<DaggerfallAction>(out daggerfallAction)) { continue; }
+                        if (daggerfallAction.ActionFlag != DFBlock.RdbActionFlags.Teleport){ continue; }
+                        if (daggerfallAction.ModelDescription != "DOR"){ continue; }
+
+                        if (
+                            actionModel.position.x == teleporter.transform.position.x &&
+                            actionModel.position.y == teleporter.transform.position.y - 1 && // Must subtract 1 for some reason. Is a unit higher than it should be.
+                            actionModel.position.z == teleporter.transform.position.z
+                            ){
+                            foundMatchingDoor = actionModel;
+                            break;
+                        }
+                    }
+                    if (foundMatchingDoor){ break; }
+                }
+
+                if (foundMatchingDoor){
+                    teleporter.transform.eulerAngles = foundMatchingDoor.eulerAngles;
+                    // teleporter.transform.Rotate(0, 90, 0);
+                }
                 // * Slide down 1 unit
-                SlideObjectPosition(telporter, new Vector3(0, -0.6f, 0)); 
+                SlideObjectPosition(teleporter, new Vector3(0, -0.6f, 0)); 
             }
         }
 
