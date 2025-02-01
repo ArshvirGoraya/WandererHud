@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 290138968
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: c611903d1521825b416be505dd83d038
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 8568e5201f97321957c300bce0003f95
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Game/Mods/WandererHud/SubModules/PointyCursor/Cursor.png
+- Assets/Game/Mods/WandererHud/SubModules/PointyCursor/PointyCursor - WandererHud.dfmod.json
+Dependencies: []
