@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 7030045753549817487}
   - component: {fileID: 5189355633317464085}
   - component: {fileID: 3008324381111950463}
-  - component: {fileID: 1456880990675151077}
   m_Layer: 0
   m_Name: Cylinder
   m_TagString: Untagged
@@ -95,18 +94,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 2534964839176971238, guid: 38a62765b3bb75146aa35c2b95896fb5, type: 3}
---- !u!114 &1456880990675151077
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1823671252915974346}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f53f910eb09cf54fa7777102a1ecc82, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &2825649359941780379
 GameObject:
   m_ObjectHideFlags: 0
@@ -152,7 +139,6 @@ GameObject:
   - component: {fileID: 3478635319132902270}
   - component: {fileID: 1589065136549359453}
   - component: {fileID: 8409152622537956912}
-  - component: {fileID: 1456880990675151079}
   m_Layer: 0
   m_Name: Sphere_Small
   m_TagString: Untagged
@@ -235,18 +221,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -4848941528007922537, guid: 38a62765b3bb75146aa35c2b95896fb5, type: 3}
---- !u!114 &1456880990675151079
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5108773280142002451}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f53f910eb09cf54fa7777102a1ecc82, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &6497334112285647196
 GameObject:
   m_ObjectHideFlags: 0
@@ -259,7 +233,6 @@ GameObject:
   - component: {fileID: 4641956468777029551}
   - component: {fileID: 8960857320543312816}
   - component: {fileID: 7968803378810656601}
-  - component: {fileID: 1456880990675151078}
   m_Layer: 0
   m_Name: Sphere
   m_TagString: Untagged
@@ -342,15 +315,3 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4711208715938537054, guid: 38a62765b3bb75146aa35c2b95896fb5, type: 3}
---- !u!114 &1456880990675151078
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6497334112285647196}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f53f910eb09cf54fa7777102a1ecc82, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

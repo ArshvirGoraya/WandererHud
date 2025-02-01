@@ -20,6 +20,7 @@
         "Assets/Game/Mods/WandererHud/ModAssets/TeleportEnter.prefab",
         "Assets/Game/Mods/WandererHud/ModAssets/TeleportExit.prefab",
         "Assets/Game/Mods/WandererHud/ModAssets/Materials/Door_Inner_Blue.mat",
-        "Assets/Game/Mods/WandererHud/Textures/Crosshair.png"
+        "Assets/Game/Mods/WandererHud/Textures/Crosshair.png",
+        "Assets/Game/Mods/WandererHud/Scripts/ChildDestroyed.cs"
     ]
 }

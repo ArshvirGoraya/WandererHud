@@ -59,6 +59,8 @@ namespace MapOverwritesMod
         readonly String NotePrefabName = "Note";
         GameObject NotePrefab;
         GameObject NoteObj;
+        // string ChildDestroyedScriptName = "ChildDestroyed";
+        // ChildDestroyed ChildDestroyedScript;
         // 
         readonly String TeleportEnterName = "TeleportEnter";
         GameObject TeleportEnterPrefab;
@@ -106,6 +108,7 @@ namespace MapOverwritesMod
             TeleportEnterPrefab = mod.GetAsset<GameObject>(TeleportEnterName, false);
             TeleportExitPrefab = mod.GetAsset<GameObject>(TeleportExitName, false);
             TeleporterConnectionColor = mod.GetAsset<Material>(TeleporterConnectionColorName, false);
+            // ChildDestroyedScript = mod.GetAsset<ChildDestroyed>(ChildDestroyedScriptName, false);
 
             SetLastScreen();
        }
@@ -341,6 +344,11 @@ namespace MapOverwritesMod
 
                 foreach (Transform subChild in NoteObj.transform){
                     subChild.transform.name = child.name;
+                    // subChild.AddComponent<ChildDestroyed>();
+                    subChild.transform.gameObject.AddComponent<ChildDestroyed>();
+                    // * Add child destoryer script to all children: will delete the parent when the child is destroyed, deleting the entire object instead of just the child.
+                    
+
                 }
                 // * Change shared mesh:
                 // child.GetComponent<MeshFilter>().sharedMesh = NoteObj.transform.GetChild(0).GetComponent<MeshFilter>().sharedMesh;
