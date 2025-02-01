@@ -341,17 +341,14 @@ namespace MapOverwritesMod
                 ChangeObjectLayer(NoteObj, child.gameObject.layer);
                 NoteObj.transform.position = child.transform.position;
                 NoteObj.transform.SetParent(child.transform);
+                SlideObjectPosition(NoteObj, new Vector3(0, -0.4f, 0));
 
                 foreach (Transform subChild in NoteObj.transform){
                     subChild.transform.name = child.name;
                     // subChild.AddComponent<ChildDestroyed>();
                     subChild.transform.gameObject.AddComponent<ChildDestroyed>();
                     // * Add child destoryer script to all children: will delete the parent when the child is destroyed, deleting the entire object instead of just the child.
-                    
-
                 }
-                // * Change shared mesh:
-                // child.GetComponent<MeshFilter>().sharedMesh = NoteObj.transform.GetChild(0).GetComponent<MeshFilter>().sharedMesh;
             }
         }
 
