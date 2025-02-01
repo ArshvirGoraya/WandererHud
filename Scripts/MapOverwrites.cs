@@ -96,6 +96,7 @@ namespace MapOverwritesMod
             SaveLoadManager.OnLoad += (_) => SaveLoadManager_OnLoad();
             PlayerEnterExit.OnTransitionInterior += (_) => OnTransitionToAnyInterior();
             PlayerEnterExit.OnTransitionDungeonInterior += (_) => OnTransitionToAnyInterior();
+            PlayerGPS.OnEnterLocationRect += (_) => OnNewExteriorLocation();
             //
             PlayerArrowPrefab = mod.GetAsset<GameObject>(PlayerArrowPrefabName, false);
             PlayerArrowPrefabExterior = mod.GetAsset<GameObject>(PlayerArrowPrefabNameExterior, false);
@@ -175,6 +176,10 @@ namespace MapOverwritesMod
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 InteriorMapWindow.NativePanel.Size = InteriorMapWindow.ParentPanel.Rectangle.size;
             }
+        }
+
+        public void OnNewExteriorLocation(){
+            ExteriorMapComponentsDisabled = false;
         }
 
         public void OnTransitionToAnyInterior(){
@@ -450,7 +455,7 @@ namespace MapOverwritesMod
             // * Rotate another -90 degrees to correct the rotation.
             PlayerArrowObjExterior.transform.Rotate(0, -90, 0);
             PlayerArrowObjExterior.transform.SetParent(ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.transform);
-            PlayerArrowObjExterior.transform.localScale = new Vector3(1, 1, 1);
+            // PlayerArrowObjExterior.transform.localScale = new Vector3(1, 1, 1);
         }
 
         public void DisableExteriorMapComponents(){
@@ -472,6 +477,7 @@ namespace MapOverwritesMod
                     continue;
                 }
             }
+            ExteriorMapWindow.UpdateAutomapView();
         }
 
         public void ResizeInteriorMapPanels(){
