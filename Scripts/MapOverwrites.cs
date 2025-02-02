@@ -127,6 +127,16 @@ namespace MapOverwritesMod
                 compassX,
                 compassY
             );
+
+            // DaggerfallWorkshop.Utility.Tuple<float, float> barSize = WandererHudSettings.GetTupleFloat("Hud", "VirtalsBarSize");
+            const int vitalsWidth = 10;
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomHealthBarSize = new Vector2(vitalsWidth, wandererCompass.Size.y);
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomMagickaBarSize = new Vector2(vitalsWidth, wandererCompass.Size.y);
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomFatigueBarSize = new Vector2(vitalsWidth, wandererCompass.Size.y);
+
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomHealthBarPosition = new Vector2(compassX - (vitalsWidth * 2), 0);
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomFatigueBarPosition = new Vector2((compassX + wandererCompass.Size.x) - vitalsWidth, 0);
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomMagickaBarPosition = new Vector2(compassX + wandererCompass.Size.x, 0);
         }
 
         public static void SetWandererCompass(){
