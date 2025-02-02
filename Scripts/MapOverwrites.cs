@@ -10,11 +10,10 @@ using System.Linq;
 using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 using System.Collections.Generic;
-using static DaggerfallWorkshop.Game.Automap;
-using UnityEngine.PlayerLoop;
 using System.Reflection;
 using DaggerfallConnect;
 using Boo.Lang;
+using JetBrains.Annotations;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
@@ -59,8 +58,6 @@ namespace MapOverwritesMod
         readonly String NotePrefabName = "Note";
         GameObject NotePrefab;
         GameObject NoteObj;
-        // string ChildDestroyedScriptName = "ChildDestroyed";
-        // ChildDestroyed ChildDestroyedScript;
         // 
         readonly String TeleportEnterName = "TeleportEnter";
         GameObject TeleportEnterPrefab;
@@ -68,18 +65,20 @@ namespace MapOverwritesMod
         Material TeleporterConnectionColor;
         bool ChangedConnectionColor = false;
         Dictionary<string, Transform> exitDoorRotationCorrectHelper = new Dictionary<string, Transform>();
-
         const int exitStringLength = 4;
-        // const int entranceStringLength = 8;
-
-        // System.Collections.Generic.List<string> exitDoorRotationCorrectHelper = new List<string>();
-        // 
         readonly String TeleportExitName = "TeleportExit";
         GameObject TeleportExitPrefab;
         // 
         int notesCount = 0;
         int teleporterCount = 0;
-        // 
+        //
+
+        public static HUDCompass wandererCompass = new HUDCompass();
+        static bool addedWandererCompass = false;
+        public static DaggerfallWorkshop.Utility.Tuple<float, float> wandererCompassLeftBottomPadding;
+
+
+
         public static ModSettings WandererHudSettings;
 
         [Invoke(StateManager.StateTypes.Start, 0)]
@@ -108,22 +107,84 @@ namespace MapOverwritesMod
             TeleportEnterPrefab = mod.GetAsset<GameObject>(TeleportEnterName, false);
             TeleportExitPrefab = mod.GetAsset<GameObject>(TeleportExitName, false);
             TeleporterConnectionColor = mod.GetAsset<Material>(TeleporterConnectionColorName, false);
-            // ChildDestroyedScript = mod.GetAsset<ChildDestroyed>(ChildDestroyedScriptName, false);
-
             SetLastScreen();
        }
 
         static void LoadSettings(ModSettings modSettings, ModSettingsChange change){
             WandererHudSettings = modSettings;
+            if (DaggerfallUI.HasInstance && DaggerfallUI.Instance.DaggerfallHUD != null){
+                SetVitalsHud();
+            }
+            wandererCompassLeftBottomPadding = WandererHudSettings.GetTupleFloat("Hud", "CompassPaddingLeftBottom");
+        }
+
+        public void PositionWandererCompass(){
+            Rect screenRect = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
+            float compassX = ((screenRect.x + screenRect.width - (wandererCompass.Size.x)) / 2) + wandererCompassLeftBottomPadding.First; // Allign horizontally + add user padding.
+            float compassY = (screenRect.y + screenRect.height - (wandererCompass.Size.y)) - wandererCompassLeftBottomPadding.Second; // Allign to the bottom + add user padding (default = allign to vitals)
+
+            wandererCompass.Position = new Vector2(
+                compassX,
+                compassY
+            );
+        }
+
+        public static void SetWandererCompass(){
+            // * Enabled: reset to ShowCompass in DaggerfallHUD.
+            // * Scale: reset to NativePanel.LocalScale
+            // * Position: reset to bottom right of screen size. -> Also relative to compasses size
+            // * Size: gets reset on each HUDCompass update relative to compassBoxSize.
+            // * AutoSize and Vertical/Horizontal alighments dont seem to matter...
+
+            if (!addedWandererCompass){
+                addedWandererCompass = true;
+                DaggerfallUI.Instance.DaggerfallHUD.ShowCompass = false; // todo: Will this stay false? or will I have to reset it to false anytime it becomes true?
+
+                DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Components.Add(wandererCompass);
+                wandererCompass.Enabled = true;
+                // 
+                wandererCompass.AutoSize = AutoSizeModes.ScaleFreely;
+                wandererCompass.HorizontalAlignment = HorizontalAlignment.None;
+                wandererCompass.VerticalAlignment = VerticalAlignment.None;
+                // 
+                wandererCompass.Position = DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Position;
+                wandererCompass.Scale = DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Scale;
+                wandererCompass.Size = DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Size;
+            }
+        }
+        public static void SetVitalsHud(){
+            // * VITALS:
+
+            // * Default sizes: 12 x 95.8
+            DaggerfallWorkshop.Utility.Tuple<float, float> barSize = WandererHudSettings.GetTupleFloat("Hud", "VirtalsBarSize");
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomHealthBarSize = new Vector2(barSize.First, barSize.Second);
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomMagickaBarSize = new Vector2(barSize.First, barSize.Second);
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomFatigueBarSize = new Vector2(barSize.First, barSize.Second);
+
+            // * Default Pos: 0 x 0
+            DaggerfallWorkshop.Utility.Tuple<float, float> healthBarPos = WandererHudSettings.GetTupleFloat("Hud", "HealthBarPos");
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomHealthBarPosition = new Vector2(healthBarPos.First, healthBarPos.Second);
+            // * Default Pos: 24 x 0
+            DaggerfallWorkshop.Utility.Tuple<float, float> fatigueBarPos = WandererHudSettings.GetTupleFloat("Hud", "FatigueBarPos");
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomFatigueBarPosition = new Vector2(fatigueBarPos.First, fatigueBarPos.Second);
+            // * Default Pos: 47.9 x 0
+            DaggerfallWorkshop.Utility.Tuple<float, float> magickaBarPos = WandererHudSettings.GetTupleFloat("Hud", "MagickaBarPos");
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomMagickaBarPosition = new Vector2(magickaBarPos.First, magickaBarPos.Second);
+        }
+
+        public static object GetNonPublicField(object targetObject, string fieldName){
+            FieldInfo fieldInfo = targetObject.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+            return fieldInfo.GetValue(targetObject);
         }
 
         public static void CallNonPublicFunction(object targetObject, string methodName, object[] parameters = null){
-            Type type = targetObject.GetType();
-            MethodInfo methodInfo = type.GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
+            MethodInfo methodInfo = targetObject.GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
             methodInfo.Invoke(targetObject, parameters);
         }
 
         private void Update(){
+            PositionWandererCompass();
+
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 if (GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes")){
                     int newCount = GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes").transform.childCount;
@@ -193,6 +254,9 @@ namespace MapOverwritesMod
             if (GameManager.Instance.IsPlayerInside || GameManager.Instance.IsPlayerInsideDungeon || GameManager.Instance.IsPlayerInsideCastle){
                 ResetInteriorMapInnerComponents();
             }
+
+            SetVitalsHud();
+            SetWandererCompass();
         }
 
         public void ForceWireFrame(){
@@ -540,6 +604,7 @@ namespace MapOverwritesMod
                     InteriorMapComponentsDisabled = true;
                 }
                 ResizeInteriorMapPanels();
+                // debugPrint();
             }
             else if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow){
                 if (!ExteriorMapComponentsDisabled){ 
@@ -547,8 +612,23 @@ namespace MapOverwritesMod
                     ExteriorMapComponentsDisabled = true;
                 }
                 ResizeExteriorMapPanels();
+                // debugPrint();
             }
         }
+
+
+        public void debugPrint(){
+            Debug.Log($"Default values:");
+            VerticalProgressSmoother healthBar = GetNonPublicField(DaggerfallUI.Instance.DaggerfallHUD.HUDVitals, "healthBar") as VerticalProgressSmoother;
+            Debug.Log($"Health: {healthBar.Position} - {healthBar.Size}");
+
+            VerticalProgressSmoother fatigueBar = GetNonPublicField(DaggerfallUI.Instance.DaggerfallHUD.HUDVitals, "fatigueBar") as VerticalProgressSmoother;
+            Debug.Log($"Featigue: {fatigueBar.Position} - {fatigueBar.Size}");
+
+            VerticalProgressSmoother magickaBar = GetNonPublicField(DaggerfallUI.Instance.DaggerfallHUD.HUDVitals, "magickaBar") as VerticalProgressSmoother;
+            Debug.Log($"Magicka: {magickaBar.Position} - {magickaBar.Size}");
+        }
+
 
         // * Exterior Map Notes:
             // * ExteriorMapWindow.ParentPanel

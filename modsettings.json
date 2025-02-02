@@ -2,6 +2,64 @@
     "Version": "1.0.0",
     "Sections": [
         {
+            "Name": "Hud",
+            "Description": null,
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": {
+                        "First": 0.0,
+                        "Second": 0.0
+                    },
+                    "Name": "HealthBarPos",
+                    "Description": "X, Y Position of the HealthBar",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TupleFloatKey"
+                },
+                {
+                    "Value": {
+                        "First": 24.0,
+                        "Second": 0.0
+                    },
+                    "Name": "FatigueBarPos",
+                    "Description": "X, Y Position of the FatigueBar",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TupleFloatKey"
+                },
+                {
+                    "Value": {
+                        "First": 47.9,
+                        "Second": 0.0
+                    },
+                    "Name": "MagickaBarPos",
+                    "Description": "X, Y Position of the MagickaBar",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TupleFloatKey"
+                },
+                {
+                    "Value": {
+                        "First": 12.0,
+                        "Second": 95.8
+                    },
+                    "Name": "VirtalsBarSize",
+                    "Description": "Width and Height of all VitalBars",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TupleFloatKey"
+                },
+                {
+                    "Value": {
+                        "First": 0.0,
+                        "Second": 10.0
+                    },
+                    "Name": "CompassPaddingLeftBottom",
+                    "Description": "First: Left padding. Second: Bottom padding",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TupleFloatKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
             "Name": "ExteriorMap",
             "Description": null,
             "IsAdvanced": false,
