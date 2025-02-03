@@ -155,41 +155,10 @@ namespace MapOverwritesMod
 
             if (GameManager.Instance.PlayerEnterExit.IsPlayerSubmerged & !GameManager.Instance.PlayerEntity.IsWaterBreathing){
                 DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.CustomBreathBarSize = new Vector2(vitalsWidth, wandererCompass.Size.y);
-                // Debug.Log($"DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.Position: {DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.Position}");
-                // Debug.Log($"Rectangle: {DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.Rectangle}");
-                // Debug.Log($"Parent Rect: {DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.Parent.Rectangle} - {screenRect}");
-
-                // DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.CustomBreathBarPosition = new Vector2(screenRect.width/2, screenRect.height/2);
                 DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.CustomBreathBarPosition = new Vector2(
                     (compassX + wandererCompass.Size.x), 
                     compassY
                 );
-
-                // 
-                // Vector2 staminaPosition = DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.ScreenToLocal((Vector2)DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomFatigueBarPosition);
-                // DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.Position = staminaPosition;
-
-                // * Pos: same as stamina.
-                
-                // * Default Height: playerEntity.Stats.LiveEndurance
-                // int currentBreath = GameManager.Instance.PlayerEntity.Stats.LiveEndurance;
-                // int minBreath = 0;
-                // int[] maxMods = (int[])GetNonPublicField(GameManager.Instance.PlayerEntity.Stats, "maxMods"); // todo:  Dont like reflection being used in update function, but no other way to get it since it's not public?
-                // int maxBreath = FormulaHelper.MaxStatValue() + maxMods[(int)Stats.Endurance];
-                // // int maxBreath = FormulaHelper.MaxStatValue();
-
-
-                // Debug.Log($"Current: {currentBreath} - Max: {maxBreath}");
-
-                // float normalizedBreath = NormalizeValue(currentBreath, minBreath, maxBreath);
-                // float barHeight = GetValueFromNormalize(normalizedBreath, 0, wandererCompass.Size.y); // * Scale normalized breath to compass Y.
-                // Debug.Log($"Breath: {normalizedBreath} - {barHeight} MAX: {wandererCompass.Size.y}");
-
-
-
-
-                // DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.
-                // Gui.depth?
             }
         }
 
@@ -217,37 +186,12 @@ namespace MapOverwritesMod
             }
         }
         public static void SetBreathHud(){
-            Debug.Log($"Default Values: {DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.AutoSize} - {DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.HorizontalAlignment} - {DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.VerticalAlignment}");
-
             DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.HorizontalAlignment = HorizontalAlignment.None;
             DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.VerticalAlignment = VerticalAlignment.None;
-            
             DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.SetMargins(Margins.All, 0);
             SetNonPublicField(DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar, "normalBreathColor", new Color32(111, 242, 255, 255 / 2)); // Blueish
             SetNonPublicField(DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar, "shortOnBreathColor", new Color32(247, 39, 41, 255 / 2)); // Resdish
         }
-
-
-
-        // public static void SetVitalsHud(){
-        //     // * VITALS:
-
-        //     // * Default sizes: 12 x 95.8
-        //     DaggerfallWorkshop.Utility.Tuple<float, float> barSize = WandererHudSettings.GetTupleFloat("Hud", "VirtalsBarSize");
-        //     DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomHealthBarSize = new Vector2(barSize.First, barSize.Second);
-        //     DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomMagickaBarSize = new Vector2(barSize.First, barSize.Second);
-        //     DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomFatigueBarSize = new Vector2(barSize.First, barSize.Second);
-
-        //     // // * Default Pos: 0 x 0
-        //     // DaggerfallWorkshop.Utility.Tuple<float, float> healthBarPos = WandererHudSettings.GetTupleFloat("Hud", "HealthBarPos");
-        //     // DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomHealthBarPosition = new Vector2(healthBarPos.First, healthBarPos.Second);
-        //     // // * Default Pos: 24 x 0
-        //     // DaggerfallWorkshop.Utility.Tuple<float, float> fatigueBarPos = WandererHudSettings.GetTupleFloat("Hud", "FatigueBarPos");
-        //     // DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomFatigueBarPosition = new Vector2(fatigueBarPos.First, fatigueBarPos.Second);
-        //     // // * Default Pos: 47.9 x 0
-        //     // DaggerfallWorkshop.Utility.Tuple<float, float> magickaBarPos = WandererHudSettings.GetTupleFloat("Hud", "MagickaBarPos");
-        //     // DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomMagickaBarPosition = new Vector2(magickaBarPos.First, magickaBarPos.Second);
-        // }
 
         public static object GetNonPublicField(object targetObject, string fieldName){
             FieldInfo fieldInfo = targetObject.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
@@ -336,8 +280,6 @@ namespace MapOverwritesMod
             if (GameManager.Instance.IsPlayerInside || GameManager.Instance.IsPlayerInsideDungeon || GameManager.Instance.IsPlayerInsideCastle){
                 ResetInteriorMapInnerComponents();
             }
-
-            // SetVitalsHud();
             SetWandererCompass();
             SetBreathHud();
         }
