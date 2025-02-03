@@ -629,7 +629,7 @@ namespace MapOverwritesMod
         }
 
         public void OnGUI(){
-            if (DaggerfallUI.UIManager.TopWindow is DaggerfallPauseOptionsWindow){
+            if (DaggerfallUI.UIManager.TopWindow is DaggerfallPauseOptionsWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallRestWindow){
                 wandererCompass.Draw();
                 return;
             }
