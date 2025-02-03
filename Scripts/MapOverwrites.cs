@@ -135,33 +135,48 @@ namespace MapOverwritesMod
         }
 
         public void PositionHUDElements(){
+            if (wandererCompass.Parent == null){ return; } // * Heuristic for checking if in game.
+
+            const int vitalsWidthPixels = 3;
+            const int vitalsHeightPaddingPixels = 4;
+            const float compassBottomPaddingPixels = 1;
+
+
+
             // * COMPASS:
             Rect screenRect = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
-            float compassX = ((screenRect.x + screenRect.width - (wandererCompass.Size.x)) / 2) + wandererCompassLeftBottomPadding.First; // Allign horizontally + add user padding.
-            float compassY = (screenRect.y + screenRect.height - (wandererCompass.Size.y)) - wandererCompassLeftBottomPadding.Second; // Allign to the bottom + add user padding (default = allign to vitals)
+            float compassX = ((screenRect.x + screenRect.width - (wandererCompass.Size.x)) / 2);// + wandererCompassLeftBottomPadding.First; // Allign horizontally + add user padding.
+
+            float compassBottomPadding = compassBottomPaddingPixels * wandererCompass.Scale.y;
+            float compassY = (screenRect.y + screenRect.height - (wandererCompass.Size.y)) - compassBottomPadding;
 
             wandererCompass.Position = new Vector2(
                 compassX,
                 compassY
             );
             // * VITALS:
-            // DaggerfallWorkshop.Utility.Tuple<float, float> barSize = WandererHudSettings.GetTupleFloat("Hud", "VirtalsBarSize");
-            const int vitalsWidth = 10;
-            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomHealthBarSize = new Vector2(vitalsWidth, wandererCompass.Size.y);
-            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomMagickaBarSize = new Vector2(vitalsWidth, wandererCompass.Size.y);
-            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomFatigueBarSize = new Vector2(vitalsWidth, wandererCompass.Size.y);
+            // const int vitalsWidth = 10;
+            float vitalsWidth = vitalsWidthPixels * wandererCompass.Scale.x;
+            float vitalsHeightPadding = vitalsHeightPaddingPixels * wandererCompass.Scale.y;
+
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomHealthBarSize = new Vector2(vitalsWidth, wandererCompass.Size.y - vitalsHeightPadding);
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomMagickaBarSize = DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomHealthBarSize;
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomFatigueBarSize = DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomHealthBarSize;
 
             DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomHealthBarPosition = new Vector2(compassX - (vitalsWidth * 2), 0);
-            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomFatigueBarPosition = new Vector2((compassX + wandererCompass.Size.x) - vitalsWidth, 0);
-            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomMagickaBarPosition = new Vector2(compassX + wandererCompass.Size.x, 0);
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomMagickaBarPosition = new Vector2((compassX + wandererCompass.Size.x) - vitalsWidth, 0);
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomFatigueBarPosition = new Vector2(compassX + wandererCompass.Size.x - 1, 0); // * -1 = pixel correction
 
             // * BREATH BAR:
-
             if (GameManager.Instance.PlayerEnterExit.IsPlayerSubmerged & !GameManager.Instance.PlayerEntity.IsWaterBreathing){
-                DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.CustomBreathBarSize = new Vector2(vitalsWidth, wandererCompass.Size.y);
+                DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.CustomBreathBarSize = new Vector2 (
+                    (float)DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomFatigueBarSize?.x / 2, // Half size of stamina bar
+                    (float)DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomFatigueBarSize?.y
+                );
+
                 DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.CustomBreathBarPosition = new Vector2(
-                    (compassX + wandererCompass.Size.x), 
-                    compassY
+                    (float)DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.CustomFatigueBarPosition?.x + (vitalsWidth + vitalsWidth/2) + 1, // Cover right half of stamina bar. -1 = pixel correction.
+                    compassY + (vitalsHeightPadding / 2)
                 );
             }
         }
@@ -189,8 +204,9 @@ namespace MapOverwritesMod
             wandererCompass.Size = DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Size;
 
             SetNonPublicField(wandererCompass, "compassBoxSize", compassBoxSize);
-
-            Debug.Log($"Default: {DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Size} - new: {wandererCompass.Size}"); // defauly:? new: 85 x 17
+        }
+        public static void SetVitalsHud(){
+            // asd
         }
         public static void SetBreathHud(){
             DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.HorizontalAlignment = HorizontalAlignment.None;
@@ -287,6 +303,7 @@ namespace MapOverwritesMod
             if (GameManager.Instance.IsPlayerInside || GameManager.Instance.IsPlayerInsideDungeon || GameManager.Instance.IsPlayerInsideCastle){
                 ResetInteriorMapInnerComponents();
             }
+            SetVitalsHud();
             SetWandererCompass();
             SetBreathHud();
         }
