@@ -14,6 +14,7 @@ using System.Reflection;
 using DaggerfallConnect;
 using Boo.Lang;
 using JetBrains.Annotations;
+using System.Security;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
@@ -194,7 +195,7 @@ namespace MapOverwritesMod
 
         private void Update(){
             PositionWandererCompass();
-
+            
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 if (GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes")){
                     int newCount = GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes").transform.childCount;
@@ -219,7 +220,7 @@ namespace MapOverwritesMod
                 }else{
                     ChangedConnectionColor = false;
                 }
-                
+                return;    
             }
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 if (Screen.width != LastScreen.x || Screen.height != LastScreen.y){
@@ -227,6 +228,7 @@ namespace MapOverwritesMod
                         StartCoroutine(WaitSeconds(ResizeWaitSecs));
                     }
                 }
+                return;
             }
         }
 
@@ -626,6 +628,12 @@ namespace MapOverwritesMod
             }
         }
 
+        public void OnGUI(){
+            if (DaggerfallUI.UIManager.TopWindow is DaggerfallPauseOptionsWindow){
+                wandererCompass.Draw();
+                return;
+            }
+        }
 
         public void debugPrint(){
             Debug.Log($"Default values:");
