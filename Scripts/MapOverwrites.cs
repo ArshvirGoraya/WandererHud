@@ -73,6 +73,8 @@ namespace MapOverwritesMod
         const int exitStringLength = 4;
         readonly String TeleportExitName = "TeleportExit";
         GameObject TeleportExitPrefab;
+
+        public static Vector2 compassBoxSize = new Vector2(0, 0);
         // 
         int notesCount = 0;
         int teleporterCount = 0;
@@ -112,6 +114,8 @@ namespace MapOverwritesMod
             TeleportEnterPrefab = mod.GetAsset<GameObject>(TeleportEnterName, false);
             TeleportExitPrefab = mod.GetAsset<GameObject>(TeleportExitName, false);
             TeleporterConnectionColor = mod.GetAsset<Material>(TeleporterConnectionColorName, false);
+            Texture2D compasImage = mod.GetAsset<Texture2D>("COMPBOX.IMG", false);
+            compassBoxSize = new Vector2(compasImage.width, compasImage.height);
             SetLastScreen();
        }
 
@@ -169,21 +173,24 @@ namespace MapOverwritesMod
             // * Size: gets reset on each HUDCompass update relative to compassBoxSize.
             // * AutoSize and Vertical/Horizontal alighments dont seem to matter...
 
-            if (!addedWandererCompass){
-                addedWandererCompass = true;
-                DaggerfallUI.Instance.DaggerfallHUD.ShowCompass = false; // todo: Will this stay false? or will I have to reset it to false anytime it becomes true?
+            addedWandererCompass = true;
+            DaggerfallUI.Instance.DaggerfallHUD.ShowCompass = false; // todo: Will this stay false? or will I have to reset it to false anytime it becomes true?
 
-                DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Components.Add(wandererCompass);
-                wandererCompass.Enabled = true;
-                // 
-                wandererCompass.AutoSize = AutoSizeModes.ScaleFreely;
-                wandererCompass.HorizontalAlignment = HorizontalAlignment.None;
-                wandererCompass.VerticalAlignment = VerticalAlignment.None;
-                // 
-                wandererCompass.Position = DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Position;
-                wandererCompass.Scale = DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Scale;
-                wandererCompass.Size = DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Size;
-            }
+            DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Components.Add(wandererCompass);
+            wandererCompass.Enabled = true;
+            // 
+            wandererCompass.AutoSize = AutoSizeModes.ScaleFreely;
+            wandererCompass.HorizontalAlignment = HorizontalAlignment.None;
+            wandererCompass.VerticalAlignment = VerticalAlignment.None;
+            // 
+            wandererCompass.Position = DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Position;
+            wandererCompass.Scale = DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Scale;
+            
+            wandererCompass.Size = DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Size;
+
+            SetNonPublicField(wandererCompass, "compassBoxSize", compassBoxSize);
+
+            Debug.Log($"Default: {DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Size} - new: {wandererCompass.Size}"); // defauly:? new: 85 x 17
         }
         public static void SetBreathHud(){
             DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.HorizontalAlignment = HorizontalAlignment.None;
