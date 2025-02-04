@@ -1,0 +1,77 @@
+{
+    "Title": "Wanderer HUD Preset",
+    "Author": "a.t. + a.g.",
+    "Description": "wanderer hud-styled",
+    "SettingsVersion": "1.0.0",
+    "Values": {
+        "DisplayConditions": {
+            "ShowEnemyBars": "True",
+            "ShowMobileNpcBars": "False",
+            "ShowStaticNpcBars": "False",
+            "EnemyOcclusion": "True",
+            "MobileNpcOcclusion": "True",
+            "StaticNpcOcclusion": "True",
+            "MaximumDisplayRange": "10.2",
+            "MaximumDisplayAngle": "65",
+            "ClampToScreenEdge": "True",
+            "OnlyShowDamaged": "True",
+            "AfterDamageHideTime": "0"
+        },
+        "AdvancedDisplay": {
+            "NearDistanceClamp": "5.5",
+            "FarDistanceClamp": "15"
+        },
+        "TextSettings": {
+            "ShowText": "True",
+            "TextDisplayDuration": "0.7",
+            "DamageNumbersColor": "DD2A06FF",
+            "MissColor": "FCA429FF",
+            "ResistColor": "37B8E3FF"
+        },
+        "Dimensions": {
+            "BarWidth": "1.4",
+            "BarHeight": "0.2",
+            "Width,BorderThickness": "54,2",
+            "HeightOffset": "0.1"
+        },
+        "BackgroundColors": {
+            "EnemyBackgroundColor": "39300DFF",
+            "PacifiedBackgroundColor": "3D855CFF",
+            "MobileNpcBackgroundColor": "444449FF",
+            "StaticNpcBackgroundColor": "9F9F9FFF"
+        },
+        "BarColors": {
+            "EnemyBarColor": "DD2A06FF",
+            "DisplayMagicka": "True",
+            "MagickaBarColor": "2D6F9FFF",
+            "PacifiedBarColor": "A79F40FF",
+            "MobileNpcBarColor": "306030FF",
+            "StaticNpcBarColor": "D2D2D2FF"
+        },
+        "BorderColors": {
+            "EnemyBorderColor": "F9DE0FFF",
+            "PacifiedBorderColor": "F7D334FF",
+            "MobileNpcBorderColor": "F7D334FF",
+            "StaticNpcBorderColor": "F7D334FF"
+        },
+        "DamageFlash": {
+            "UseDamageFlashBackground": "True",
+            "DamageFlashBackgroundColor": "222222FF",
+            "UseDamageFlashBar": "True",
+            "DamageFlashBarColor": "FCFCFCFF",
+            "UseDamageFlashBorder": "True",
+            "DamageFlashBorderColor": "F9F177FF",
+            "DamageFlashDuration": "1"
+        },
+        "HealFlash": {
+            "UseHealFlashBackground": "False",
+            "HealFlashBackgroundColor": "00FF00FF",
+            "UseHealFlashBar": "True",
+            "HealFlashBarColor": "6DA76DFF",
+            "UseHealFlashBorder": "False",
+            "HealFlashBorderColor": "00FF00FF",
+            "HealFlashDuration": "0.9"
+        }
+    },
+    "$version": "v1"
+}
