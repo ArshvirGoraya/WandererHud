@@ -12,13 +12,6 @@ using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 using System.Collections.Generic;
 using System.Reflection;
 using DaggerfallConnect;
-using Boo.Lang;
-using JetBrains.Annotations;
-using System.Security;
-using DaggerfallWorkshop.Game.Entity;
-using DaggerfallWorkshop.Game.Formulas;
-using static DaggerfallConnect.DFCareer;
-using System.ComponentModel;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
@@ -28,7 +21,7 @@ namespace MapOverwritesMod
 {
     public class MapOverwrites : MonoBehaviour
     {
-        private static Mod mod;
+        public static Mod mod;
         // 
         public DaggerfallAutomapWindow InteriorMapWindow {
             get {return DaggerfallUI.Instance.AutomapWindow;}
@@ -78,12 +71,12 @@ namespace MapOverwritesMod
         // 
         int notesCount = 0;
         int teleporterCount = 0;
-        //
 
+        const string breathBarFilename = "BreathBar";
         public static HUDCompass wandererCompass = new HUDCompass();
         public static HUDVitals wandererVitals = new HUDVitals();
-        public static HUDBreathBar wandererBreathBar = new HUDBreathBar();
-
+        public static WandererHUDBreathBar wandererBreathBar;// = new WandererHUDBreathBar(mod.GetAsset<Texture2D>(breathBarFilename, false));
+        // public static HUDBreathBar wandererBreathBar = new HUDBreathBar();
 
         public static DaggerfallWorkshop.Utility.Tuple<float, float> wandererCompassLeftBottomPadding;
         public static float HealthBarPos;
@@ -123,6 +116,8 @@ namespace MapOverwritesMod
             TeleporterConnectionColor = mod.GetAsset<Material>(TeleporterConnectionColorName, false);
             Texture2D compasImage = mod.GetAsset<Texture2D>("COMPBOX.IMG", false);
             compassBoxSize = new Vector2(compasImage.width, compasImage.height);
+
+            wandererBreathBar = new WandererHUDBreathBar(mod.GetAsset<Texture2D>(breathBarFilename, false));
             SetLastScreen();
        }
 
@@ -162,8 +157,8 @@ namespace MapOverwritesMod
             // Magicka Bar X Position Offset: -14
             // Fatigue Bar X Position Offset: -8
             // Fatigue Width: 3
-            // Breath Bar Position: (-5, 2) -> (-3.5 , 2)
-            // Breath Bar Width: 3 -> 1.5.
+            // Breath Bar Position: -3.5 x 2
+            // Breath Bar Width: 1.5.
 
             // * COMPASS:
             Rect screenRect = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
@@ -217,7 +212,6 @@ namespace MapOverwritesMod
             // * AutoSize and Vertical/Horizontal alighments dont seem to matter...
 
             DaggerfallUI.Instance.DaggerfallHUD.ShowCompass = false; // todo: Will this stay false? or will I have to reset it to false anytime it becomes true?
-
             DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Components.Add(wandererCompass);
             wandererCompass.Enabled = true;
             // 
@@ -227,7 +221,6 @@ namespace MapOverwritesMod
             // 
             wandererCompass.Position = DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Position;
             wandererCompass.Scale = DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Scale;
-            
             wandererCompass.Size = DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Size;
 
             SetNonPublicField(wandererCompass, "compassBoxSize", compassBoxSize);
@@ -247,15 +240,15 @@ namespace MapOverwritesMod
             DaggerfallUI.Instance.DaggerfallHUD.ShowBreathBar = false; // todo: Will this stay false? or will I have to reset it to false anytime it becomes true?
             DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Components.Add(wandererBreathBar);
             wandererBreathBar.Enabled = true;
-            wandererBreathBar.AutoSize = DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.AutoSize;
-            wandererBreathBar.HorizontalAlignment = HorizontalAlignment.None;
-            wandererBreathBar.VerticalAlignment = VerticalAlignment.None;
-            wandererBreathBar.Position = DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.Position;
-            wandererBreathBar.Scale = DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.Scale;
-            wandererBreathBar.Size = DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.Size;
-            wandererBreathBar.SetMargins(Margins.All, 0);
-            SetNonPublicField(wandererBreathBar, "normalBreathColor", new Color32(111, 242, 255, 255 / 2)); // Blueish
-            SetNonPublicField(wandererBreathBar, "shortOnBreathColor", new Color32(247, 39, 41, 255 / 2)); // Resdish
+            // wandererBreathBar.AutoSize = DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.AutoSize;
+            // wandererBreathBar.HorizontalAlignment = HorizontalAlignment.None;
+            // wandererBreathBar.VerticalAlignment = VerticalAlignment.None;
+            // wandererBreathBar.Position = DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.Position;
+            // wandererBreathBar.Scale = DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.Scale;
+            // wandererBreathBar.Size = DaggerfallUI.Instance.DaggerfallHUD.HUDBreathBar.Size;
+            // wandererBreathBar.SetMargins(Margins.All, 0);
+            // SetNonPublicField(wandererBreathBar, "normalBreathColor", new Color32(111, 242, 255, 255 / 2)); // Blueish
+            // SetNonPublicField(wandererBreathBar, "shortOnBreathColor", new Color32(247, 39, 41, 255 / 2)); // Resdish
         }
 
         public static object GetNonPublicField(object targetObject, string fieldName){
@@ -708,23 +701,16 @@ namespace MapOverwritesMod
             }
         }
 
-        // public void OnGUI(){
-        //     if (!DaggerfallUI.HasInstance || DaggerfallUI.Instance.DaggerfallHUD == null){ return; }
+        public void OnGUI(){
+            if (!DaggerfallUI.HasInstance || DaggerfallUI.Instance.DaggerfallHUD == null){ return; }
 
-        //     // // * Draw compass first (under everything)
-        //     // if (DaggerfallUI.UIManager.TopWindow is DaggerfallPauseOptionsWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallRestWindow){
-        //     // }
-        //     GUI.depth = 1;
-        //     wandererCompass.Draw();
-
-        //     GUI.depth = 1003;
-        //     wandererVitals.Draw();
-
-        //     GUI.depth = 1004;
-        //     if (GameManager.Instance.PlayerEnterExit.IsPlayerSubmerged & !GameManager.Instance.PlayerEntity.IsWaterBreathing){
-        //         wandererBreathBar.Draw();
-        //     }
-        // }
+            // * Draw even when paused: Does not control draw order!!!
+            wandererCompass.Draw();
+            wandererVitals.Draw();
+            if (GameManager.Instance.PlayerEnterExit.IsPlayerSubmerged & !GameManager.Instance.PlayerEntity.IsWaterBreathing){
+                wandererBreathBar.Draw();
+            }
+        }
 
         public void debugPrint(){
             Debug.Log($"Default values:");
