@@ -2,74 +2,122 @@
     "Version": "1.0.0",
     "Sections": [
         {
-            "Name": "Hud",
-            "Description": null,
+            "Name": "Hud-Sizes",
+            "Description": "Width and Height of Vitals",
             "IsAdvanced": false,
             "Keys": [
                 {
-                    "Value": {
-                        "First": 0.0,
-                        "Second": -3.0
-                    },
-                    "Name": "CompassPaddingLeftBottom",
-                    "Description": "First: Left padding. Second: Bottom padding",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TupleFloatKey"
-                },
-                {
-                    "Value": {
-                        "First": 4.0,
-                        "Second": 13.0
-                    },
-                    "Name": "VitalsBarSize",
-                    "Description": "Width and Height of all VitalBars",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TupleFloatKey"
-                },
-                {
-                    "Min": -100.0,
-                    "Max": 100.0,
-                    "Value": -0.8,
-                    "Name": "HealthBarPos",
-                    "Description": "X Position of the HealthBar",
+                    "Min": 0.0,
+                    "Max": 20.0,
+                    "Value": 13.0,
+                    "Name": "VitalsHeight",
+                    "Description": "Height for Health Fatigue Magicka and Breath Bar",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 },
                 {
-                    "Min": -100.0,
-                    "Max": 100.0,
-                    "Value": -14.0,
-                    "Name": "MagickaBarPos",
-                    "Description": "X Position of the MagickaBar",
+                    "Min": 0.0,
+                    "Max": 20.0,
+                    "Value": 3.9,
+                    "Name": "HealthWidth",
+                    "Description": "Width for Health Bar",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 },
                 {
-                    "Value": {
-                        "First": -8.0,
-                        "Second": 3.0
-                    },
-                    "Name": "FatigueBarPosWidth",
-                    "Description": "First: X Pos. Second: Width.",
+                    "Min": 0.0,
+                    "Max": 20.0,
+                    "Value": 3.9,
+                    "Name": "MagickaWidth",
+                    "Description": "Width for Maficka Bar",
                     "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TupleFloatKey"
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 },
                 {
-                    "Value": {
-                        "First": -3.5,
-                        "Second": 2.0
-                    },
-                    "Name": "BreathBarPos",
-                    "Description": "X, Y Pos",
+                    "Min": 0.0,
+                    "Max": 20.0,
+                    "Value": 3.0,
+                    "Name": "FatigueWidth",
+                    "Description": "Width for Fatigue Bar",
                     "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TupleFloatKey"
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 },
                 {
-                    "Min": -100.0,
-                    "Max": 100.0,
-                    "Value": 1.4,
-                    "Name": "BreathBarWidth",
-                    "Description": "Width of Breath Bar",
+                    "Min": 0.0,
+                    "Max": 20.0,
+                    "Value": 1.5,
+                    "Name": "BreathWidth",
+                    "Description": "Width for Breath Bar",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "Hud-XPositions",
+            "Description": "Horizontal Positions of Hud elements.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Min": 110.0,
+                    "Max": 2000.0,
+                    "Value": 135.4,
+                    "Name": "HealthX",
+                    "Description": "Horizontal Position of Health bar",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 110.0,
+                    "Max": 2000.0,
+                    "Value": 207.4,
+                    "Name": "MagickaX",
+                    "Description": "Horizontal Position of Magicka bar",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 110.0,
+                    "Max": 2000.0,
+                    "Value": 213.4,
+                    "Name": "FatigueX",
+                    "Description": "Horizontal Position of Fatigue bar",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 110.0,
+                    "Max": 2000.0,
+                    "Value": 216.6,
+                    "Name": "BreathX",
+                    "Description": "Horizontal Position of Breath bar",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "Hud-YPositions",
+            "Description": "Vertical Positions of Hud elements.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Min": 150.0,
+                    "Max": 2000.0,
+                    "Value": 185.0,
+                    "Name": "BreathY",
+                    "Description": "Vertical Position of Breath Bar",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": -10.0,
+                    "Max": 10.0,
+                    "Value": 1.2,
+                    "Name": "CompassYPadding",
+                    "Description": "Bottom Padding for Compass",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 }

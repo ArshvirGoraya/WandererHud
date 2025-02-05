@@ -1,0 +1,54 @@
+[
+    {
+        "Title": "1920x1080",
+        "Author": "Arshvir Goraya",
+        "Description": "The Default",
+        "SettingsVersion": "1.0.0",
+        "Values": {
+            "Hud-Sizes": {
+                "VitalsHeight": "13",
+                "HealthWidth": "3.9",
+                "MagickaWidth": "3.9",
+                "FatigueWidth": "3",
+                "BreathWidth": "1.5"
+            },
+            "Hud-XPositions": {
+                "HealthX": "135.4",
+                "MagickaX": "207.4",
+                "FatigueX": "213.4",
+                "BreathX": "216.6"
+            },
+            "Hud-YPositions": {
+                "BreathY": "185",
+                "CompassYPadding": "1.2"
+            }
+        },
+        "$version": "v1"
+    },
+    {
+        "Title": "Unity",
+        "Author": "Arshvir Goraya",
+        "Description": "Used In the Unity Editor for Debugging",
+        "SettingsVersion": "1.0.0",
+        "Values": {
+            "Hud-YPositions": {
+                "BreathY": "184.2",
+                "CompassYPadding": "-3.2"
+            },
+            "Hud-XPositions": {
+                "HealthX": "116.7",
+                "MagickaX": "188.5",
+                "FatigueX": "194.5",
+                "BreathX": "199"
+            },
+            "Hud-Sizes": {
+                "VitalsHeight": "12.8",
+                "HealthWidth": "3.9",
+                "MagickaWidth": "3.9",
+                "FatigueWidth": "3",
+                "BreathWidth": "1.5"
+            }
+        },
+        "$version": "v1"
+    }
+]

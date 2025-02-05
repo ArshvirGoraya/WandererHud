@@ -27,6 +27,7 @@
         "Assets/Game/Mods/WandererHud/Textures/Img/MAIN05I0.IMG.png",
         "Assets/Game/Mods/WandererHud/Textures/Img/MAIN04I0.IMG.png",
         "Assets/Game/Mods/WandererHud/Scripts/WandererHUDBreathBar.cs",
-        "Assets/Game/Mods/WandererHud/Textures/Img/BreathBar.png"
+        "Assets/Game/Mods/WandererHud/Textures/Img/BreathBar.png",
+        "Assets/Game/Mods/WandererHud/modpresets.json"
     ]
 }
