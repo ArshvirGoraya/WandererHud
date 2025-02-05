@@ -1,0 +1,26 @@
+{
+    "Title": "version 1 test",
+    "Author": "a.t.",
+    "Description": "first alignment try",
+    "SettingsVersion": "1.0.0",
+    "Values": {
+        "Hud": {
+            "CompassPaddingLeftBottom": "0,1",
+            "VitalsBarSize": "4,13",
+            "HealthBarPos": "0.1",
+            "MagickaBarPos": "-12.8",
+            "FatigueBarPosWidth": "-6.9,3",
+            "BreathBarPos": "-3.5,2",
+            "BreathBarWidth": "1.4"
+        },
+        "ExteriorMap": {
+            "ZoomSpeed": "40"
+        },
+        "InteriorMap": {
+            "ZoomSpeed": "0.6",
+            "ForceWireFrame": "True",
+            "DefaultZoomOut": "30"
+        }
+    },
+    "$version": "v1"
+}
