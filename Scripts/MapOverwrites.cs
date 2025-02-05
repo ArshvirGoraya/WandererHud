@@ -78,17 +78,6 @@ namespace MapOverwritesMod
         public static WandererHUDBreathBar wandererBreathBar;// = new WandererHUDBreathBar(mod.GetAsset<Texture2D>(breathBarFilename, false));
         // public static HUDBreathBar wandererBreathBar = new HUDBreathBar();
         // Settings
-        public static float compassYPadding;
-        public static float vitalsBarHeight;
-        public static float healthBarWidth;
-        public static float fatigueBarWidth;
-        public static float magickaBarWidth;
-        public static float breathBarWidth;
-        public static float healthBarXPos;
-        public static float magickaBarXPos;
-        public static float fatigueBarXPos;
-        public static float breathBarXPos;
-        public static float breathBarYPos;
 
         public static Texture2D debugTexture;
         public static Rect debugTextRect = new Rect(0, 0, 1, 1);
@@ -139,17 +128,6 @@ namespace MapOverwritesMod
                 ForceUpdateHUDElements();
                 // PositionHUDElements();
             }
-            compassYPadding = WandererHudSettings.GetFloat("Hud-YPositions", "CompassYPadding");
-            vitalsBarHeight = WandererHudSettings.GetFloat("Hud-Sizes", "VitalsHeight");
-            healthBarWidth = WandererHudSettings.GetFloat("Hud-Sizes", "HealthWidth");
-            fatigueBarWidth = WandererHudSettings.GetFloat("Hud-Sizes", "FatigueWidth");
-            magickaBarWidth = WandererHudSettings.GetFloat("Hud-Sizes", "MagickaWidth");
-            breathBarWidth = WandererHudSettings.GetFloat("Hud-Sizes", "BreathWidth");
-            healthBarXPos = WandererHudSettings.GetFloat("Hud-XPositions", "HealthX");
-            fatigueBarXPos = WandererHudSettings.GetFloat("Hud-XPositions", "FatigueX");
-            magickaBarXPos = WandererHudSettings.GetFloat("Hud-XPositions", "MagickaX");
-            breathBarXPos = WandererHudSettings.GetFloat("Hud-XPositions", "BreathX");
-            breathBarYPos = WandererHudSettings.GetFloat("Hud-YPositions", "BreathY");
         }
 
         public static float NormalizeValue(float value, float min, float max){
@@ -169,9 +147,18 @@ namespace MapOverwritesMod
         public static void PositionHUDElements(){
             if (wandererCompass.Parent == null){ return; } // * Heuristic for checking if in game.
             // * COMPASS:
+            // float screenWidth = Screen.width;
+            // float screenHeight = Screen.height;
+
             Rect screenRect = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
-            float compassX = screenRect.width / 2 - (wandererCompass.Size.x / 2);
-            float compassY = screenRect.height - wandererCompass.Size.y;
+            float screenMiddleX = screenRect.x + (screenRect.width / 2);
+            float screenBottomY = screenRect.y + screenRect.height;
+
+            float compassWidth = wandererCompass.Size.x;
+            float compassHeight = wandererCompass.Size.y;
+
+            float compassX = screenMiddleX - (compassWidth / 2);
+            float compassY = screenBottomY - compassHeight;
 
             wandererCompass.Position = new Vector2(
                 compassX,
@@ -197,14 +184,22 @@ namespace MapOverwritesMod
             wandererVitals.CustomMagickaBarSize = new Vector2(vitalsWidth, vitalsHeight);
             wandererBreathBar.CustomBreathBarSize = new Vector2 (vitalsBreathWidth, vitalsHeight);
             // 
-            float compassRight = wandererCompass.Rectangle.xMin + wandererCompass.Size.x;
-            wandererVitals.CustomHealthBarPosition = new Vector2(wandererCompass.Rectangle.xMin + vitalsHealthXOffset, 0);
+            // * Need to adjust for in-game aspect ratio (screenRect.x) change even though already did it for compass.
+            float compassLeft = compassX - screenRect.x; 
+            float compassRight = compassX + compassWidth - screenRect.x;
+            wandererVitals.CustomHealthBarPosition = new Vector2(compassLeft + vitalsHealthXOffset, 0);
             wandererVitals.CustomFatigueBarPosition = new Vector2(compassRight - vitalsFatigueXOffset,0);
             wandererVitals.CustomMagickaBarPosition = new Vector2(compassRight - vitalsMagickaXOffset,0);
             wandererBreathBar.CustomBreathBarPosition = new Vector2(
                 compassRight - vitalsBreathXOffset, 
-                screenRect.height - vitalsHeight - vitalsYOffset
+                screenBottomY - vitalsHeight - vitalsYOffset
             );
+            // debugPosition.x = compassX + vitalsHealthXOffset;
+            // debugPosition.y = compassY + vitalsYOffset;
+            // debugPosition.width = vitalsWidth;
+            // debugPosition.height = vitalsHeight;
+            // Debug.Log($"debugPosition: {debugPosition}");
+            
         }
 
         public static void SetWandererCompass(){
