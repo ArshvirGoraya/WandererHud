@@ -12,7 +12,6 @@ using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 using System.Collections.Generic;
 using System.Reflection;
 using DaggerfallConnect;
-using UnityEngine.AI;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
@@ -60,10 +59,10 @@ namespace MapOverwritesMod
         // 
         readonly String TeleportEnterName = "TeleportEnter";
         GameObject TeleportEnterPrefab;
-        string TeleporterConnectionColorName = "Door_Inner_Blue";
+        readonly string TeleporterConnectionColorName = "Door_Inner_Blue";
         Material TeleporterConnectionColor;
         bool ChangedConnectionColor = false;
-        Dictionary<string, Transform> exitDoorRotationCorrectHelper = new Dictionary<string, Transform>();
+        readonly Dictionary<string, Transform> exitDoorRotationCorrectHelper = new Dictionary<string, Transform>();
         const int exitStringLength = 4;
         readonly String TeleportExitName = "TeleportExit";
         GameObject TeleportExitPrefab;
@@ -95,7 +94,6 @@ namespace MapOverwritesMod
         public static Rect debugTextRect = new Rect(0, 0, 1, 1);
         public static Rect debugPosition = new Rect(0, 0, 0, 0);
         public static Color32 debugColor = new Color32(255, 255, 255, 255);
-
 
         public static ModSettings WandererHudSettings;
 
@@ -161,7 +159,6 @@ namespace MapOverwritesMod
             return min + normalized_value * (max - min);
         }
         
-        
         public static void ForceUpdateHUDElements(){
             wandererCompass.Update();
             wandererVitals.Update();
@@ -171,8 +168,6 @@ namespace MapOverwritesMod
 
         public static void PositionHUDElements(){
             if (wandererCompass.Parent == null){ return; } // * Heuristic for checking if in game.
-            // 
-
             // * COMPASS:
             Rect screenRect = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
             float compassX = screenRect.width / 2 - (wandererCompass.Size.x / 2);
@@ -182,16 +177,8 @@ namespace MapOverwritesMod
                 compassX,
                 compassY
             );
-
             float compassPixelX = wandererCompass.Scale.x; // 1 Compass Pixel Width
             float compassPixelY = wandererCompass.Scale.y; // 1 Compass Pixel Height
-
-            // Debug.Log($"Compass scale: {wandererCompass.Scale}");
-            // 1 Pixel: 3.37
-            // 85 scaled: 286.45
-            // 17 scaled: 57.29
-            // Debug.Log($"compassPixelX: {compassPixelX.ToString("G")}");
-            
             // * Magic numbers: pixels taken up the vitals in the base compass texture image.
             float vitalsHeight = 13 * compassPixelY;
             float vitalsWidth = 2 * compassPixelX;
@@ -218,114 +205,6 @@ namespace MapOverwritesMod
                 compassRight - vitalsBreathXOffset, 
                 screenRect.height - vitalsHeight - vitalsYOffset
             );
-            // 
-            return;
-
-
-            // BreathBarPos
-
-            // * Scaling and position offsets
-            float scaledPixelX = 1 * wandererCompass.Scale.x;
-            float scaledPixelY = 1 * wandererCompass.Scale.y;
-
-            // * CONSTANTS: Settings
-            // Compass Pos Offset (Y Offset): (0, -3.)
-            // Vitals Size (width and height): (4, 13)
-            // Health Bar Position (X Offset): -0.8
-            // Magicka Bar Position (X Offset): -14
-            // Fatigue Bar Position (X Offset): -8
-                // Fatigue Width: 3
-            // Breath Bar Position: (-3.5 x 2)
-            // Breath Bar Width: 1.5.
-            // * NEW:
-            // Compass Pos Offset (Y Offset): (0, -3.2)
-            // Vitals Size (width and height): (4, 13)
-            // Health Bar Position (X Offset): -1.5
-            // Magicka Bar Position (X Offset): -14.5
-            // Fatigue Bar Position (X Offset): -8.5
-                // Fatigue Width: 3.5
-            // Breath Bar Position: (-3.5 x 2)
-            // Breath Bar Width: 1.7.
-            // * NEW NEW:
-            // Vitals Height: 12.8
-            // Height Width: 3.9
-            // Magicka Width: 3.9
-            // Fatigue width: 3
-            // Breath Width: 1.5
-            //-// HealthX: -0.7    -> 116.7
-            //-// MagickaX: -13.9  -> 188.5
-            //-// FatigueX: -8     -> 194.5
-            //-// BreathX: -3.7    -> 199
-            //-// BreathY: 2       -> 184.2
-            // CompassYPadding: -3.2
-            // * IN GAME:
-            // Vitals Height: 13
-            // Height Width: 3.9
-            // Magicka Width: 3.9
-            // Fatigue width: 3
-            // Breath Width: 1.5
-            //-// HealthX: 135.4
-            //-// MagickaX: 207.4
-            //-// FatigueX: 213.4
-            //-// BreathX: 216.6
-            //-// BreathY: 185
-            // CompassYPadding: 1.2
-
-            // * VITALS:
-            // * Positioning:
-            wandererVitals.CustomHealthBarPosition = new Vector2(
-                healthBarXPos * scaledPixelX, 0
-            );
-            wandererVitals.CustomMagickaBarPosition = new Vector2(
-                magickaBarXPos * scaledPixelX, 0
-            );
-            wandererVitals.CustomFatigueBarPosition = new Vector2(
-                fatigueBarXPos * scaledPixelX, 0
-            ); 
-
-            // * Sizing:
-            wandererVitals.CustomHealthBarSize = new Vector2(
-                (healthBarWidth * scaledPixelX), (vitalsBarHeight * scaledPixelY)
-            );
-            wandererVitals.CustomMagickaBarSize = new Vector2(
-                (magickaBarWidth * scaledPixelX), (vitalsBarHeight * scaledPixelY)
-            );
-            wandererVitals.CustomFatigueBarSize = new Vector2(
-                (fatigueBarWidth * scaledPixelX), (vitalsBarHeight * scaledPixelY)
-            );
-
-            // * BREATH BAR:
-            if (GameManager.Instance.PlayerEnterExit.IsPlayerSubmerged & !GameManager.Instance.PlayerEntity.IsWaterBreathing){
-                wandererBreathBar.CustomBreathBarPosition = new Vector2(
-                    breathBarXPos * scaledPixelX,
-                    breathBarYPos * scaledPixelX
-                );
-                wandererBreathBar.CustomBreathBarSize = new Vector2 (
-                    (breathBarWidth * scaledPixelX), (vitalsBarHeight * scaledPixelY)
-                );
-            }
-
-            // * Define Rect of Debug Box:
-            // todo !!!
-            float middleX = screenRect.width / 2;
-            float bottomY = screenRect.height;
-            float compassSizeY = wandererCompass.Size.y; // TIMES * wandererCompass.Scale.y;
-            float compassSizeX = wandererCompass.Size.x; // TIMES * wandererCompass.Scale.y;
-            float xPos = middleX - compassSizeX / 2;
-            float yPos = bottomY - compassSizeY;
-            debugPosition.width = compassSizeX;
-            debugPosition.height = compassSizeY;
-            debugPosition.x = xPos;
-            debugPosition.y = yPos + compassYPadding;
-
-            float compassPixelWidth = compassSizeX * 0.01f;
-            float compassPixelHeight = compassSizeY * 0.01f;
-
-            // 
-            debugPosition.width = compassPixelWidth;
-            debugPosition.height = compassPixelHeight * 100; // get 100% from the single pixel.
-
-            Debug.Log($"compassSizeY: {compassSizeY}, compassSizeY * 0.01 {compassPixelHeight}, compassPixelHeight * compassSizeY {compassPixelHeight * compassSizeY}");
         }
 
         public static void SetWandererCompass(){
@@ -366,17 +245,6 @@ namespace MapOverwritesMod
             wandererVitals.Scale = Vector2.one;
             wandererVitals.Size = DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.Size;
             wandererVitals.SetMargins(Margins.All, 0);
-            // 
-            // wandererVitals.healthBar.Scale = Vector2.one;
-
-            // VerticalProgressSmoother healthBar = (VerticalProgressSmoother)GetNonPublicField(wandererVitals, "healthBar");
-            // healthBar.Scale = Vector2.one;
-            // VerticalProgressSmoother fatigueBar = (VerticalProgressSmoother)GetNonPublicField(wandererVitals, "fatigueBar");
-            // fatigueBar.Scale = Vector2.one;
-            // VerticalProgressSmoother magickaBar = (VerticalProgressSmoother)GetNonPublicField(wandererVitals, "magickaBar");
-            // magickaBar.Scale = Vector2.one;
-
-
         }
         public static void SetBreathHud(){
             DaggerfallUI.Instance.DaggerfallHUD.ShowBreathBar = false; // todo: Will this stay false? or will I have to reset it to false anytime it becomes true?
@@ -409,7 +277,6 @@ namespace MapOverwritesMod
 
         private void Update(){
             PositionHUDElements();
-            
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 if (GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes")){
                     int newCount = GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes").transform.childCount;
@@ -436,7 +303,6 @@ namespace MapOverwritesMod
                 }
                 return;    
             }
-
             if (Screen.width != LastScreen.x || Screen.height != LastScreen.y){
                 if (!ResizeWaiting){
                     StartCoroutine(WaitSeconds(ResizeWaitSecs));
@@ -511,7 +377,7 @@ namespace MapOverwritesMod
         }
 
         public void ChangeObjectDirectionToNormal(GameObject obj, Vector3 normal){
-            // if (normal.x == 1){} // No rotation needed
+            // if (normal.x == 1){} // * No rotation needed
             if (normal.x == -1){
                 obj.transform.Rotate(0, 180, 0);
             }
@@ -636,7 +502,6 @@ namespace MapOverwritesMod
 
                 foreach (Transform subChild in NoteObj.transform){
                     subChild.transform.name = child.name;
-                    // subChild.AddComponent<ChildDestroyed>();
                     subChild.transform.gameObject.AddComponent<ChildDestroyed>();
                     // * Add child destoryer script to all children: will delete the parent when the child is destroyed, deleting the entire object instead of just the child.
                 }
@@ -736,7 +601,6 @@ namespace MapOverwritesMod
             }
         }
 
-
         public void ReplaceExteriorPlayerMarker(){
             // * Simply scales them to 0 so we cannot see them anymore.
             GameObject.Find("Automap/ExteriorAutomap/PlayerMarkerArrowStamp").GetComponent<Transform>().localScale = Vector3.zero;
@@ -756,7 +620,6 @@ namespace MapOverwritesMod
 
         public void DisableExteriorMapComponents(){
             ReplaceExteriorPlayerMarker();
-
             foreach (BaseScreenComponent component in ExteriorMapWindow.NativePanel.Components){
                 if (component is Outline){ continue; }
                 else if (component is Button || component is HUDCompass){ // * Buttons and Compass Texture
@@ -854,9 +717,9 @@ namespace MapOverwritesMod
             }
 
             // Debugging
-            if (debugTexture != null){
-                DaggerfallUI.DrawTextureWithTexCoords(debugPosition, debugTexture, debugTextRect, false, debugColor);
-            }
+            // if (debugTexture != null){
+            //     DaggerfallUI.DrawTextureWithTexCoords(debugPosition, debugTexture, debugTextRect, false, debugColor);
+            // }
         }
 
         public void debugPrint(){
