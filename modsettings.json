@@ -2,6 +2,38 @@
     "Version": "1.0.0",
     "Sections": [
         {
+            "Name": "Hud",
+            "Description": null,
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Options": [
+                        "Left",
+                        "Center",
+                        "Right"
+                    ],
+                    "Value": 1,
+                    "Name": "CompassHorizontalAlignment",
+                    "Description": null,
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Options": [
+                        "Top",
+                        "Middle",
+                        "Bottom"
+                    ],
+                    "Value": 2,
+                    "Name": "CompassVerticalAlignment",
+                    "Description": null,
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
             "Name": "ExteriorMap",
             "Description": null,
             "IsAdvanced": false,

@@ -75,17 +75,18 @@ namespace MapOverwritesMod
         const string breathBarFilename = "BreathBar";
         public static HUDCompass wandererCompass;
         public static HUDVitals wandererVitals;
-        public static WandererHUDBreathBar wandererBreathBar;// = new WandererHUDBreathBar(mod.GetAsset<Texture2D>(breathBarFilename, false));
-        // public static HUDBreathBar wandererBreathBar = new HUDBreathBar();
-        // Settings
-
+        public static WandererHUDBreathBar wandererBreathBar;
+        //
         public static Texture2D debugTexture;
         public static Rect debugTextRect = new Rect(0, 0, 1, 1);
         public static Rect debugPosition = new Rect(0, 0, 0, 0);
         public static Color32 debugColor = new Color32(255, 255, 255, 255);
-
+        //
         public static ModSettings WandererHudSettings;
-
+        static HorizontalAlignment wandererCompassHorizontalAlignment = HorizontalAlignment.Center;
+        static VerticalAlignment wandererCompassVerticalAlignment = VerticalAlignment.Bottom;
+        static Vector2 compassPosition = new Vector2(0, 0);
+        //
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams){
             mod = initParams.Mod;
@@ -124,9 +125,22 @@ namespace MapOverwritesMod
 
         static void LoadSettings(ModSettings modSettings, ModSettingsChange change){
             WandererHudSettings = modSettings;
+            switch (WandererHudSettings.GetInt("Hud", "CompassHorizontalAlignment"))
+            {
+                case 0: { wandererCompassHorizontalAlignment = HorizontalAlignment.Left; break;}
+                case 1: { wandererCompassHorizontalAlignment = HorizontalAlignment.Center; break; }
+                case 2: { wandererCompassHorizontalAlignment = HorizontalAlignment.Right; break; }
+            }
+            switch (WandererHudSettings.GetInt("Hud", "CompassVerticalAlignment"))
+            {
+                case 0: { wandererCompassVerticalAlignment = VerticalAlignment.Top; break;}
+                case 1: { wandererCompassVerticalAlignment = VerticalAlignment.Middle; break; }
+                case 2: { wandererCompassVerticalAlignment = VerticalAlignment.Bottom; break; }
+            }
+            SetCompassPosition();
+
             if (DaggerfallUI.HasInstance && DaggerfallUI.Instance.DaggerfallHUD != null){
                 ForceUpdateHUDElements();
-                // PositionHUDElements();
             }
         }
 
@@ -144,26 +158,24 @@ namespace MapOverwritesMod
             PositionHUDElements();
         }
 
+        public static void SetCompassPosition(){
+
+        }
+
         public static void PositionHUDElements(){
             if (wandererCompass.Parent == null){ return; } // * Heuristic for checking if in game.
             // * COMPASS:
             // float screenWidth = Screen.width;
             // float screenHeight = Screen.height;
-
             Rect screenRect = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
-            float screenMiddleX = screenRect.x + (screenRect.width / 2);
-            float screenBottomY = screenRect.y + screenRect.height;
-
             float compassWidth = wandererCompass.Size.x;
             float compassHeight = wandererCompass.Size.y;
+            float xAnchor = 0;
+            float yAnchor = 0;
+            float compassX = 0;
+            float compassY = 0;
+            float vitalsY = 0;
 
-            float compassX = screenMiddleX - (compassWidth / 2);
-            float compassY = screenBottomY - compassHeight;
-
-            wandererCompass.Position = new Vector2(
-                compassX,
-                compassY
-            );
             float compassPixelX = wandererCompass.Scale.x; // 1 Compass Pixel Width
             float compassPixelY = wandererCompass.Scale.y; // 1 Compass Pixel Height
             // * Magic numbers: pixels taken up the vitals in the base compass texture image.
@@ -171,23 +183,65 @@ namespace MapOverwritesMod
             float vitalsWidth = 2 * compassPixelX;
             float vitalsBreathWidth = 1 * compassPixelX;
             //
-            float vitalsYOffset = 2 * compassPixelX; // From bottom of comppass.
+            float vitalsYOffset = 2 * compassPixelX; // From bottom of compass.
             float vitalsHealthXOffset = 3 * compassPixelX; // From Left of compass
             float vitalsBreathXOffset = 4 * compassPixelX; // From Right of compass
             float vitalsFatigueXOffset = 5 * compassPixelX; // From Right of compass
             float vitalsMagickaXOffset = 10 * compassPixelX; // From Right of compass
+
+            switch (wandererCompassHorizontalAlignment){
+                case HorizontalAlignment.Left: {
+                    xAnchor = screenRect.x;
+                    compassX = xAnchor;
+                    break;
+                }
+                case HorizontalAlignment.Center: {
+                    xAnchor = screenRect.x + (screenRect.width / 2);
+                    compassX = xAnchor - (compassWidth / 2);
+                    break;
+                }
+                case HorizontalAlignment.Right: {
+                    xAnchor = screenRect.x + screenRect.width;
+                    compassX = xAnchor - compassWidth;
+                    break;
+                }
+            }
+            switch (wandererCompassVerticalAlignment){
+                case VerticalAlignment.Top: {
+                    yAnchor = screenRect.y;
+                    compassY = yAnchor + compassHeight;
+                    // vitalsY = (yAnchor);
+                    break;
+                }
+                case VerticalAlignment.Middle: {
+                    yAnchor = screenRect.y + (screenRect.height / 2);
+                    compassY = yAnchor - (compassHeight / 2);
+                    // vitalsY = (yAnchor);
+                    break;
+                }
+                case VerticalAlignment.Bottom: {
+                    yAnchor = screenRect.y + screenRect.height;
+                    compassY = yAnchor - compassHeight;
+                    // vitalsY = (yAnchor);
+                    break;
+                }
+            }
+
+            wandererCompass.Position = new Vector2(
+                compassX,
+                compassY
+            );
             // 
-            wandererVitals.SetMargins(Margins.Bottom, (int)vitalsYOffset);
+            // Debug.Log($"compassY: {compassY}");
+
+            vitalsY = compassY + compassHeight - vitalsYOffset;
+            wandererVitals.SetMargins(Margins.Bottom, (int)(screenRect.height - vitalsY)); // ! Cant use Margins.Top for some reason.
             // 
             wandererVitals.CustomHealthBarSize = new Vector2(vitalsWidth, vitalsHeight);
             wandererVitals.CustomFatigueBarSize = new Vector2(vitalsWidth, vitalsHeight);
             wandererVitals.CustomMagickaBarSize = new Vector2(vitalsWidth, vitalsHeight);
             wandererBreathBar.CustomBreathBarSize = new Vector2 (vitalsBreathWidth, vitalsHeight);
             // 
-            // * Need to adjust for in-game aspect ratio (screenRect.x) change even though already did it for compass.
-            // * Starting with full: works.
-            // * Staring with 4:3 : works.
-            // * Staring with 16:10 : works.
             float compassLeft = compassX - screenRect.x; 
             float compassRight = compassX + compassWidth - screenRect.x;
             wandererVitals.CustomHealthBarPosition = new Vector2(compassLeft + vitalsHealthXOffset, 0);
@@ -195,14 +249,13 @@ namespace MapOverwritesMod
             wandererVitals.CustomMagickaBarPosition = new Vector2(compassRight - vitalsMagickaXOffset,0);
             wandererBreathBar.CustomBreathBarPosition = new Vector2(
                 compassRight - vitalsBreathXOffset, 
-                screenBottomY - vitalsHeight - vitalsYOffset
+                compassY + vitalsYOffset // + middle, + bottom.
             );
             // debugPosition.x = compassX + vitalsHealthXOffset;
             // debugPosition.y = compassY + vitalsYOffset;
             // debugPosition.width = vitalsWidth;
             // debugPosition.height = vitalsHeight;
             // Debug.Log($"debugPosition: {debugPosition}");
-            
         }
 
         public static void SetWandererCompass(){
@@ -274,7 +327,18 @@ namespace MapOverwritesMod
         }
 
         private void Update(){
-            PositionHUDElements();
+            // Debug.Log($"TopWindow: {DaggerfallUI.UIManager.TopWindow}");
+            // Debug.Log($"IsGamePaused: {GameManager.IsGamePaused}");
+            // Debug.Log($"IsPlayingGame: {GameManager.Instance.IsPlayingGame()}");
+            // Debug.Log($"SaveLoadManager.HasInstance: {SaveLoadManager.HasInstance}");
+            // Debug.Log($"CurrentState: {GameManager.Instance.StateManager.CurrentState}");
+            if (GameManager.IsGamePaused){
+                ForceUpdateHUDElements();
+            } else{
+                PositionHUDElements();
+            }
+
+
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 if (GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes")){
                     int newCount = GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes").transform.childCount;
@@ -708,8 +772,24 @@ namespace MapOverwritesMod
             if (!DaggerfallUI.HasInstance || DaggerfallUI.Instance.DaggerfallHUD == null){ return; }
 
             // * Draw even when paused: Does not control draw order!!!
-            wandererCompass.Draw();
-            wandererVitals.Draw();
+            if (
+                GameManager.IsGamePaused
+                && GameManager.Instance.StateManager.CurrentState == StateManager.StateTypes.UI
+                // && GameManager.Instance.StateManager.CurrentState == StateManager.StateTypes.Game
+                // && GameManager.Instance.IsPlayingGame()
+                // && !(DaggerfallUI.UIManager.TopWindow is DaggerfallHUD)
+                // && !(DaggerfallUI.UIManager.TopWindow is DaggerfallVidPlayerWindow)
+                // && !(DaggerfallUI.UIManager.TopWindow is DaggerfallStartWindow)
+                // && !(DaggerfallUI.UIManager.TopWindow is DaggerfallUnitySaveGameWindow)
+                // DaggerfallUI.UIManager.TopWindow is DaggerfallPauseOptionsWindow ||
+                // DaggerfallUI.UIManager.TopWindow is GameEffectsConfigWindow ||
+                // DaggerfallUI.UIManager.TopWindow is ModSettingsWindow ||
+                // DaggerfallUI.UIManager.TopWindow is PresetPicker
+            ){
+                // wandererBreathBar.Draw();
+                wandererCompass.Draw();
+                wandererVitals.Draw();
+            }
             if (GameManager.Instance.PlayerEnterExit.IsPlayerSubmerged & !GameManager.Instance.PlayerEntity.IsWaterBreathing){
                 wandererBreathBar.Draw();
             }
