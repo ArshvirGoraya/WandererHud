@@ -185,6 +185,9 @@ namespace MapOverwritesMod
             wandererBreathBar.CustomBreathBarSize = new Vector2 (vitalsBreathWidth, vitalsHeight);
             // 
             // * Need to adjust for in-game aspect ratio (screenRect.x) change even though already did it for compass.
+            // * Starting with full: works.
+            // * Staring with 4:3 : works.
+            // * Staring with 16:10 : works.
             float compassLeft = compassX - screenRect.x; 
             float compassRight = compassX + compassWidth - screenRect.x;
             wandererVitals.CustomHealthBarPosition = new Vector2(compassLeft + vitalsHealthXOffset, 0);
