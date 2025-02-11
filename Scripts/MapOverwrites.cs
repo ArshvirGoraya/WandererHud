@@ -74,6 +74,8 @@ namespace MapOverwritesMod
 
         const string breathBarFilename = "BreathBar";
         public static HUDCompass wandererCompass;
+        public static Vector2 defaultWandererCompassScale;
+        public static float wandererCompassScale;
         public static HUDVitals wandererVitals;
         public static WandererHUDBreathBar wandererBreathBar;
         //
@@ -137,6 +139,8 @@ namespace MapOverwritesMod
                 case 2: { wandererCompassVerticalAlignment = VerticalAlignment.Bottom; break; }
             }
 
+            wandererCompassScale = WandererHudSettings.GetFloat("Hud", "CompassScale");
+
             if (DaggerfallUI.HasInstance && DaggerfallUI.Instance.DaggerfallHUD != null){
                 ForceUpdateHUDElements();
             }
@@ -159,6 +163,13 @@ namespace MapOverwritesMod
         // TODO: optimize this so isnt calculated on each update lol.
         public static void PositionHUDElements(){
             if (wandererCompass.Parent == null){ return; } // ! Heuristic for checking if in game.
+
+            Debug.Log($"Compass Scale: {wandererCompass.Scale}");
+            wandererCompass.Scale = new Vector2(
+                defaultWandererCompassScale.x * wandererCompassScale,
+                defaultWandererCompassScale.y * wandererCompassScale
+            );
+
             // * COMPASS:
             Rect screenRect = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
             float compassWidth = wandererCompass.Size.x;
@@ -267,6 +278,10 @@ namespace MapOverwritesMod
             wandererCompass.Scale = new Vector2(
                 (float)Math.Round(DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Scale.x), 
                 (float)Math.Round(DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Scale.y)
+            );
+            defaultWandererCompassScale = new Vector2(
+                wandererCompass.Scale.x,
+                wandererCompass.Scale.y
             );
             wandererCompass.Size = DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Size;
             wandererCompass.SetMargins(Margins.All, 0);
