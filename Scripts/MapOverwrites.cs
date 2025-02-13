@@ -165,7 +165,6 @@ namespace MapOverwritesMod
         public static void PositionHUDElements(){
             if (wandererCompass.Parent == null){ return; } // ! Heuristic for checking if in game.
 
-            Debug.Log($"Compass Scale: {wandererCompass.Scale}");
             wandererCompass.Scale = new Vector2(
                 defaultWandererCompassScale.x * wandererCompassScale,
                 defaultWandererCompassScale.y * wandererCompassScale
@@ -523,9 +522,11 @@ namespace MapOverwritesMod
                 // * Rename:
                 teleporter.transform.name = portalMarker.name;
                 // * Rotation:
+                
                 if (child.name.EndsWith("Exit")){ 
+                    // string doorName = child.name.Substring(0, child.name.Length - exitStringLength);
                     // * Rotate Exit doors seperately.
-                    exitDoorRotationCorrectHelper.Add(child.name.Substring(0, child.name.Length - exitStringLength), teleporter.transform);
+                    exitDoorRotationCorrectHelper[child.name.Substring(0, child.name.Length - exitStringLength)] = teleporter.transform;
                     continue; 
                 }
 
