@@ -21,7 +21,6 @@
                 {
                     "Options": [
                         "Top",
-                        "Middle",
                         "Bottom"
                     ],
                     "Value": 2,

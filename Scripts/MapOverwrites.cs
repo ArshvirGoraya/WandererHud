@@ -16,6 +16,7 @@ using DaggerfallConnect;
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
 // * Disabled inner components of interior map (e.g., beacons)
+// Todo: Refactor into different files.
 
 namespace MapOverwritesMod
 {
@@ -135,8 +136,8 @@ namespace MapOverwritesMod
             switch (WandererHudSettings.GetInt("Hud", "CompassVerticalAlignment"))
             {
                 case 0: { wandererCompassVerticalAlignment = VerticalAlignment.Top; break;}
-                case 1: { wandererCompassVerticalAlignment = VerticalAlignment.Middle; break; }
-                case 2: { wandererCompassVerticalAlignment = VerticalAlignment.Bottom; break; }
+                case 1: { wandererCompassVerticalAlignment = VerticalAlignment.Bottom; break; }
+                // case 2: { wandererCompassVerticalAlignment = VerticalAlignment.Middle; break; }
             }
 
             wandererCompassScale = WandererHudSettings.GetFloat("Hud", "CompassScale");
@@ -174,7 +175,7 @@ namespace MapOverwritesMod
             Rect screenRect = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
             float compassWidth = wandererCompass.Size.x;
             float compassHeight = wandererCompass.Size.y;
-            float xAnchor;
+            float xAnchor = 0;
             float yAnchor;
             float compassX = 0;
             float compassY = 0;
@@ -212,13 +213,8 @@ namespace MapOverwritesMod
             }
             switch (wandererCompassVerticalAlignment){
                 case VerticalAlignment.Top: {
-                    yAnchor = screenRect.y;
+                    yAnchor = screenRect.y - compassHeight;
                     compassY = yAnchor + compassHeight;
-                    break;
-                }
-                case VerticalAlignment.Middle: {
-                    yAnchor = screenRect.y + (screenRect.height / 2);
-                    compassY = yAnchor - (compassHeight / 2);
                     break;
                 }
                 case VerticalAlignment.Bottom: {
@@ -226,7 +222,12 @@ namespace MapOverwritesMod
                     compassY = yAnchor - compassHeight;
                     break;
                 }
-            }
+                // case VerticalAlignment.Middle: {
+                //     yAnchor = screenRect.y + (screenRect.height / 2);
+                //     compassY = yAnchor - (compassHeight / 2);
+                //     break;
+                // }
+            }            
 
             wandererCompass.Position = new Vector2(
                 compassX,
