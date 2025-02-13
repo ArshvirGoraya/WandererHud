@@ -1,0 +1,43 @@
+=== OVERVIEW ===
+
+From the suspiciously dev tools-like feel of its dungeon map viewer to the somewhat barebone fullscreen HUD, some elements among Daggerfall's charmingly quaint pixel-art interfaces betray the history of its rushed production, while others simply aged not too gracefully.
+
+The aim of Wanderer HUD is simple - to polish up and smartly streamline a few rough edges, keeping them close in-line with the established art direction. 
+
+Foremost attention was given to the matter of local maps, particularly dungeons - perhaps the most rough-looking aspect of Daggerfall all in all. All of the markers were remade, and the layout micromap and cluttered control panels removed along with the opaque backdrop and the ugly, glowing 3d texturing of the labyrinth itself. In their place, akin to a mind's eye image, a monochromatic, minimal wiremesh labyrinth appears against a dimmed backdrop of the gamespace itself, keeping the player present in the moment as the wanderer squints their eyes, recalling the layout.
+
+For the uninitiated, top-down / 3d views can be toggled with [spacebar], camera rotation anchor point can be set with an [Mouse2 double tap], while notes can be dropped and deleted with [M1 double-tap] and [M2 double tap] respectively.
+
+
+
+=== HIGHLIGHT ===
+
+[HUD] Vital Bars cleaned up and integrated into the golden compass frame, with the crosshair / cursor remade into a small golden nugget
+
+[LOCAL MAPS] decluttered and reimagined as immersive "mind's eye" overlay, with all of the icons remade from scratch
+
+[MOB HEALTH BARS] A preset for this mod is included, tailored to complement Wanderer HUD by keeping with its style
+
+
+
+=== ROADMAP ===
+
+- [x] 	Base Mod
+- [x]	Mod Health Bars (preset)
+- [ ]	Hotkey Bar (integration)
+- [ ]	First Person Lighting (integration)
+- [ ]	Scrollable Interaction Modes (feature or integration)
+
+
+
+
+=== COMPATIBILITY ===
+
+Wanderer HUD should be compatible and complementary with 'Mob Health Bars', 'Uncanny UI Fork', 'Advanced Dialogue' or anything else that doesn't rework the HUD elements and the design of local maps. We would like to integrate the 'Hotkey Bar' and 'First Person Lighting' features down the line, and are also considering a more seamless and instant way of switching between the Interaction modes, based on how 'Scrollable Interaction Modes' and 'Penwick Papers' do it when working in tandem, voiding the need of having the hand icon displayed on screen.
+
+
+
+
+*Concept and 2D mockups by R.S., programming and 3D modelling by A.G.
+
+Enjoy.
