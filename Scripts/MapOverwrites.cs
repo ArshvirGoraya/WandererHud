@@ -89,6 +89,8 @@ namespace MapOverwritesMod
         static HorizontalAlignment wandererCompassHorizontalAlignment = HorizontalAlignment.Center;
         static VerticalAlignment wandererCompassVerticalAlignment = VerticalAlignment.Bottom;
         //
+        static HUDInteractionModeIcon interactionModeIcon;
+        // 
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams){
             mod = initParams.Mod;
@@ -122,28 +124,51 @@ namespace MapOverwritesMod
             wandererCompass = new HUDCompass();
             wandererVitals = new HUDVitals();
             wandererBreathBar = new WandererHUDBreathBar(mod.GetAsset<Texture2D>(breathBarFilename, false));
+            // 
             SetLastScreen();
        }
 
+        public static HorizontalAlignment GetHorizontalAlignmentFromSettings(int settingsVal){
+            switch (settingsVal)
+            {
+                case 0: { return HorizontalAlignment.Left;}
+                case 1: { return HorizontalAlignment.Center; }
+                case 2: { return HorizontalAlignment.Right; }
+            }
+            Debug.Log($"WandererHUD: UNKNOWN HORIZONTAL ALIGNMENT");
+            return HorizontalAlignment.None;
+        }
+
+        public static VerticalAlignment GetVerticalAlignmentFromSettings(int settingsVal){
+            switch (settingsVal)
+            {
+                case 0: { return VerticalAlignment.Top;}
+                case 1: { return VerticalAlignment.Middle; }
+                case 2: { return VerticalAlignment.Bottom; }
+            }
+            Debug.Log($"WandererHUD: UNKNOWN VERTICAL ALIGNMENT");
+            return VerticalAlignment.None;
+        }
+
         static void LoadSettings(ModSettings modSettings, ModSettingsChange change){
             WandererHudSettings = modSettings;
-            switch (WandererHudSettings.GetInt("Hud", "CompassHorizontalAlignment"))
-            {
-                case 0: { wandererCompassHorizontalAlignment = HorizontalAlignment.Left; break;}
-                case 1: { wandererCompassHorizontalAlignment = HorizontalAlignment.Center; break; }
-                case 2: { wandererCompassHorizontalAlignment = HorizontalAlignment.Right; break; }
-            }
-            switch (WandererHudSettings.GetInt("Hud", "CompassVerticalAlignment"))
+            wandererCompassHorizontalAlignment = GetHorizontalAlignmentFromSettings(WandererHudSettings.GetInt("Compass", "HorizontalAlignment"));
+
+            switch (WandererHudSettings.GetInt("Compass", "VerticalAlignment"))
             {
                 case 0: { wandererCompassVerticalAlignment = VerticalAlignment.Top; break;}
                 case 1: { wandererCompassVerticalAlignment = VerticalAlignment.Bottom; break; }
                 // case 2: { wandererCompassVerticalAlignment = VerticalAlignment.Middle; break; }
             }
 
-            wandererCompassScale = WandererHudSettings.GetFloat("Hud", "CompassScale");
+            wandererCompassScale = WandererHudSettings.GetFloat("Compass", "Scale");
 
             if (DaggerfallUI.HasInstance && DaggerfallUI.Instance.DaggerfallHUD != null){
                 ForceUpdateHUDElements();
+            }
+            // 
+            if (interactionModeIcon != null){
+                SetInteractionModeIconValues();
             }
         }
 
@@ -257,6 +282,22 @@ namespace MapOverwritesMod
             // Debug.Log($"debugPosition: {debugPosition}");
         }
 
+        public static void SetInteractionModeIconValues(){
+            SetNonPublicField(interactionModeIcon, "displayScale", WandererHudSettings.GetFloat("InteractionMode", "Scale"));
+
+            HorizontalAlignment intHA = GetHorizontalAlignmentFromSettings(WandererHudSettings.GetInt("InteractionMode", "HorizontalAlignment"));
+            VerticalAlignment intVA = GetVerticalAlignmentFromSettings(WandererHudSettings.GetInt("InteractionMode", "VerticalAlignment"));
+
+            interactionModeIcon.HorizontalAlignment = intHA;
+            interactionModeIcon.VerticalAlignment = intVA;
+
+            interactionModeIcon.Position = Vector2.zero;
+        }
+        public static void SetInteractionModeIcon(){
+            interactionModeIcon = (HUDInteractionModeIcon)GetNonPublicField(DaggerfallUI.Instance.DaggerfallHUD, "interactionModeIcon");
+            interactionModeIcon.SetMargins(Margins.All, 0);
+            SetInteractionModeIconValues();
+        }
         public static void SetWandererCompass(){
             // * Enabled: reset to ShowCompass in DaggerfallHUD.
             // * Scale: reset to NativePanel.LocalScale
@@ -352,7 +393,6 @@ namespace MapOverwritesMod
                 PositionHUDElements();
             }
 
-
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 if (GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes")){
                     int newCount = GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes").transform.childCount;
@@ -426,6 +466,8 @@ namespace MapOverwritesMod
             SetVitalsHud();
             SetBreathHud();
             debugTexture = DaggerfallUI.CreateSolidTexture(UnityEngine.Color.white, 8);
+            // 
+            SetInteractionModeIcon();
         }
 
         public void ForceWireFrame(){
@@ -794,6 +836,7 @@ namespace MapOverwritesMod
             ){
                 wandererCompass.Draw();
                 wandererVitals.Draw();
+                interactionModeIcon.Draw();
             }
             if (GameManager.Instance.PlayerEnterExit.IsPlayerSubmerged & !GameManager.Instance.PlayerEntity.IsWaterBreathing){
                 wandererBreathBar.Draw();
