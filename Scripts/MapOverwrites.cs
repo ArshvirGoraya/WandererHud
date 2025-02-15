@@ -91,6 +91,11 @@ namespace MapOverwritesMod
         //
         static HUDInteractionModeIcon interactionModeIcon;
         // 
+        static List<Panel> facePanels;
+        // public static float facePanelsScale;
+        public static Vector2 facePanelsScale = Vector2.zero;
+        const int facePanelsDefaultSize = 48;
+        // 
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams){
             mod = initParams.Mod;
@@ -170,6 +175,11 @@ namespace MapOverwritesMod
             if (interactionModeIcon != null){
                 SetInteractionModeIconValues();
             }
+            // facePanelsScale = WandererHudSettings.GetFloat("FacePanels", "Scale");
+            facePanelsScale = new Vector2(
+                facePanelsDefaultSize * WandererHudSettings.GetFloat("FacePanels", "Scale"),
+                facePanelsDefaultSize * WandererHudSettings.GetFloat("FacePanels", "Scale")
+            );
         }
 
         public static float NormalizeValue(float value, float min, float max){
@@ -186,9 +196,16 @@ namespace MapOverwritesMod
             PositionHUDElements();
         }
 
+        public static void PositionFacePanels(){
+            foreach (Panel facePanel in facePanels){
+                facePanel.Size = facePanelsScale;
+            }
+        }
+
         // TODO: optimize this so isnt calculated on each update lol.
         public static void PositionHUDElements(){
-            if (wandererCompass.Parent == null){ return; } // ! Heuristic for checking if in game.
+            if (wandererCompass.Parent == null){ return; } // ! Heuristic for checking if in game
+            PositionFacePanels();
 
             wandererCompass.Scale = new Vector2(
                 defaultWandererCompassScale.x * wandererCompassScale,
@@ -293,11 +310,34 @@ namespace MapOverwritesMod
 
             interactionModeIcon.Position = Vector2.zero;
         }
+
         public static void SetInteractionModeIcon(){
             interactionModeIcon = (HUDInteractionModeIcon)GetNonPublicField(DaggerfallUI.Instance.DaggerfallHUD, "interactionModeIcon");
             interactionModeIcon.SetMargins(Margins.All, 0);
             SetInteractionModeIconValues();
         }
+
+        public static void SetFacePanels(){
+            EscortingNPCFacePanel facePanel = DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces;
+            facePanel.SetMargins(Margins.All, 0);
+            facePanels = (List<Panel>)GetNonPublicField(facePanel, "facePanels");
+
+            // ! This is a test: remove everything under this line.
+            List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanel, "faces");
+            FaceDetails firstFace = faces[0];
+            // 
+            firstFace.factionFaceIndex = UnityEngine.Random.Range(0, 61);
+            faces.Add(firstFace);
+            // 
+            firstFace.factionFaceIndex = UnityEngine.Random.Range(0, 61);
+            faces.Add(firstFace);
+            // 
+            firstFace.factionFaceIndex = UnityEngine.Random.Range(0, 61);
+            faces.Add(firstFace);
+            // 
+            facePanel.RefreshFaces();
+        }
+
         public static void SetWandererCompass(){
             // * Enabled: reset to ShowCompass in DaggerfallHUD.
             // * Scale: reset to NativePanel.LocalScale
@@ -386,7 +426,27 @@ namespace MapOverwritesMod
             methodInfo.Invoke(targetObject, parameters);
         }
 
+        private void DebugAction(){
+            // * Drop a face panel:
+            // ! This is a test: remove everything under this line.
+            EscortingNPCFacePanel facePanel = DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces;
+            List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanel, "faces");
+            faces.RemoveAt(1);
+            facePanel.RefreshFaces();
+        }
+
+        private void DebugInputs(){
+            if (!Input.anyKey){ return; }
+
+            // Keycodes: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/KeyCode.html
+            if (Input.GetKeyDown(KeyCode.Slash)){
+                DebugAction();
+            }
+        }
+
         private void Update(){
+            DebugInputs();
+
             if (GameManager.IsGamePaused){
                 ForceUpdateHUDElements();
             } else{
@@ -468,6 +528,8 @@ namespace MapOverwritesMod
             debugTexture = DaggerfallUI.CreateSolidTexture(UnityEngine.Color.white, 8);
             // 
             SetInteractionModeIcon();
+            // 
+            SetFacePanels();
         }
 
         public void ForceWireFrame(){
@@ -841,6 +903,14 @@ namespace MapOverwritesMod
             if (GameManager.Instance.PlayerEnterExit.IsPlayerSubmerged & !GameManager.Instance.PlayerEntity.IsWaterBreathing){
                 wandererBreathBar.Draw();
             }
+
+            if (facePanels != null){
+                foreach (Panel facePanel in facePanels){
+                    if (!facePanel.Enabled) { break; }
+                    facePanel.Draw();
+                }
+            }
+
 
             // Debugging
             // if (debugTexture != null){

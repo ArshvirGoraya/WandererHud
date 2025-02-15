@@ -2,6 +2,23 @@
     "Version": "1.0.0",
     "Sections": [
         {
+            "Name": "FacePanels",
+            "Description": null,
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Min": 0.0,
+                    "Max": 3.0,
+                    "Value": 1.0,
+                    "Name": "Scale",
+                    "Description": null,
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
             "Name": "InteractionMode",
             "Description": null,
             "IsAdvanced": false,
