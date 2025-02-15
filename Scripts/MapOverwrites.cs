@@ -95,6 +95,7 @@ namespace MapOverwritesMod
         // public static float facePanelsScale;
         public static Vector2 facePanelsScale = Vector2.zero;
         const int facePanelsDefaultSize = 48;
+        public static bool facePanelsHorizontalOrientation = false;
         // 
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams){
@@ -180,6 +181,7 @@ namespace MapOverwritesMod
                 facePanelsDefaultSize * WandererHudSettings.GetFloat("FacePanels", "Scale"),
                 facePanelsDefaultSize * WandererHudSettings.GetFloat("FacePanels", "Scale")
             );
+            facePanelsHorizontalOrientation = WandererHudSettings.GetBool("FacePanels", "HorizontalOrientation");
         }
 
         public static float NormalizeValue(float value, float min, float max){
@@ -196,9 +198,34 @@ namespace MapOverwritesMod
             PositionHUDElements();
         }
 
+        public static void EmptyFunction(){
+
+        }
+
         public static void PositionFacePanels(){
+            // Rect screenRect = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
+            // Vector2 panelPosition = new Vector2(screenRect.x, 0);
+
+            Vector2 panelPosition = Vector2.zero;
             foreach (Panel facePanel in facePanels){
+                if (!facePanel.Enabled){ break; }
+                // * Scale
                 facePanel.Size = facePanelsScale;
+                
+                // * Position
+                // Top left
+                facePanel.Position = panelPosition;
+                if (facePanelsHorizontalOrientation){
+                    panelPosition = new Vector2 (
+                        panelPosition.x + facePanel.Size.x, 
+                        0
+                    );
+                } else {
+                    panelPosition = new Vector2 (
+                        0,
+                        panelPosition.y + facePanel.Size.y
+                    );
+                }
             }
         }
 
@@ -444,14 +471,16 @@ namespace MapOverwritesMod
             }
         }
 
-        private void Update(){
-            DebugInputs();
-
+        private void LateUpdate(){
             if (GameManager.IsGamePaused){
                 ForceUpdateHUDElements();
             } else{
                 PositionHUDElements();
             }
+        }
+
+        private void Update(){
+            DebugInputs();
 
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 if (GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes")){
