@@ -18,9 +18,33 @@
                 {
                     "Value": true,
                     "Name": "HorizontalOrientation",
-                    "Description": "Left-to-right instead of the default top-down",
+                    "Description": "Left-Right instead of the default Up-Down",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Options": [
+                        "Left",
+                        "Center",
+                        "Right"
+                    ],
+                    "Value": 0,
+                    "Name": "HorizontalAlignment",
+                    "Description": null,
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Options": [
+                        "Top",
+                        "Middle",
+                        "Bottom"
+                    ],
+                    "Value": 0,
+                    "Name": "VerticalAlignment",
+                    "Description": null,
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
                 }
             ],
             "$version": "v1"

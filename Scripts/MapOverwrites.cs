@@ -86,16 +86,19 @@ namespace MapOverwritesMod
         public static Color32 debugColor = new Color32(255, 255, 255, 255);
         //
         public static ModSettings WandererHudSettings;
-        static HorizontalAlignment wandererCompassHorizontalAlignment = HorizontalAlignment.Center;
-        static VerticalAlignment wandererCompassVerticalAlignment = VerticalAlignment.Bottom;
+        static HorizontalAlignment wandererCompassHorizontalAlignment;
+        static VerticalAlignment wandererCompassVerticalAlignment;
         //
         static HUDInteractionModeIcon interactionModeIcon;
         // 
+        public static EscortingNPCFacePanel facePanelsParent;
         static List<Panel> facePanels;
         // public static float facePanelsScale;
         public static Vector2 facePanelsScale = Vector2.zero;
         const int facePanelsDefaultSize = 48;
         public static bool facePanelsHorizontalOrientation = false;
+        static HorizontalAlignment facePanelsHorizontalAlignment;
+        static VerticalAlignment facePanelsVerticalAlignment;
         // 
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams){
@@ -182,6 +185,8 @@ namespace MapOverwritesMod
                 facePanelsDefaultSize * WandererHudSettings.GetFloat("FacePanels", "Scale")
             );
             facePanelsHorizontalOrientation = WandererHudSettings.GetBool("FacePanels", "HorizontalOrientation");
+            facePanelsHorizontalAlignment = GetHorizontalAlignmentFromSettings(WandererHudSettings.GetInt("FacePanels", "HorizontalAlignment"));
+            facePanelsVerticalAlignment = GetVerticalAlignmentFromSettings(WandererHudSettings.GetInt("FacePanels", "VerticalAlignment"));
         }
 
         public static float NormalizeValue(float value, float min, float max){
@@ -203,27 +208,109 @@ namespace MapOverwritesMod
         }
 
         public static void PositionFacePanels(){
-            // Rect screenRect = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
+            Rect screenRect = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
             // Vector2 panelPosition = new Vector2(screenRect.x, 0);
+            Vector2 startingPosition = Vector2.zero;
 
-            Vector2 panelPosition = Vector2.zero;
+            switch(facePanelsHorizontalAlignment){
+                case HorizontalAlignment.Center: {
+                    startingPosition = new Vector2(
+                        (screenRect.width / 2),
+                        startingPosition.y
+                    );
+                    break;
+                }
+                case HorizontalAlignment.Right: {
+                    startingPosition = new Vector2(
+                        (screenRect.width) - facePanelsScale.x,
+                        startingPosition.y
+                    );
+                    break;
+                }
+            }
+            switch(facePanelsVerticalAlignment){
+                case VerticalAlignment.Middle: {
+                    startingPosition = new Vector2(
+                        startingPosition.x,
+                        (screenRect.height / 2)
+                    );
+                    break;
+                }
+                case VerticalAlignment.Bottom: {
+                    startingPosition = new Vector2(
+                        startingPosition.x,
+                        (screenRect.height) - facePanelsScale.y
+                    );
+                    break;
+                }
+            }
+            bool growLeft = (facePanelsHorizontalAlignment == HorizontalAlignment.Right);
+            bool growUp = (facePanelsVerticalAlignment == VerticalAlignment.Bottom);
+
+            Debug.Log($"startingPosition: {startingPosition}");
+
+            Vector2 panelPosition = startingPosition;
+
+            int facePanelCount = 0;
+
             foreach (Panel facePanel in facePanels){
                 if (!facePanel.Enabled){ break; }
+                facePanelCount += 1 ;
                 // * Scale
                 facePanel.Size = facePanelsScale;
                 
                 // * Position
-                // Top left
                 facePanel.Position = panelPosition;
                 if (facePanelsHorizontalOrientation){
-                    panelPosition = new Vector2 (
-                        panelPosition.x + facePanel.Size.x, 
-                        0
-                    );
+                    // 
+                    if (growLeft){
+                        panelPosition = new Vector2 (
+                            panelPosition.x - facePanel.Size.x, 
+                            startingPosition.y
+                        );
+                    }else{
+                        panelPosition = new Vector2 (
+                            panelPosition.x + facePanel.Size.x, 
+                            startingPosition.y
+                        );
+                    }
+
                 } else {
-                    panelPosition = new Vector2 (
-                        0,
-                        panelPosition.y + facePanel.Size.y
+                    if (growUp){
+                        panelPosition = new Vector2 (
+                            startingPosition.x,
+                            panelPosition.y - facePanel.Size.y
+                        );
+                    } else {
+                        panelPosition = new Vector2 (
+                            startingPosition.x,
+                            panelPosition.y + facePanel.Size.y
+                        );
+                    }
+                }
+            }
+            // * Correction for middle alignments:
+            if (facePanelsHorizontalAlignment == HorizontalAlignment.Center || facePanelsVerticalAlignment == VerticalAlignment.Middle){
+                Vector2 facePanelSize = new Vector2(facePanelsScale.x, facePanelCount * facePanelsScale.y);
+                if (facePanelsHorizontalOrientation){
+                    facePanelSize = new Vector2(facePanelCount * facePanelsScale.x, facePanelsScale.y);
+                }
+                Vector2 facePanelPositionOffset = Vector2.zero;
+                if (facePanelsHorizontalAlignment == HorizontalAlignment.Center){
+                    facePanelPositionOffset = new Vector2(
+                        (facePanelSize.x / 2), facePanelPositionOffset.y
+                    );
+                }
+                if (facePanelsVerticalAlignment == VerticalAlignment.Middle){
+                    facePanelPositionOffset = new Vector2(
+                        facePanelPositionOffset.x, (facePanelSize.y / 2)
+                    );
+                }
+                foreach (Panel facePanel in facePanels){
+                    if (!facePanel.Enabled){ break; }
+                    facePanel.Position = new Vector2(
+                        facePanel.Position.x - facePanelPositionOffset.x,
+                        facePanel.Position.y - facePanelPositionOffset.y
                     );
                 }
             }
@@ -345,12 +432,14 @@ namespace MapOverwritesMod
         }
 
         public static void SetFacePanels(){
-            EscortingNPCFacePanel facePanel = DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces;
-            facePanel.SetMargins(Margins.All, 0);
-            facePanels = (List<Panel>)GetNonPublicField(facePanel, "facePanels");
+            facePanelsParent = DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces;
+            facePanelsParent.SetMargins(Margins.All, 0);
+            facePanelsParent.AutoSize = AutoSizeModes.None;
+
+            facePanels = (List<Panel>)GetNonPublicField(facePanelsParent, "facePanels");
 
             // ! This is a test: remove everything under this line.
-            List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanel, "faces");
+            List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanelsParent, "faces");
             FaceDetails firstFace = faces[0];
             // 
             firstFace.factionFaceIndex = UnityEngine.Random.Range(0, 61);
@@ -362,7 +451,7 @@ namespace MapOverwritesMod
             firstFace.factionFaceIndex = UnityEngine.Random.Range(0, 61);
             faces.Add(firstFace);
             // 
-            facePanel.RefreshFaces();
+            facePanelsParent.RefreshFaces();
         }
 
         public static void SetWandererCompass(){
