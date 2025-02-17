@@ -334,9 +334,48 @@ namespace MapOverwritesMod
             }
         }
 
-        public static Rect PositionSpellEffects(){
+        // ToDo: this is very unoptimized -> repeated loops that dont need to be repeated.
+        public static void PositionSpellEffects(){
             DaggerfallUI.Instance.DaggerfallHUD.ActiveSpells.Enabled = true; // Gets disabled when opening pause dropdown so must re-enable it here.
+            bool growLeft = (activeSpellsHorizontalAlignment == HorizontalAlignment.Right);
+            bool growUp = (activeSpellsVerticalAlignment == VerticalAlignment.Bottom);
 
+            Rect spellEffectsBuffsRect = PositionSpellEffectIcons(activeSelfList);
+            Rect spellEffectsDebuffsRect = PositionSpellEffectIcons(activeOtherList);
+
+            if (spellEffectsDebuffsRect == Rect.zero){ return; }
+
+            // * Fix Debuff Positioning so is next to Buffs instead of in the same position as it.
+            Vector2 offsetPosition = Vector2.zero;
+            // Determine Offset Position
+            if (activeSpellsHorizontalOrientation){
+                if (activeSpellsVerticalAlignment == VerticalAlignment.Bottom){
+                    offsetPosition = new Vector2(offsetPosition.x, spellEffectsBuffsRect.height);
+                }else{
+                    offsetPosition = new Vector2(offsetPosition.x, -spellEffectsBuffsRect.height);
+                }
+            } else {
+                if (activeSpellsHorizontalAlignment == HorizontalAlignment.Right){
+                    offsetPosition = new Vector2(spellEffectsBuffsRect.width, offsetPosition.y);
+                }else{
+                    offsetPosition = new Vector2(-spellEffectsBuffsRect.width, offsetPosition.y);
+                }
+            }
+            if (offsetPosition == Vector2.zero){ return; }
+            // * Perform offset
+            foreach (ActiveSpellIcon spell in activeOtherList){
+                if (spell.poolIndex >= maxIconPool){ break; }
+                Panel panel = iconPool[spell.poolIndex];
+                if (!panel.Enabled) { continue; }
+                panel.Position = new Vector2(
+                    panel.Position.x - offsetPosition.x,
+                    panel.Position.y - offsetPosition.y
+                );
+            }
+
+        }
+        public static Rect PositionSpellEffectIcons(List<ActiveSpellIcon> activeSpellList){
+            if (activeSpellList.Count <= 0){ return Rect.zero; }
             Rect boundingBox = new Rect(
                 DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.x / DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale.x,
                 DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.y / DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale.y,
@@ -344,31 +383,18 @@ namespace MapOverwritesMod
                 DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.height / DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale.y
             );
             float startingX = 0;
-
             if (DaggerfallUnity.Settings.RetroRenderingMode == 0 || DaggerfallUnity.Settings.RetroModeAspectCorrection == 0){
-                // * NOT using retro mode.
-                Debug.Log($"not using retro mode");
                 startingX = -boundingBox.x;
             }
-
-
-            // activeSpellsPanel.Size = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Size;
-            // Debug.Log($"activeSpellsPanel.Size: {activeSpellsPanel.Size}");
-            // Debug.Log($"activeSpellsPanel.LocalScale: {activeSpellsPanel.LocalScale}");
-            // Debug.Log($"activeSpellsPanel.AutoSize: {activeSpellsPanel.AutoSize}");
-            // Debug.Log($"NativePanel.LocalScale: {DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale}");
-            // Debug.Log($"NativePanel.Rectangle: {DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle}");
-            Debug.Log($"boundingBox: {boundingBox}");
-            Debug.Log($"startingX: {startingX}");
-
-            // activeOtherList; // ! Still have to do this!!!
-            Vector2 startingPosition = GetStartingPositionFromAlignment(activeSpellsHorizontalAlignment, activeSpellsVerticalAlignment, activeSpellsScale, boundingBox.width, boundingBox.height, startingX);
             bool growLeft = (activeSpellsHorizontalAlignment == HorizontalAlignment.Right);
             bool growUp = (activeSpellsVerticalAlignment == VerticalAlignment.Bottom);
-            Vector2 panelPosition = startingPosition;
             int panelCount = 0;
 
-            foreach (ActiveSpellIcon spell in activeSelfList){
+            Vector2 startingPosition = GetStartingPositionFromAlignment(activeSpellsHorizontalAlignment, activeSpellsVerticalAlignment, activeSpellsScale, boundingBox.width, boundingBox.height, startingX);
+
+            Vector2 panelPosition = startingPosition;
+
+            foreach (ActiveSpellIcon spell in activeSpellList){
                 if (spell.poolIndex >= maxIconPool){ break; }
                 Panel panel = iconPool[spell.poolIndex];
                 if (!panel.Enabled) { continue; }
@@ -431,7 +457,7 @@ namespace MapOverwritesMod
                         panelPositionOffset.x, (panelsAggregate.height / 2)
                     );
                 }
-                foreach (ActiveSpellIcon spell in activeSelfList){
+                foreach (ActiveSpellIcon spell in activeSpellList){
                     if (spell.poolIndex >= maxIconPool){ break; }
                     Panel panel = iconPool[spell.poolIndex];
                     if (!panel.Enabled) { continue; }
@@ -442,8 +468,8 @@ namespace MapOverwritesMod
                 }
             }
 
-            panelsAggregate.x = - panelPositionOffset.x;
-            panelsAggregate.y = - panelPositionOffset.y;
+            panelsAggregate.x = -panelPositionOffset.x;
+            panelsAggregate.y = -panelPositionOffset.y;
             return panelsAggregate;
         }
 
@@ -627,19 +653,19 @@ namespace MapOverwritesMod
             facePanels = (List<Panel>)GetNonPublicField(facePanelsParent, "facePanels");
 
             // ! This is a test: remove everything under this line.
-            List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanelsParent, "faces");
-            FaceDetails firstFace = faces[0];
-            // 
-            firstFace.factionFaceIndex = UnityEngine.Random.Range(0, 61);
-            faces.Add(firstFace);
-            // 
-            firstFace.factionFaceIndex = UnityEngine.Random.Range(0, 61);
-            faces.Add(firstFace);
-            // 
-            firstFace.factionFaceIndex = UnityEngine.Random.Range(0, 61);
-            faces.Add(firstFace);
-            // 
-            facePanelsParent.RefreshFaces();
+            // List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanelsParent, "faces");
+            // FaceDetails firstFace = faces[0];
+            // // 
+            // firstFace.factionFaceIndex = UnityEngine.Random.Range(0, 61);
+            // faces.Add(firstFace);
+            // // 
+            // firstFace.factionFaceIndex = UnityEngine.Random.Range(0, 61);
+            // faces.Add(firstFace);
+            // // 
+            // firstFace.factionFaceIndex = UnityEngine.Random.Range(0, 61);
+            // faces.Add(firstFace);
+            // // 
+            // facePanelsParent.RefreshFaces();
         }
 
         public static void SetWandererCompass(){
@@ -746,10 +772,10 @@ namespace MapOverwritesMod
         private void DebugAction(){
             // * Drop a face panel:
             // ! This is a test: remove everything under this line.
-            EscortingNPCFacePanel facePanel = DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces;
-            List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanel, "faces");
-            faces.RemoveAt(1);
-            facePanel.RefreshFaces();
+            // EscortingNPCFacePanel facePanel = DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces;
+            // List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanel, "faces");
+            // faces.RemoveAt(1);
+            // facePanel.RefreshFaces();
         }
 
         private void DebugInputs(){
