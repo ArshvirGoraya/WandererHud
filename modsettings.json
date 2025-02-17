@@ -2,6 +2,54 @@
     "Version": "1.0.0",
     "Sections": [
         {
+            "Name": "ActiveSpells",
+            "Description": null,
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Min": 0.0,
+                    "Max": 20.0,
+                    "Value": 8.0,
+                    "Name": "Scale",
+                    "Description": null,
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "HorizontalOrientation",
+                    "Description": "Left-Right instead of the default Up-Down",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Options": [
+                        "Left",
+                        "Center",
+                        "Right"
+                    ],
+                    "Value": 0,
+                    "Name": "HorizontalAlignment",
+                    "Description": null,
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Options": [
+                        "Top",
+                        "Middle",
+                        "Bottom"
+                    ],
+                    "Value": 0,
+                    "Name": "VerticalAlignment",
+                    "Description": null,
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
             "Name": "FacePanels",
             "Description": null,
             "IsAdvanced": false,
