@@ -93,7 +93,6 @@ namespace MapOverwritesMod
         static HUDInteractionModeIcon interactionModeIcon;
         static bool HUDInteractionModeIconEnabled = true;
         static Vector2 HUDInteractionModeIconPositionOffset = Vector2.zero;
-        static Vector2 HUDInteractionModeIconPosition = Vector2.zero;
         static HorizontalAlignment HUDInteractionModeHorizontalAlignment;
         static VerticalAlignment HUDInteractionModeVerticalAlignment;
         // 
@@ -115,6 +114,8 @@ namespace MapOverwritesMod
         public static bool activeSpellsHorizontalOrientation = false;
         static HorizontalAlignment activeSpellsHorizontalAlignment;
         static VerticalAlignment activeSpellsVerticalAlignment;
+        // 
+        static Vector2 edgeMargin = Vector2.zero;
         // 
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams){
@@ -188,13 +189,6 @@ namespace MapOverwritesMod
 
             wandererCompassScale = WandererHudSettings.GetFloat("Compass", "Scale");
 
-            if (DaggerfallUI.HasInstance && DaggerfallUI.Instance.DaggerfallHUD != null){
-                ForceUpdateHUDElements();
-            }
-            // 
-            if (interactionModeIcon != null){
-                SetInteractionModeIconValues();
-            }
             // facePanelsScale = WandererHudSettings.GetFloat("FacePanels", "Scale");
             facePanelsScale = new Vector2(
                 facePanelsDefaultSize * WandererHudSettings.GetFloat("FacePanels", "Scale"),
@@ -212,6 +206,18 @@ namespace MapOverwritesMod
             activeSpellsHorizontalAlignment = GetHorizontalAlignmentFromSettings(WandererHudSettings.GetInt("ActiveSpells", "HorizontalAlignment"));
             activeSpellsVerticalAlignment = GetVerticalAlignmentFromSettings(WandererHudSettings.GetInt("ActiveSpells", "VerticalAlignment"));
             // 
+            edgeMargin = new Vector2(
+                WandererHudSettings.GetTupleFloat("Hud", "EdgeMargin").First,
+                WandererHudSettings.GetTupleFloat("Hud", "EdgeMargin").Second
+            );
+            // 
+            if (DaggerfallUI.HasInstance && DaggerfallUI.Instance.DaggerfallHUD != null){
+                ForceUpdateHUDElements();
+            }
+            // 
+            if (interactionModeIcon != null){
+                SetInteractionModeIconValues();
+            }
         }
 
         public static float NormalizeValue(float value, float min, float max){
@@ -313,13 +319,15 @@ namespace MapOverwritesMod
                     }
                 }
             }
+            // * Positional Corrections
+            Vector2 facePanelPositionOffset = Vector2.zero;
+
             // * Correction for middle alignments:
             if (facePanelsHorizontalAlignment == HorizontalAlignment.Center || facePanelsVerticalAlignment == VerticalAlignment.Middle){
                 Vector2 facePanelSize = new Vector2(facePanelsScale.x, facePanelCount * facePanelsScale.y);
                 if (facePanelsHorizontalOrientation){
                     facePanelSize = new Vector2(facePanelCount * facePanelsScale.x, facePanelsScale.y);
                 }
-                Vector2 facePanelPositionOffset = Vector2.zero;
                 if (facePanelsHorizontalAlignment == HorizontalAlignment.Center){
                     facePanelPositionOffset = new Vector2(
                         (facePanelSize.x / 2), facePanelPositionOffset.y
@@ -330,13 +338,40 @@ namespace MapOverwritesMod
                         facePanelPositionOffset.x, (facePanelSize.y / 2)
                     );
                 }
-                foreach (Panel facePanel in facePanels){
-                    if (!facePanel.Enabled){ break; }
-                    facePanel.Position = new Vector2(
-                        facePanel.Position.x - facePanelPositionOffset.x,
-                        facePanel.Position.y - facePanelPositionOffset.y
-                    );
-                }
+            }
+
+            // * Edge Margin Correction:
+            if (facePanelsHorizontalAlignment == HorizontalAlignment.Right){
+                // edgeMargin
+                facePanelPositionOffset = new Vector2(
+                    facePanelPositionOffset.x + edgeMargin.x,
+                    facePanelPositionOffset.y
+                );
+
+            }else if (facePanelsHorizontalAlignment == HorizontalAlignment.Left){
+                facePanelPositionOffset = new Vector2(
+                    facePanelPositionOffset.x - edgeMargin.x,
+                    facePanelPositionOffset.y
+                );
+            }
+            if (facePanelsVerticalAlignment == VerticalAlignment.Top){
+                facePanelPositionOffset = new Vector2(
+                    facePanelPositionOffset.x,
+                    facePanelPositionOffset.y - edgeMargin.y
+                );
+
+            }else if (facePanelsVerticalAlignment == VerticalAlignment.Bottom){
+                facePanelPositionOffset = new Vector2(
+                    facePanelPositionOffset.x,
+                    facePanelPositionOffset.y + edgeMargin.y
+                );
+            }
+            foreach (Panel facePanel in facePanels){
+                if (!facePanel.Enabled){ break; }
+                facePanel.Position = new Vector2(
+                    facePanel.Position.x - facePanelPositionOffset.x,
+                    facePanel.Position.y - facePanelPositionOffset.y
+                );
             }
         }
 
@@ -385,13 +420,15 @@ namespace MapOverwritesMod
             Rect boundingBox = new Rect(
                 DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.x / DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale.x,
                 DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.y / DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale.y,
-                DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.width / DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale.x,
+                DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.width / DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale.x + (DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.x / DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale.x),
                 DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.height / DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale.y
             );
+
             float startingX = 0;
             if (DaggerfallUnity.Settings.RetroRenderingMode == 0 || DaggerfallUnity.Settings.RetroModeAspectCorrection == 0){
                 startingX = -boundingBox.x;
             }
+
             bool growLeft = (activeSpellsHorizontalAlignment == HorizontalAlignment.Right);
             bool growUp = (activeSpellsVerticalAlignment == VerticalAlignment.Bottom);
             int panelCount = 0;
@@ -452,26 +489,50 @@ namespace MapOverwritesMod
             );
             // * Correction for middle alignments:
             Vector2 panelPositionOffset = Vector2.zero;
-            if (activeSpellsHorizontalAlignment == HorizontalAlignment.Center || activeSpellsVerticalAlignment == VerticalAlignment.Middle){
-                if (activeSpellsHorizontalAlignment == HorizontalAlignment.Center){
-                    panelPositionOffset = new Vector2(
-                        (panelsAggregate.width / 2), panelPositionOffset.y
-                    );
-                }
-                if (activeSpellsVerticalAlignment == VerticalAlignment.Middle){
-                    panelPositionOffset = new Vector2(
-                        panelPositionOffset.x, (panelsAggregate.height / 2)
-                    );
-                }
-                foreach (ActiveSpellIcon spell in activeSpellList){
-                    if (spell.poolIndex >= maxIconPool){ break; }
-                    Panel panel = iconPool[spell.poolIndex];
-                    if (!panel.Enabled) { continue; }
-                    panel.Position = new Vector2(
-                        panel.Position.x - panelPositionOffset.x,
-                        panel.Position.y - panelPositionOffset.y
-                    );
-                }
+            if (activeSpellsHorizontalAlignment == HorizontalAlignment.Center){
+                panelPositionOffset = new Vector2(
+                    (panelsAggregate.width / 2), panelPositionOffset.y
+                );
+            }
+            if (activeSpellsVerticalAlignment == VerticalAlignment.Middle){
+                panelPositionOffset = new Vector2(
+                    panelPositionOffset.x, (panelsAggregate.height / 2)
+                );
+            }
+            // * Edge Corrections
+            if (activeSpellsHorizontalAlignment == HorizontalAlignment.Right){
+                panelPositionOffset = new Vector2(
+                    panelPositionOffset.x + (edgeMargin.x / DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale.x),
+                    panelPositionOffset.y
+                );
+
+            }else if (activeSpellsHorizontalAlignment == HorizontalAlignment.Left){
+                panelPositionOffset = new Vector2(
+                    panelPositionOffset.x - (edgeMargin.x / DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale.x),
+                    panelPositionOffset.y
+                );
+            }
+            if (activeSpellsVerticalAlignment == VerticalAlignment.Top){
+                panelPositionOffset = new Vector2(
+                    panelPositionOffset.x,
+                    panelPositionOffset.y - (edgeMargin.y / DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale.y)
+                );
+
+            }else if (activeSpellsVerticalAlignment == VerticalAlignment.Bottom){
+                panelPositionOffset = new Vector2(
+                    panelPositionOffset.x,
+                    panelPositionOffset.y + (edgeMargin.y / DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale.y)
+                );
+            }
+
+            foreach (ActiveSpellIcon spell in activeSpellList){
+                if (spell.poolIndex >= maxIconPool){ break; }
+                Panel panel = iconPool[spell.poolIndex];
+                if (!panel.Enabled) { continue; }
+                panel.Position = new Vector2(
+                    panel.Position.x - panelPositionOffset.x,
+                    panel.Position.y - panelPositionOffset.y
+                );
             }
 
             panelsAggregate.x = -panelPositionOffset.x;
@@ -541,7 +602,18 @@ namespace MapOverwritesMod
                 //     compassY = yAnchor - (compassHeight / 2);
                 //     break;
                 // }
-            }            
+            }
+            if (wandererCompassHorizontalAlignment == HorizontalAlignment.Right){
+                compassX -= edgeMargin.x;
+
+            }else if (wandererCompassHorizontalAlignment == HorizontalAlignment.Left){
+                compassX += edgeMargin.x;
+            }
+            if (wandererCompassVerticalAlignment == VerticalAlignment.Top){
+                compassY += edgeMargin.y;
+            }else if (wandererCompassVerticalAlignment == VerticalAlignment.Bottom){
+                compassY -= edgeMargin.y;
+            }
 
             wandererCompass.Position = new Vector2(
                 compassX,
@@ -600,6 +672,29 @@ namespace MapOverwritesMod
                 startingPosition = new Vector2(
                     startingPosition.x,
                     startingPosition.y - interactionModeSize.y / 2
+                );
+            }
+            // 
+            if (HUDInteractionModeHorizontalAlignment == HorizontalAlignment.Right){
+                startingPosition = new Vector2(
+                    startingPosition.x - edgeMargin.x,
+                    startingPosition.y
+                );
+            }else if (HUDInteractionModeHorizontalAlignment == HorizontalAlignment.Left){
+                startingPosition = new Vector2(
+                    startingPosition.x + edgeMargin.x,
+                    startingPosition.y
+                );
+            }
+            if (HUDInteractionModeVerticalAlignment == VerticalAlignment.Top){
+                startingPosition = new Vector2(
+                    startingPosition.x,
+                    startingPosition.y + edgeMargin.y
+                );
+            }else if (HUDInteractionModeVerticalAlignment == VerticalAlignment.Bottom){
+                startingPosition = new Vector2(
+                    startingPosition.x,
+                    startingPosition.y - edgeMargin.y
                 );
             }
 

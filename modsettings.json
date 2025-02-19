@@ -2,6 +2,24 @@
     "Version": "1.0.0",
     "Sections": [
         {
+            "Name": "Hud",
+            "Description": null,
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": {
+                        "First": 0.0,
+                        "Second": 100.0
+                    },
+                    "Name": "EdgeMargin",
+                    "Description": "Keeps hud elements away from Horizontal and Vertical edges of the screen",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TupleFloatKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
             "Name": "InteractionMode",
             "Description": null,
             "IsAdvanced": false,
