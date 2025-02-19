@@ -2,6 +2,64 @@
     "Version": "1.0.0",
     "Sections": [
         {
+            "Name": "InteractionMode",
+            "Description": null,
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": false,
+                    "Name": "Disable",
+                    "Description": null,
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": {
+                        "First": 0.0,
+                        "Second": 100.0
+                    },
+                    "Name": "PositionOffset",
+                    "Description": null,
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TupleFloatKey"
+                },
+                {
+                    "Options": [
+                        "Left",
+                        "Center",
+                        "Right"
+                    ],
+                    "Value": 0,
+                    "Name": "HorizontalAlignment",
+                    "Description": null,
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Options": [
+                        "Top",
+                        "Middle",
+                        "Bottom"
+                    ],
+                    "Value": 0,
+                    "Name": "VerticalAlignment",
+                    "Description": null,
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Min": 0.0,
+                    "Max": 4.0,
+                    "Value": 0.0,
+                    "Name": "Scale",
+                    "Description": null,
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
             "Name": "ActiveSpells",
             "Description": null,
             "IsAdvanced": false,
@@ -93,47 +151,6 @@
                     "Description": null,
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
-                }
-            ],
-            "$version": "v1"
-        },
-        {
-            "Name": "InteractionMode",
-            "Description": null,
-            "IsAdvanced": false,
-            "Keys": [
-                {
-                    "Options": [
-                        "Left",
-                        "Center",
-                        "Right"
-                    ],
-                    "Value": 0,
-                    "Name": "HorizontalAlignment",
-                    "Description": null,
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
-                },
-                {
-                    "Options": [
-                        "Top",
-                        "Middle",
-                        "Bottom"
-                    ],
-                    "Value": 0,
-                    "Name": "VerticalAlignment",
-                    "Description": null,
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
-                },
-                {
-                    "Min": 0.0,
-                    "Max": 4.0,
-                    "Value": 0.0,
-                    "Name": "Scale",
-                    "Description": null,
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 }
             ],
             "$version": "v1"

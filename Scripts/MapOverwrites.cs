@@ -91,6 +91,11 @@ namespace MapOverwritesMod
         static VerticalAlignment wandererCompassVerticalAlignment;
         //
         static HUDInteractionModeIcon interactionModeIcon;
+        static bool HUDInteractionModeIconEnabled = true;
+        static Vector2 HUDInteractionModeIconPositionOffset = Vector2.zero;
+        static Vector2 HUDInteractionModeIconPosition = Vector2.zero;
+        static HorizontalAlignment HUDInteractionModeHorizontalAlignment;
+        static VerticalAlignment HUDInteractionModeVerticalAlignment;
         // 
         public static EscortingNPCFacePanel facePanelsParent;
         static List<Panel> facePanels;
@@ -206,6 +211,7 @@ namespace MapOverwritesMod
             activeSpellsHorizontalOrientation = WandererHudSettings.GetBool("ActiveSpells", "HorizontalOrientation");
             activeSpellsHorizontalAlignment = GetHorizontalAlignmentFromSettings(WandererHudSettings.GetInt("ActiveSpells", "HorizontalAlignment"));
             activeSpellsVerticalAlignment = GetVerticalAlignmentFromSettings(WandererHudSettings.GetInt("ActiveSpells", "VerticalAlignment"));
+            // 
         }
 
         public static float NormalizeValue(float value, float min, float max){
@@ -473,12 +479,7 @@ namespace MapOverwritesMod
             return panelsAggregate;
         }
 
-        // TODO: optimize this so isnt calculated on each update lol.
-        public static void PositionHUDElements(){
-            if (wandererCompass.Parent == null){ return; } // ! Heuristic for checking if in game
-            PositionFacePanels();
-            PositionSpellEffects();
-
+        public static void PositionWandererCompass(){
             wandererCompass.Scale = new Vector2(
                 defaultWandererCompassScale.x * wandererCompassScale,
                 defaultWandererCompassScale.y * wandererCompassScale
@@ -571,20 +572,63 @@ namespace MapOverwritesMod
             // Debug.Log($"debugPosition: {debugPosition}");
         }
 
+        // TODO: optimize this so isnt calculated on each update lol.
+        
+        public static void PositionInteractionModeIcon(){
+            interactionModeIcon.Enabled = HUDInteractionModeIconEnabled;
+            if (!interactionModeIcon.Enabled) { return; }
+
+            Vector2 interactionModeSize = interactionModeIcon.Size;
+
+            Rect boundingBox = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
+
+            Vector2 startingPosition = GetStartingPositionFromAlignment(
+                HUDInteractionModeHorizontalAlignment,
+                HUDInteractionModeVerticalAlignment,
+                interactionModeSize,
+                boundingBox.width, 
+                boundingBox.height
+            );
+
+            if (HUDInteractionModeHorizontalAlignment == HorizontalAlignment.Center){
+                startingPosition = new Vector2(
+                    startingPosition.x - interactionModeSize.x / 2,
+                    startingPosition.y
+                );
+            }
+            if (HUDInteractionModeVerticalAlignment == VerticalAlignment.Middle){
+                startingPosition = new Vector2(
+                    startingPosition.x,
+                    startingPosition.y - interactionModeSize.y / 2
+                );
+            }
+
+            interactionModeIcon.Position = startingPosition + HUDInteractionModeIconPositionOffset;
+        }
+
+        public static void PositionHUDElements(){
+            if (wandererCompass.Parent == null){ return; } // ! Heuristic for checking if in game
+            PositionFacePanels();
+            PositionSpellEffects();
+            PositionWandererCompass();
+            PositionInteractionModeIcon();
+        }
+
         public static void SetInteractionModeIconValues(){
+            HUDInteractionModeIconEnabled = !WandererHudSettings.GetBool("InteractionMode", "Disable");
+            HUDInteractionModeHorizontalAlignment = GetHorizontalAlignmentFromSettings(WandererHudSettings.GetInt("InteractionMode", "HorizontalAlignment"));
+            HUDInteractionModeVerticalAlignment = GetVerticalAlignmentFromSettings(WandererHudSettings.GetInt("InteractionMode", "VerticalAlignment"));
+            HUDInteractionModeIconPositionOffset = new Vector2(
+                WandererHudSettings.GetTupleFloat("InteractionMode", "PositionOffset").First,
+                WandererHudSettings.GetTupleFloat("InteractionMode", "PositionOffset").Second
+            );
             SetNonPublicField(interactionModeIcon, "displayScale", WandererHudSettings.GetFloat("InteractionMode", "Scale"));
-
-            HorizontalAlignment intHA = GetHorizontalAlignmentFromSettings(WandererHudSettings.GetInt("InteractionMode", "HorizontalAlignment"));
-            VerticalAlignment intVA = GetVerticalAlignmentFromSettings(WandererHudSettings.GetInt("InteractionMode", "VerticalAlignment"));
-
-            interactionModeIcon.HorizontalAlignment = intHA;
-            interactionModeIcon.VerticalAlignment = intVA;
-
-            interactionModeIcon.Position = Vector2.zero;
         }
 
         public static void SetInteractionModeIcon(){
             interactionModeIcon = (HUDInteractionModeIcon)GetNonPublicField(DaggerfallUI.Instance.DaggerfallHUD, "interactionModeIcon");
+            interactionModeIcon.HorizontalAlignment = HorizontalAlignment.None;
+            interactionModeIcon.VerticalAlignment = VerticalAlignment.None;
             interactionModeIcon.SetMargins(Margins.All, 0);
             SetInteractionModeIconValues();
         }
@@ -594,52 +638,6 @@ namespace MapOverwritesMod
             activeSpellsPanel.SetMargins(Margins.All, 0);
             activeSpellsPanel.HorizontalAlignment = HorizontalAlignment.Left;
             activeSpellsPanel.VerticalAlignment = VerticalAlignment.Top;
-
-            // activeSpellsPanel.BackgroundColor = Color.red;
-            // activeSpellsPanel.AutoSize = AutoSizeModes.None;
-            // activeSpellsPanel.Parent.BackgroundColor = Color.blue;
-
-            // Debug.Log($"activeSpellsPanel.parent: {activeSpellsPanel.Parent.LeftMargin}");
-            // Debug.Log($"activeSpellsPanel.parent: {activeSpellsPanel.Parent.Size}");
-            // Debug.Log($"activeSpellsPanel.parent: {activeSpellsPanel.Parent.Scale}");
-            // Debug.Log($"activeSpellsPanel.parent: {activeSpellsPanel.Parent.AutoSize}");
-            // Debug.Log($"activeSpellsPanel.parent: {activeSpellsPanel.Parent.Position}");
-            // Debug.Log($"activeSpellsPanel.AutoSize: {activeSpellsPanel.AutoSize}");
-            // Debug.Log($"activeSpellsPanel.Scale: {activeSpellsPanel.Scale}");
-            // Debug.Log($"activeSpellsPanel.LocalScale: {activeSpellsPanel.LocalScale}");
-            // Debug.Log($"activeSpellsPanel.Position: {activeSpellsPanel.Position}");
-            // Debug.Log($"activeSpellsPanel.Size: {activeSpellsPanel.Size}");
-            // Debug.Log($"nativepanel size: {DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Size}");
-            // Debug.Log($"parentPanel size: {DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Size}");
-            // activeSpellsPanel.Position = Vector2.zero;
-            
-
-
-            // object selfIconsPositioning = CreateNonPublicClassInstance(
-            //     activeSpellsPanel,
-            //     "IconsPositioning",
-            //     new Vector2(activeSpellsScale, activeSpellsScale), 
-            //     new Vector2(27, 28), 
-            //     new Vector2(10, -2), 
-            //     new Vector2(0, 10), 
-            //     6
-            // );
-            // object otherIconsPositioning = CreateNonPublicClassInstance(
-            //     activeSpellsPanel,
-            //     "IconsPositioning",
-            //     new Vector2(activeSpellsScale, activeSpellsScale), 
-            //     new Vector2(27, 165), 
-            //     new Vector2(10, 2), 
-            //     new Vector2(0, -10), 
-            //     6
-            // );
-
-            // SetNonPublicField(activeSpellsPanel, "selfIconsPositioning", selfIconsPositioning);
-            // SetNonPublicField(activeSpellsPanel, "otherIconsPositioning", otherIconsPositioning);
-
-            // activeSpellsPanelBuffIcons = GetNonPublicField(activeSpellsPanel, "selfIconsPositioning");
-            // activeSpellsPanelDebuffIcons = GetNonPublicField(activeSpellsPanel, "otherIconsPositioning");
-
             activeSelfList = (List<ActiveSpellIcon>)GetNonPublicField(activeSpellsPanel, "activeSelfList");
             activeOtherList = (List<ActiveSpellIcon>)GetNonPublicField(activeSpellsPanel, "activeOtherList");
             iconPool = (Panel[])GetNonPublicField(activeSpellsPanel, "iconPool");
@@ -649,23 +647,7 @@ namespace MapOverwritesMod
             facePanelsParent = DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces;
             facePanelsParent.SetMargins(Margins.All, 0);
             facePanelsParent.AutoSize = AutoSizeModes.None;
-
             facePanels = (List<Panel>)GetNonPublicField(facePanelsParent, "facePanels");
-
-            // ! This is a test: remove everything under this line.
-            // List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanelsParent, "faces");
-            // FaceDetails firstFace = faces[0];
-            // // 
-            // firstFace.factionFaceIndex = UnityEngine.Random.Range(0, 61);
-            // faces.Add(firstFace);
-            // // 
-            // firstFace.factionFaceIndex = UnityEngine.Random.Range(0, 61);
-            // faces.Add(firstFace);
-            // // 
-            // firstFace.factionFaceIndex = UnityEngine.Random.Range(0, 61);
-            // faces.Add(firstFace);
-            // // 
-            // facePanelsParent.RefreshFaces();
         }
 
         public static void SetWandererCompass(){
@@ -770,12 +752,8 @@ namespace MapOverwritesMod
         }
 
         private void DebugAction(){
-            // * Drop a face panel:
-            // ! This is a test: remove everything under this line.
-            // EscortingNPCFacePanel facePanel = DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces;
-            // List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanel, "faces");
-            // faces.RemoveAt(1);
-            // facePanel.RefreshFaces();
+            Debug.Log($"Empty Debug Action");
+            
         }
 
         private void DebugInputs(){
@@ -871,9 +849,7 @@ namespace MapOverwritesMod
             SetVitalsHud();
             SetBreathHud();
             debugTexture = DaggerfallUI.CreateSolidTexture(UnityEngine.Color.white, 8);
-            // 
             SetInteractionModeIcon();
-            // 
             SetFacePanels();
             SetActiveSpells();
         }
@@ -1249,6 +1225,11 @@ namespace MapOverwritesMod
             if (GameManager.Instance.PlayerEnterExit.IsPlayerSubmerged & !GameManager.Instance.PlayerEntity.IsWaterBreathing){
                 wandererBreathBar.Draw();
             }
+
+            // if (interactionModeIcon != null){
+            //     interactionModeIcon.Position = HUDInteractionModeIconPositionOffset;
+            //     interactionModeIcon.Draw();
+            // }
 
             if (facePanels != null){
                 foreach (Panel facePanel in facePanels){
