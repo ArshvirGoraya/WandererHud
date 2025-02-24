@@ -413,21 +413,16 @@ namespace MapOverwritesMod
                 }
             }
 
-            // if (DaggerfallUnity.Settings.RetroRenderingMode == 0 || DaggerfallUnity.Settings.RetroModeAspectCorrection == 0){
-            //     // * if NOT using different aspect ratio: 
-            //     // * NativePanel doesn't extend to the edge if NOT using retro mode so must extend it here.
-            //     // * Already native scaled: dont need to divide by scale here.
-            //     xOffset -= nativeRect.x;
-            // }
-
             // * Extra Offsets: Put above the Compass (will also be in this position)
             yOffset += -wandererCompass.Size.y;
             xOffset += -panelsAggregateSize.x / 2;
+            // * Correct for screen size changes so is always at the same y location..
+            yOffset += DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.y;
 
             Vector2 startingPosition = GetStartingPositionFromAlignment(activeSpellsHorizontalAlignment, activeSpellsVerticalAlignment, spellsScale, nativeRect.width, nativeRect.height, edgeMargin, xOffset, yOffset);
 
             // * Get total size of panels.
-            Rect panelsAggregate = new Rect(
+            Rect panelsAggregate = new Rect( // ! must in parent scale for debuffs to position correctly
                 startingPosition.x,
                 startingPosition.y,
                 panelsAggregateSize.x,
@@ -766,21 +761,21 @@ namespace MapOverwritesMod
                 wandererBreathBar.Update();
                 DaggerfallUI.Instance.DaggerfallHUD.ActiveSpells.Enabled = true; // Gets disabled when opening pause dropdown so must re-enable it here.
             }
+
             if (wandererCompass.Parent == null){ return; } // ! Heuristic for checking if in game
             
             if (inGameAspectX != DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x){
-                // !debug: delete this block.
-                Debug.Log($"ParentPanel: {DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle}");
-                Debug.Log($"NativePanel: {DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle}");
-            }
-            if (!updateOnUnPause && inGameAspectX != DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x){
-                // * Aspect Ratio change:
+                Debug.Log($"Pause - NativePanel: {DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle}");
+                PositionHUDElements();
                 updateOnUnPause = true;
             }
+            // if (!updateOnUnPause && inGameAspectX != DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x){
+            //     // * Aspect Ratio change:
+            //     updateOnUnPause = true;
+            // }
             if (updateOnUnPause && !GameManager.IsGamePaused){
                 updateOnUnPause = false;
-                Debug.Log($"ParentPanel: {DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle}");
-                Debug.Log($"NativePanel: {DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle}");
+                Debug.Log($"Correction - NativePanel: {DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle}");
                 PositionHUDElements();
             }
             // 
@@ -832,7 +827,7 @@ namespace MapOverwritesMod
 
         private IEnumerator WaitSeconds(float seconds){
             ForceResizeMap();
-            PositionHUDElements();
+            // PositionHUDElements();
             SetLastScreen();
             ResizeWaiting = true;
             yield return new WaitForSecondsRealtime(seconds);
@@ -1258,6 +1253,7 @@ namespace MapOverwritesMod
             }
             if (activeSpellsPanel != null){
                 activeSpellsPanel.Draw();
+                DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Draw(); // ! debug remove line
             }
 
             // Debugging
