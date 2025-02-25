@@ -90,9 +90,9 @@ namespace MapOverwritesMod
         //
         static HUDInteractionModeIcon interactionModeIcon;
         static bool HUDInteractionModeIconEnabled = true;
-        static Vector2 HUDInteractionModeIconPositionOffset = Vector2.zero;
         static HorizontalAlignment HUDInteractionModeHorizontalAlignment;
         static VerticalAlignment HUDInteractionModeVerticalAlignment;
+        static Vector2 interactionModeIconPosition;
         // 
         public static EscortingNPCFacePanel facePanelsParent;
         static List<Panel> facePanels;
@@ -222,11 +222,12 @@ namespace MapOverwritesMod
             // 
             facePanelsEnable = false;
             // 
+            HUDInteractionModeIconEnabled = !WandererHudSettings.GetBool("InteractionMode", "Disable");
+            HUDInteractionModeHorizontalAlignment = GetHorizontalAlignmentFromSettings(WandererHudSettings.GetInt("InteractionMode", "HorizontalAlignment"));
+            HUDInteractionModeVerticalAlignment = GetVerticalAlignmentFromSettings(WandererHudSettings.GetInt("InteractionMode", "VerticalAlignment"));
+            // 
             if (DaggerfallUI.HasInstance && DaggerfallUI.Instance.DaggerfallHUD != null){
                 PositionHUDElements();
-            }
-            if (interactionModeIcon != null){
-                SetInteractionModeIconValues();
             }
         }
 
@@ -298,6 +299,19 @@ namespace MapOverwritesMod
             PositionSpellEffectIcons(activeOtherList, spellEffectsBuffsRect);
         }
 
+        public static Vector2 GetMiddleOffsets(HorizontalAlignment horizontalAlignment, VerticalAlignment verticalAlignment, Vector2 totalPanelSize){
+            Vector2 offset = Vector2.zero;
+            if (horizontalAlignment == HorizontalAlignment.Center || verticalAlignment == VerticalAlignment.Middle){
+                if (horizontalAlignment == HorizontalAlignment.Center){
+                    offset.x -= totalPanelSize.x / 2;
+                }
+                if (verticalAlignment == VerticalAlignment.Middle){
+                    offset.y -= totalPanelSize.y / 2;
+                }
+            }
+            return offset;
+        }
+
         public static void SetFacePanelsValues(){
             if (!facePanelsEnable){ return; }
             if (facePanels.Count <= 0){ return; }
@@ -312,21 +326,14 @@ namespace MapOverwritesMod
             bool growLeft = (facePanelsHorizontalAlignment == HorizontalAlignment.Right);
             bool growUp = (facePanelsVerticalAlignment == VerticalAlignment.Bottom);
 
-            float xOffset = 0;
-            float yOffset = 0;
+            Vector2 offset = Vector2.zero;
             if (facePanelsHorizontalAlignment == HorizontalAlignment.Center || facePanelsVerticalAlignment == VerticalAlignment.Middle){
                 Vector2 panelsAggregateSize = new Vector2(facePanelsScale.x, panelCount * facePanelsScale.y);
                 if (facePanelsHorizontalOrientation){ panelsAggregateSize = new Vector2(panelCount * facePanelsScale.x, facePanelsScale.y); }
-                // 
-                if (facePanelsHorizontalAlignment == HorizontalAlignment.Center){
-                    xOffset -= panelsAggregateSize.x / 2;
-                }
-                if (facePanelsVerticalAlignment == VerticalAlignment.Middle){
-                    yOffset -= panelsAggregateSize.y / 2;
-                }
+                offset = GetMiddleOffsets(facePanelsHorizontalAlignment, facePanelsVerticalAlignment, panelsAggregateSize);
             }
 
-            Vector2 startingPosition = GetStartingPositionFromAlignment(facePanelsHorizontalAlignment, facePanelsVerticalAlignment, facePanelsScale, boundingBox.width, boundingBox.height, edgeMargin, xOffset, yOffset);
+            Vector2 startingPosition = GetStartingPositionFromAlignment(facePanelsHorizontalAlignment, facePanelsVerticalAlignment, facePanelsScale, boundingBox.width, boundingBox.height, edgeMargin, offset.x, offset.y);
 
             Vector2 panelPosition = startingPosition;
             for (int i = 0; i < facePanels.Count; i++){
@@ -392,7 +399,9 @@ namespace MapOverwritesMod
             Vector2 spellsScale = activeSpellsScale * nativeScale; // convert to parentScale.
             Vector2 panelsAggregateSize = new Vector2(spellsScale.x, panelCount * spellsScale.y); // parentScale
             if (activeSpellsHorizontalOrientation){ panelsAggregateSize = new Vector2(panelCount * spellsScale.x, spellsScale.y); } // parentScale
-            //             
+
+            // Vector2 middleOffset = GetMiddleOffsets(facePanelsHorizontalAlignment, facePanelsVerticalAlignment, panelsAggregateSize);
+
             // * Start from the correct position base on size:
             float xOffset = 0; // nativeScale
             float yOffset = 0; // nativeScale
@@ -416,7 +425,7 @@ namespace MapOverwritesMod
 
             // * Extra Offsets: Put above the Compass (will also be in this position)
             yOffset += -wandererCompass.Size.y;
-            xOffset += -panelsAggregateSize.x / 2;
+            xOffset -= panelsAggregateSize.x / 2;
             // * Correct for screen size changes so is always at the same y location..
             yOffset += DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.y;
 
@@ -461,63 +470,30 @@ namespace MapOverwritesMod
             return panelsAggregate;
         }
 
-
-        // TODO: optimize this so isnt calculated on each update lol.
-        
-        public static void PositionInteractionModeIcon(){
+        public static void SetInteractionModeIconValues(){
             interactionModeIcon.Enabled = HUDInteractionModeIconEnabled;
             if (!interactionModeIcon.Enabled) { return; }
+            Debug.Log($"set interaction mode");
+
+            SetNonPublicField(interactionModeIcon, "displayScale", WandererHudSettings.GetFloat("InteractionMode", "Scale"));
+            interactionModeIcon.Update(); // Update the size from above scale.
 
             Vector2 interactionModeSize = interactionModeIcon.Size;
 
             Rect boundingBox = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
 
-            Vector2 startingPosition = GetStartingPositionFromAlignment(
+            Vector2 middleOffset = GetMiddleOffsets(HUDInteractionModeHorizontalAlignment, HUDInteractionModeVerticalAlignment, interactionModeSize);
+
+            interactionModeIconPosition = GetStartingPositionFromAlignment(
                 HUDInteractionModeHorizontalAlignment,
                 HUDInteractionModeVerticalAlignment,
                 interactionModeSize,
                 boundingBox.width, 
                 boundingBox.height,
-                edgeMargin
+                edgeMargin,
+                middleOffset.x,
+                middleOffset.y
             );
-
-            if (HUDInteractionModeHorizontalAlignment == HorizontalAlignment.Center){
-                startingPosition = new Vector2(
-                    startingPosition.x - interactionModeSize.x / 2,
-                    startingPosition.y
-                );
-            }
-            if (HUDInteractionModeVerticalAlignment == VerticalAlignment.Middle){
-                startingPosition = new Vector2(
-                    startingPosition.x,
-                    startingPosition.y - interactionModeSize.y / 2
-                );
-            }
-            // 
-            if (HUDInteractionModeHorizontalAlignment == HorizontalAlignment.Right){
-                startingPosition = new Vector2(
-                    startingPosition.x - edgeMargin.x,
-                    startingPosition.y
-                );
-            }else if (HUDInteractionModeHorizontalAlignment == HorizontalAlignment.Left){
-                startingPosition = new Vector2(
-                    startingPosition.x + edgeMargin.x,
-                    startingPosition.y
-                );
-            }
-            if (HUDInteractionModeVerticalAlignment == VerticalAlignment.Top){
-                startingPosition = new Vector2(
-                    startingPosition.x,
-                    startingPosition.y + edgeMargin.y
-                );
-            }else if (HUDInteractionModeVerticalAlignment == VerticalAlignment.Bottom){
-                startingPosition = new Vector2(
-                    startingPosition.x,
-                    startingPosition.y - edgeMargin.y
-                );
-            }
-
-            interactionModeIcon.Position = startingPosition + HUDInteractionModeIconPositionOffset;
         }
 
         public static void PositionHUDElements(){
@@ -526,29 +502,17 @@ namespace MapOverwritesMod
             wandererCompass.Update();
             wandererVitals.Update();
             wandererBreathBar.Update();            
-            // PositionInteractionModeIcon();
             SetWandererCompassValues();
             SetSpellEffectsValues();
-            // SetFacePanelsValues();
-        }
-
-        public static void SetInteractionModeIconValues(){
-            HUDInteractionModeIconEnabled = !WandererHudSettings.GetBool("InteractionMode", "Disable");
-            HUDInteractionModeHorizontalAlignment = GetHorizontalAlignmentFromSettings(WandererHudSettings.GetInt("InteractionMode", "HorizontalAlignment"));
-            HUDInteractionModeVerticalAlignment = GetVerticalAlignmentFromSettings(WandererHudSettings.GetInt("InteractionMode", "VerticalAlignment"));
-            HUDInteractionModeIconPositionOffset = new Vector2(
-                WandererHudSettings.GetTupleFloat("InteractionMode", "PositionOffset").First,
-                WandererHudSettings.GetTupleFloat("InteractionMode", "PositionOffset").Second
-            );
-            SetNonPublicField(interactionModeIcon, "displayScale", WandererHudSettings.GetFloat("InteractionMode", "Scale"));
+            // SetFacePanelsValues(); // ! updates each update so no need to update it here.
+            SetInteractionModeIconValues();
         }
 
         public static void SetInteractionModeIcon(){
             interactionModeIcon = (HUDInteractionModeIcon)GetNonPublicField(DaggerfallUI.Instance.DaggerfallHUD, "interactionModeIcon");
-            interactionModeIcon.HorizontalAlignment = HorizontalAlignment.None;
-            interactionModeIcon.VerticalAlignment = VerticalAlignment.None;
             interactionModeIcon.SetMargins(Margins.All, 0);
-            SetInteractionModeIconValues();
+            // interactionModeIcon.HorizontalAlignment = HorizontalAlignment.None;
+            // interactionModeIcon.VerticalAlignment = VerticalAlignment.None;
         }
 
         public static void SetSpellEffects(){
@@ -557,8 +521,6 @@ namespace MapOverwritesMod
             activeSelfList = (List<ActiveSpellIcon>)GetNonPublicField(activeSpellsPanel, "activeSelfList");
             activeOtherList = (List<ActiveSpellIcon>)GetNonPublicField(activeSpellsPanel, "activeOtherList");
             iconPool = (Panel[])GetNonPublicField(activeSpellsPanel, "iconPool");
-            // activeSpellsPanel.HorizontalAlignment = HorizontalAlignment.Left;
-            // activeSpellsPanel.VerticalAlignment = VerticalAlignment.Top;
         }
 
         public static void SetFacePanels(){
@@ -595,9 +557,11 @@ namespace MapOverwritesMod
             float compassHeight = wandererCompass.Size.y;
             Rect screenRect = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
 
+            // Vector2 middleOffset = GetMiddleOffsets(wandererCompassHorizontalAlignment, wandererCompassVerticalAlignment, wandererCompass.Size);
+
             // Find alignment position + edge margins.
             Vector2 compassPos = GetStartingPositionFromAlignment(wandererCompassHorizontalAlignment, wandererCompassVerticalAlignment, wandererCompass.Size, screenRect.width, screenRect.height, edgeMargin);
-            compassPos.x += -compassWidth/2; // horizontal center.
+            compassPos.x -= compassWidth/2; // horizontal center.
             compassPos.x += screenRect.x; // if using in-game aspect ratio.
             // 
             wandererCompass.Position = new Vector2(
@@ -789,6 +753,11 @@ namespace MapOverwritesMod
                 if (firstFacePosition != GetFirstFacePosition() || firstFaceSize != GetFirstFaceSize()){
                     SetFacePanelsValues();
                 }                
+            }
+
+            // Position Interaction Icon must occur each update:
+            if (HUDInteractionModeIconEnabled){
+                interactionModeIcon.Position = interactionModeIconPosition;
             }
 
             if (inGameAspectX != DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x){
@@ -1265,10 +1234,9 @@ namespace MapOverwritesMod
                 wandererBreathBar.Draw();
             }
 
-            // if (interactionModeIcon != null){
-            //     interactionModeIcon.Position = HUDInteractionModeIconPositionOffset;
-            //     interactionModeIcon.Draw();
-            // }
+            if (interactionModeIcon != null){
+                interactionModeIcon.Draw();
+            }
 
             if (facePanelsEnable && facePanels != null){
                 foreach (Panel facePanel in facePanels){
@@ -1276,9 +1244,9 @@ namespace MapOverwritesMod
                     facePanel.Draw();
                 }
             }
+
             if (activeSpellsPanel != null){
                 activeSpellsPanel.Draw();
-                DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Draw(); // ! debug remove line
             }
 
             // Debugging
