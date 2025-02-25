@@ -77,7 +77,6 @@ namespace MapOverwritesMod
         public static Rect debugPosition = new Rect(0, 0, 0, 0);
         public static Color32 debugColor = new Color32(255, 255, 255, 255);
         // 
-        // 
         const string breathBarFilename = "BreathBar";
         public static WandererHUDBreathBar wandererBreathBar;
         // 
@@ -102,6 +101,9 @@ namespace MapOverwritesMod
         public static bool facePanelsHorizontalOrientation = false;
         static HorizontalAlignment facePanelsHorizontalAlignment;
         static VerticalAlignment facePanelsVerticalAlignment;
+        public static bool facePanelsEnable = true;
+        public static Vector2 firstFacePosition = Vector2.zero;
+        public static Vector2 firstFaceSize = Vector2.zero;
         // 
         public static HUDActiveSpells activeSpellsPanel = null;
         public static Vector2 activeSpellsScale = Vector2.zero;
@@ -208,15 +210,17 @@ namespace MapOverwritesMod
                 WandererHudSettings.GetFloat("ActiveSpells", "Scale"),
                 WandererHudSettings.GetFloat("ActiveSpells", "Scale")
             );
+            wandererCompassScale = WandererHudSettings.GetFloat("Compass", "Scale");
 
             // * Final Settings:
-            wandererCompassScale = WandererHudSettings.GetFloat("Compass", "Scale");
             wandererCompassHorizontalAlignment = HorizontalAlignment.Center;
             wandererCompassVerticalAlignment = VerticalAlignment.Bottom;
             // 
             activeSpellsHorizontalOrientation = true;
             activeSpellsHorizontalAlignment = HorizontalAlignment.Center;
             activeSpellsVerticalAlignment = VerticalAlignment.Bottom;
+            // 
+            facePanelsEnable = false;
             // 
             if (DaggerfallUI.HasInstance && DaggerfallUI.Instance.DaggerfallHUD != null){
                 PositionHUDElements();
@@ -287,96 +291,88 @@ namespace MapOverwritesMod
             return startingPosition;
         }
 
-        public static void SetFacePanelsValues(){
-
-        }
-
-        public static void PositionFacePanels(){
-            Rect boundingBox = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
-            Vector2  startingPosition = GetStartingPositionFromAlignment(facePanelsHorizontalAlignment, facePanelsVerticalAlignment, facePanelsScale, boundingBox.width, boundingBox.height, edgeMargin);
-
-            bool growLeft = (facePanelsHorizontalAlignment == HorizontalAlignment.Right);
-            bool growUp = (facePanelsVerticalAlignment == VerticalAlignment.Bottom);
-
-            Vector2 panelPosition = startingPosition;
-
-            int facePanelCount = 0;
-
-            foreach (Panel facePanel in facePanels){
-                if (!facePanel.Enabled){ break; }
-                facePanelCount += 1 ;
-                // * Scale
-                facePanel.Size = facePanelsScale;
-                
-                // * Position
-                facePanel.Position = panelPosition;
-                if (facePanelsHorizontalOrientation){
-                    // 
-                    if (growLeft){
-                        panelPosition = new Vector2 (
-                            panelPosition.x - facePanel.Size.x, 
-                            startingPosition.y
-                        );
-                    }else{
-                        panelPosition = new Vector2 (
-                            panelPosition.x + facePanel.Size.x, 
-                            startingPosition.y
-                        );
-                    }
-
-                } else {
-                    if (growUp){
-                        panelPosition = new Vector2 (
-                            startingPosition.x,
-                            panelPosition.y - facePanel.Size.y
-                        );
-                    } else {
-                        panelPosition = new Vector2 (
-                            startingPosition.x,
-                            panelPosition.y + facePanel.Size.y
-                        );
-                    }
-                }
-            }
-            // * Correction for middle alignments:
-            Vector2 facePanelPositionOffset = Vector2.zero;
-
-            if (facePanelsHorizontalAlignment == HorizontalAlignment.Center || facePanelsVerticalAlignment == VerticalAlignment.Middle){
-                Vector2 facePanelSize = new Vector2(facePanelsScale.x, facePanelCount * facePanelsScale.y);
-                if (facePanelsHorizontalOrientation){
-                    facePanelSize = new Vector2(facePanelCount * facePanelsScale.x, facePanelsScale.y);
-                }
-                if (facePanelsHorizontalAlignment == HorizontalAlignment.Center){
-                    facePanelPositionOffset = new Vector2(
-                        (facePanelSize.x / 2), facePanelPositionOffset.y
-                    );
-                }
-                if (facePanelsVerticalAlignment == VerticalAlignment.Middle){
-                    facePanelPositionOffset = new Vector2(
-                        facePanelPositionOffset.x, (facePanelSize.y / 2)
-                    );
-                }
-            }
-            foreach (Panel facePanel in facePanels){
-                if (!facePanel.Enabled){ break; }
-                facePanel.Position = new Vector2(
-                    facePanel.Position.x - facePanelPositionOffset.x,
-                    facePanel.Position.y - facePanelPositionOffset.y
-                );
-            }
-        }
-
         public static void SetSpellEffectsValues(){
             Debug.Log($"set spell effects");
-            
             // ! Should be called AFTER SetWandererCompassValues().
             Rect spellEffectsBuffsRect = PositionSpellEffectIcons(activeSelfList, Rect.zero);
             PositionSpellEffectIcons(activeOtherList, spellEffectsBuffsRect);
         }
 
+        public static void SetFacePanelsValues(){
+            if (!facePanelsEnable){ return; }
+            if (facePanels.Count <= 0){ return; }
+            Debug.Log($"set face panels");
+            // 
+            int panelCount = 0;
+            foreach (Panel facePanel in facePanels){
+                if (!facePanel.Enabled){ continue; }
+                panelCount += 1;
+            }
+            Rect boundingBox = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
+            bool growLeft = (facePanelsHorizontalAlignment == HorizontalAlignment.Right);
+            bool growUp = (facePanelsVerticalAlignment == VerticalAlignment.Bottom);
+
+            float xOffset = 0;
+            float yOffset = 0;
+            if (facePanelsHorizontalAlignment == HorizontalAlignment.Center || facePanelsVerticalAlignment == VerticalAlignment.Middle){
+                Vector2 panelsAggregateSize = new Vector2(facePanelsScale.x, panelCount * facePanelsScale.y);
+                if (facePanelsHorizontalOrientation){ panelsAggregateSize = new Vector2(panelCount * facePanelsScale.x, facePanelsScale.y); }
+                // 
+                if (facePanelsHorizontalAlignment == HorizontalAlignment.Center){
+                    xOffset -= panelsAggregateSize.x / 2;
+                }
+                if (facePanelsVerticalAlignment == VerticalAlignment.Middle){
+                    yOffset -= panelsAggregateSize.y / 2;
+                }
+            }
+
+            Vector2 startingPosition = GetStartingPositionFromAlignment(facePanelsHorizontalAlignment, facePanelsVerticalAlignment, facePanelsScale, boundingBox.width, boundingBox.height, edgeMargin, xOffset, yOffset);
+
+            Vector2 panelPosition = startingPosition;
+            for (int i = 0; i < facePanels.Count; i++){
+                Panel facePanel = facePanels[i];
+                if (!facePanel.Enabled){ continue; }
+                // * Scale
+                facePanel.Size = facePanelsScale;
+                // * Position
+                facePanel.Position = panelPosition;
+                if (i + 1 == facePanels.Count){break;}
+                // * Next Panel Position:
+                panelPosition = GetPositionOfNextPanel(facePanelsHorizontalOrientation, growLeft, growUp, startingPosition, facePanel.Size, panelPosition);
+            }
+        }
+
+        public static Vector2 GetPositionOfNextPanel(bool horizontalOrientation, bool growLeft, bool growUp, Vector2 startingPosition, Vector2 panelSize, Vector2 previousPanelPosition){
+            if (horizontalOrientation){
+                if (growLeft){
+                    return new Vector2 (
+                        previousPanelPosition.x - panelSize.x, 
+                        startingPosition.y
+                    );
+                }else{
+                    return new Vector2 (
+                        previousPanelPosition.x + panelSize.x, 
+                        startingPosition.y
+                    );
+                }
+            } else {
+                if (growUp){
+                    return new Vector2 (
+                        startingPosition.x,
+                        previousPanelPosition.y - panelSize.y
+                    );
+                } else {
+                    return new Vector2 (
+                        startingPosition.x,
+                        previousPanelPosition.y + panelSize.y
+                    );
+                }
+            }
+        }
+
         public static Rect PositionSpellEffectIcons(List<ActiveSpellIcon> activeSpellList, Rect offsetRect){
             if (activeSpellList.Count <= 0){ return Rect.zero; }
-            Rect nativeRect = DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle; // In Parent Scale.
+            Rect nativeRect = DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle; // In Parent Scale.  // ! MUST BE CALLED FIRST HERE TO UPDATE AUTO SIZING.
 
             Vector2 nativeScale = DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale;
             // * Dividing Parent by NativePanel = Native Space
@@ -427,7 +423,7 @@ namespace MapOverwritesMod
             Vector2 startingPosition = GetStartingPositionFromAlignment(activeSpellsHorizontalAlignment, activeSpellsVerticalAlignment, spellsScale, nativeRect.width, nativeRect.height, edgeMargin, xOffset, yOffset);
 
             // * Get total size of panels.
-            Rect panelsAggregate = new Rect( // ! must in parent scale for debuffs to position correctly
+            Rect panelsAggregate = new Rect( // ! must be in parent scale for debuffs to position on side of buffs correctly
                 startingPosition.x,
                 startingPosition.y,
                 panelsAggregateSize.x,
@@ -436,6 +432,12 @@ namespace MapOverwritesMod
 
             startingPosition /= nativeScale;
             Vector2 panelPosition = startingPosition;
+
+            if (activeSpellList == activeSelfList){
+                firstBuffPosition = startingPosition;
+            }else if (activeSpellList == activeOtherList){
+                firstDeBuffPosition = startingPosition;
+            }
 
             // Apply positions:
             bool growLeft = activeSpellsHorizontalAlignment == HorizontalAlignment.Right;
@@ -447,9 +449,6 @@ namespace MapOverwritesMod
                 Panel panel = iconPool[spell.poolIndex];
                 if (!panel.Enabled) { continue; }
                 // 
-                if (i == 0 && activeSpellList == activeSelfList){firstBuffPosition = panelPosition;}
-                else if (i == 0 && activeSpellList == activeOtherList){firstDeBuffPosition = panelPosition;}
-                // 
                 // * Scale:
                 panel.Size = activeSpellsScale;
                 // * Position:
@@ -457,31 +456,7 @@ namespace MapOverwritesMod
                 // * Check if there is a next icon or if this is the last one..
                 if (i + 1 == activeSpellList.Count){break;}
                 // * Determine next icon position: 
-                if (activeSpellsHorizontalOrientation){
-                    if (growLeft){
-                        panelPosition = new Vector2 (
-                            panelPosition.x - panel.Size.x, 
-                            startingPosition.y
-                        );
-                    }else{
-                        panelPosition = new Vector2 (
-                            panelPosition.x + panel.Size.x, 
-                            startingPosition.y
-                        );
-                    }
-                } else {
-                    if (growUp){
-                        panelPosition = new Vector2 (
-                            startingPosition.x,
-                            panelPosition.y - panel.Size.y
-                        );
-                    } else {
-                        panelPosition = new Vector2 (
-                            startingPosition.x,
-                            panelPosition.y + panel.Size.y
-                        );
-                    }
-                }
+                panelPosition = GetPositionOfNextPanel(activeSpellsHorizontalOrientation, growLeft, growUp, startingPosition, panel.Size, panelPosition);
             }
             return panelsAggregate;
         }
@@ -554,7 +529,7 @@ namespace MapOverwritesMod
             // PositionInteractionModeIcon();
             SetWandererCompassValues();
             SetSpellEffectsValues();
-            SetFacePanelsValues();
+            // SetFacePanelsValues();
         }
 
         public static void SetInteractionModeIconValues(){
@@ -746,11 +721,18 @@ namespace MapOverwritesMod
         }
 
         private void DebugAction(){
-            Debug.Log($"Empty Debug Action");
-            EscortingNPCFacePanel facePanel = DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces;
-            List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanel, "faces");
-            faces.RemoveAt(faces.Count - 1);
-            facePanel.RefreshFaces();
+            // Debug.Log($"Empty Debug Action");
+            // EscortingNPCFacePanel facePanel = DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces;
+            // List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanel, "faces");
+            // faces.RemoveAt(0);
+            // facePanel.RefreshFaces();
+
+            // SetFacePanelsValues();
+            for (int i = 0; i < facePanels.Count; i++){
+                Panel facePanel = facePanels[i];
+                if (!facePanel.Enabled){ continue; }
+                Debug.Log($"facePanel.Position: {facePanel.Position}");
+            }
         }
 
         private void DebugInputs(){
@@ -760,6 +742,23 @@ namespace MapOverwritesMod
             if (Input.GetKeyDown(KeyCode.Slash)){
                 DebugAction();
             }
+        }
+
+        public Vector2 GetFirstFacePosition(){
+            Vector2 position = Vector2.zero;
+            foreach (Panel facePanel in facePanels){
+                if (!facePanel.Enabled){ continue; }
+                position = facePanel.Position;
+            }
+            return position;
+        }
+        public Vector2 GetFirstFaceSize(){
+            Vector2 size = Vector2.zero;
+            foreach (Panel facePanel in facePanels){
+                if (!facePanel.Enabled){ continue; }
+                size = facePanel.Size;
+            }
+            return size;
         }
 
         public Vector2 GetFirstSpellPosition(List<ActiveSpellIcon> activeSpellList){
@@ -783,6 +782,14 @@ namespace MapOverwritesMod
                 DaggerfallUI.Instance.DaggerfallHUD.ActiveSpells.Enabled = true; // Gets disabled when opening pause dropdown so must re-enable it here.
             }
             if (wandererCompass.Parent == null){ return; } // ! Heuristic for checking if in game
+
+            // Position faces must occur every update:
+            DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces.Enabled = facePanelsEnable;
+            if (facePanelsEnable){
+                if (firstFacePosition != GetFirstFacePosition() || firstFaceSize != GetFirstFaceSize()){
+                    SetFacePanelsValues();
+                }                
+            }
 
             if (inGameAspectX != DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x){
                 // * During pause, position vitals and spell effects correctly on aspect ratio correction setting change.
@@ -1263,9 +1270,9 @@ namespace MapOverwritesMod
             //     interactionModeIcon.Draw();
             // }
 
-            if (facePanels != null){
+            if (facePanelsEnable && facePanels != null){
                 foreach (Panel facePanel in facePanels){
-                    if (!facePanel.Enabled) { break; }
+                    if (!facePanel.Enabled) { continue; }
                     facePanel.Draw();
                 }
             }
