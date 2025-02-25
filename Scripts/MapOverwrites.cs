@@ -287,6 +287,10 @@ namespace MapOverwritesMod
             return startingPosition;
         }
 
+        public static void SetFacePanelsValues(){
+
+        }
+
         public static void PositionFacePanels(){
             Rect boundingBox = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
             Vector2  startingPosition = GetStartingPositionFromAlignment(facePanelsHorizontalAlignment, facePanelsVerticalAlignment, facePanelsScale, boundingBox.width, boundingBox.height, edgeMargin);
@@ -372,10 +376,11 @@ namespace MapOverwritesMod
 
         public static Rect PositionSpellEffectIcons(List<ActiveSpellIcon> activeSpellList, Rect offsetRect){
             if (activeSpellList.Count <= 0){ return Rect.zero; }
+            Rect nativeRect = DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle; // In Parent Scale.
+
             Vector2 nativeScale = DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale;
             // * Dividing Parent by NativePanel = Native Space
             // * Multiple Native by NativePanel = Parent Space
-            Rect nativeRect = DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle; // In Parent Scale.
 
             // * Get total size of panels: 
             // * Get Size and Correct of Middle/Center Alignment if needed:
@@ -542,14 +547,14 @@ namespace MapOverwritesMod
 
         public static void PositionHUDElements(){
             if (wandererCompass.Parent == null){ return; } // ! Heuristic for checking if in game
+            // 
             wandererCompass.Update();
             wandererVitals.Update();
             wandererBreathBar.Update();            
-            // PositionFacePanels();
             // PositionInteractionModeIcon();
             SetWandererCompassValues();
             SetSpellEffectsValues();
-            inGameAspectX = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x;
+            SetFacePanelsValues();
         }
 
         public static void SetInteractionModeIconValues(){
@@ -586,6 +591,19 @@ namespace MapOverwritesMod
             facePanelsParent.SetMargins(Margins.All, 0);
             facePanelsParent.AutoSize = AutoSizeModes.None;
             facePanels = (List<Panel>)GetNonPublicField(facePanelsParent, "facePanels");
+            // ! ↓ debug ↓
+            // * Add faces:
+            List<FaceDetails> faces = new List<FaceDetails>();
+            faces = (List<FaceDetails>)GetNonPublicField(facePanelsParent, "faces");
+            FaceDetails faceRef = faces[0];
+            faceRef.factionFaceIndex = UnityEngine.Random.Range(0, 61);
+            faces.Add(faceRef);
+            faceRef.factionFaceIndex = UnityEngine.Random.Range(0, 61);
+            faces.Add(faceRef);
+            faceRef.factionFaceIndex = UnityEngine.Random.Range(0, 61);
+            faces.Add(faceRef);
+            facePanelsParent.RefreshFaces();
+            // ! ↑ debug ↑
         }
 
         public static void SetWandererCompassValues(){
@@ -729,7 +747,10 @@ namespace MapOverwritesMod
 
         private void DebugAction(){
             Debug.Log($"Empty Debug Action");
-            
+            EscortingNPCFacePanel facePanel = DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces;
+            List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanel, "faces");
+            faces.RemoveAt(faces.Count - 1);
+            facePanel.RefreshFaces();
         }
 
         private void DebugInputs(){
@@ -761,24 +782,21 @@ namespace MapOverwritesMod
                 wandererBreathBar.Update();
                 DaggerfallUI.Instance.DaggerfallHUD.ActiveSpells.Enabled = true; // Gets disabled when opening pause dropdown so must re-enable it here.
             }
-
             if (wandererCompass.Parent == null){ return; } // ! Heuristic for checking if in game
-            
+
             if (inGameAspectX != DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x){
-                Debug.Log($"Pause - NativePanel: {DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle}");
-                PositionHUDElements();
+                // * During pause, position vitals and spell effects correctly on aspect ratio correction setting change.
+                inGameAspectX = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x;
                 updateOnUnPause = true;
+                SetWandererCompassValues();
+                SetSpellEffectsValues();
             }
-            // if (!updateOnUnPause && inGameAspectX != DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x){
-            //     // * Aspect Ratio change:
-            //     updateOnUnPause = true;
-            // }
             if (updateOnUnPause && !GameManager.IsGamePaused){
+                // Need to update spellEffects position when unpaused to ensure immediate correct positioning.
                 updateOnUnPause = false;
-                Debug.Log($"Correction - NativePanel: {DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle}");
-                PositionHUDElements();
+                SetSpellEffectsValues();
             }
-            // 
+
             if (firstBuffPosition != GetFirstSpellPosition(activeSelfList)|| firstDeBuffPosition != GetFirstSpellPosition(activeOtherList)){
                 SetSpellEffectsValues();
             }
@@ -862,8 +880,8 @@ namespace MapOverwritesMod
             debugTexture = DaggerfallUI.CreateSolidTexture(UnityEngine.Color.white, 8);
             // 
             SetSpellEffects();
-            SetInteractionModeIcon();
             SetFacePanels();
+            SetInteractionModeIcon();
             // 
             PositionHUDElements();
         }
