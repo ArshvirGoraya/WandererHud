@@ -83,13 +83,14 @@ namespace MapOverwritesMod
         public static Vector2 compassBoxSize = new Vector2(0, 0);
         public static HUDCompass wandererCompass;
         public static Vector2 defaultWandererCompassScale;
-        public static float wandererCompassScale;
+        public static float wandererCompassScale = 1f;
         public static HUDVitals wandererVitals;
         static HorizontalAlignment wandererCompassHorizontalAlignment;
         static VerticalAlignment wandererCompassVerticalAlignment;
         //
         static HUDInteractionModeIcon interactionModeIcon;
         static bool HUDInteractionModeIconEnabled = true;
+        static float HUDInteractionModeIconScale = 0.5f;
         static HorizontalAlignment HUDInteractionModeHorizontalAlignment;
         static VerticalAlignment HUDInteractionModeVerticalAlignment;
         static Vector2 interactionModeIconPosition;
@@ -106,7 +107,7 @@ namespace MapOverwritesMod
         public static Vector2 firstFaceSize = Vector2.zero;
         // 
         public static HUDActiveSpells activeSpellsPanel = null;
-        public static Vector2 activeSpellsScale = Vector2.zero;
+        public static Vector2 activeSpellsScale = new Vector2(8, 8);
         public static List<ActiveSpellIcon> activeSelfList = new List<ActiveSpellIcon>();
         public static List<ActiveSpellIcon> activeOtherList = new List<ActiveSpellIcon>();
         public static Panel[] iconPool;
@@ -117,7 +118,7 @@ namespace MapOverwritesMod
         public static Vector2 firstBuffPosition = new Vector2(0,0);
         public static Vector2 firstDeBuffPosition = new Vector2(0,0);
         // 
-        static Vector2 edgeMargin = Vector2.zero;
+        static Vector2 edgeMargin = new Vector2(10, 10);
         // 
         static float inGameAspectX = 0;
         static bool updateOnUnPause = false;
@@ -182,35 +183,7 @@ namespace MapOverwritesMod
 
         static void LoadSettings(ModSettings modSettings, ModSettingsChange change){
             WandererHudSettings = modSettings;
-            // wandererCompassHorizontalAlignment = GetHorizontalAlignmentFromSettings(WandererHudSettings.GetInt("Compass", "HorizontalAlignment"));
-            // switch (WandererHudSettings.GetInt("Compass", "VerticalAlignment"))
-            // {
-            //     case 0: { wandererCompassVerticalAlignment = VerticalAlignment.Top; break;}
-            //     case 1: { wandererCompassVerticalAlignment = VerticalAlignment.Bottom; break; }
-            //     // case 2: { wandererCompassVerticalAlignment = VerticalAlignment.Middle; break; }
-            // }
-            // 
-            // facePanelsScale = new Vector2(
-            //     facePanelsDefaultSize * WandererHudSettings.GetFloat("FacePanels", "Scale"),
-            //     facePanelsDefaultSize * WandererHudSettings.GetFloat("FacePanels", "Scale")
-            // );
-            // facePanelsHorizontalOrientation = WandererHudSettings.GetBool("FacePanels", "HorizontalOrientation");
-            // facePanelsHorizontalAlignment = GetHorizontalAlignmentFromSettings(WandererHudSettings.GetInt("FacePanels", "HorizontalAlignment"));
-            // facePanelsVerticalAlignment = GetVerticalAlignmentFromSettings(WandererHudSettings.GetInt("FacePanels", "VerticalAlignment"));
-            // 
-            // activeSpellsHorizontalOrientation = WandererHudSettings.GetBool("ActiveSpells", "HorizontalOrientation");
-            // activeSpellsHorizontalAlignment = GetHorizontalAlignmentFromSettings(WandererHudSettings.GetInt("ActiveSpells", "HorizontalAlignment"));
-            // activeSpellsVerticalAlignment = GetVerticalAlignmentFromSettings(WandererHudSettings.GetInt("ActiveSpells", "VerticalAlignment"));
-
-            edgeMargin = new Vector2(
-                WandererHudSettings.GetTupleFloat("Hud", "EdgeMargin").First,
-                WandererHudSettings.GetTupleFloat("Hud", "EdgeMargin").Second
-            );
-            activeSpellsScale = new Vector2(
-                WandererHudSettings.GetFloat("ActiveSpells", "Scale"),
-                WandererHudSettings.GetFloat("ActiveSpells", "Scale")
-            );
-            wandererCompassScale = WandererHudSettings.GetFloat("Compass", "Scale");
+            Debug.Log($"mod settings change: {change}");
 
             // * Final Settings:
             wandererCompassHorizontalAlignment = HorizontalAlignment.Center;
@@ -222,9 +195,10 @@ namespace MapOverwritesMod
             // 
             facePanelsEnable = false;
             // 
-            HUDInteractionModeIconEnabled = !WandererHudSettings.GetBool("InteractionMode", "Disable");
-            HUDInteractionModeHorizontalAlignment = GetHorizontalAlignmentFromSettings(WandererHudSettings.GetInt("InteractionMode", "HorizontalAlignment"));
-            HUDInteractionModeVerticalAlignment = GetVerticalAlignmentFromSettings(WandererHudSettings.GetInt("InteractionMode", "VerticalAlignment"));
+            // HUDInteractionModeIconEnabled = WandererHudSettings.GetBool("InteractionMode", "Enable");
+            HUDInteractionModeIconEnabled = WandererHudSettings.GetBool("Hud", "EnableInteractionIcon");
+            HUDInteractionModeHorizontalAlignment = HorizontalAlignment.Left;
+            HUDInteractionModeVerticalAlignment = VerticalAlignment.Bottom;
             // 
             if (DaggerfallUI.HasInstance && DaggerfallUI.Instance.DaggerfallHUD != null){
                 PositionHUDElements();
@@ -424,7 +398,8 @@ namespace MapOverwritesMod
             }
 
             // * Extra Offsets: Put above the Compass (will also be in this position)
-            yOffset += -wandererCompass.Size.y;
+            yOffset -= wandererCompass.Size.y;
+            yOffset -= 0.4f; // some padding away from the compass
             xOffset -= panelsAggregateSize.x / 2;
             // * Correct for screen size changes so is always at the same y location..
             yOffset += DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.y;
@@ -475,7 +450,7 @@ namespace MapOverwritesMod
             if (!interactionModeIcon.Enabled) { return; }
             Debug.Log($"set interaction mode");
 
-            SetNonPublicField(interactionModeIcon, "displayScale", WandererHudSettings.GetFloat("InteractionMode", "Scale"));
+            SetNonPublicField(interactionModeIcon, "displayScale", HUDInteractionModeIconScale);
             interactionModeIcon.Update(); // Update the size from above scale.
 
             Vector2 interactionModeSize = interactionModeIcon.Size;
