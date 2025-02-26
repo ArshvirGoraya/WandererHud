@@ -4,7 +4,7 @@
         {
             "Name": "Hud",
             "Description": "Settings for on-screen interface",
-            "IsAdvanced": false,
+            "IsAdvanced": true,
             "Keys": [
                 {
                     "Value": true,
