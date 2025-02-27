@@ -207,16 +207,16 @@ namespace MapOverwritesMod
                 Debug.Log($"changed EnableInteractionIcon");
                 
                 SetInteractionModeIconValues();
-                // 
-                if (HUDInteractionModeIconEnabled){
-                    // Allign to interaction icon (right)
-                    activeSpellsHorizontalAlignment = HorizontalAlignment.Left;
-                    activeSpellsVerticalAlignment = VerticalAlignment.Bottom;                    
-                }else{
-                    // * Allign to compass (top)
-                    activeSpellsHorizontalAlignment = HorizontalAlignment.Center;
-                    activeSpellsVerticalAlignment = VerticalAlignment.Bottom;
-                }
+                // // 
+                // if (HUDInteractionModeIconEnabled){
+                //     // Allign to interaction icon (right)
+                //     activeSpellsHorizontalAlignment = HorizontalAlignment.Left;
+                //     activeSpellsVerticalAlignment = VerticalAlignment.Bottom;                    
+                // }else{
+                //     // * Allign to compass (top)
+                //     activeSpellsHorizontalAlignment = HorizontalAlignment.Center;
+                //     activeSpellsVerticalAlignment = VerticalAlignment.Bottom;
+                // }
                 SetSpellEffectsValues();
             }
         }
@@ -533,11 +533,12 @@ namespace MapOverwritesMod
             startingPosition /= nativeScale;
             Vector2 panelPosition = startingPosition;
 
-            List<Vector2> referenceList = new List<Vector2>();
+            List<Vector2> referenceList;
             if (activeSpellList == activeSelfList){
                 firstBuffPosition = startingPosition;
                 referenceList = activeSelfListPositions;
-            }else if (activeSpellList == activeOtherList){
+                Debug.Log($"set firstBuffPosition: {firstBuffPosition}");
+            }else{
                 firstDeBuffPosition = startingPosition;
                 referenceList = activeOtherListPositions;
             }
@@ -619,8 +620,6 @@ namespace MapOverwritesMod
         }
 
         public static void PositionHUDElements(){
-            if (!hudElementsInitalized) { return; }
-            // 
             wandererCompass.Update();
             wandererVitals.Update();
             wandererBreathBar.Update();            
@@ -640,11 +639,15 @@ namespace MapOverwritesMod
         }
 
         public static void SetSpellEffects(){
+            Debug.Log($"SET SPELL EFFECTS");
+            
             activeSpellsPanel = DaggerfallUI.Instance.DaggerfallHUD.ActiveSpells;
             activeSpellsPanel.SetMargins(Margins.All, 0);
             activeSelfList = (List<ActiveSpellIcon>)GetNonPublicField(activeSpellsPanel, "activeSelfList");
             activeOtherList = (List<ActiveSpellIcon>)GetNonPublicField(activeSpellsPanel, "activeOtherList");
             iconPool = (Panel[])GetNonPublicField(activeSpellsPanel, "iconPool");
+            firstBuffPosition = Vector2.zero;
+            firstDeBuffPosition = Vector2.zero;
         }
 
         public static void SetFacePanels(){
@@ -852,6 +855,17 @@ namespace MapOverwritesMod
         }
 
         public Vector2 GetFirstSpellPosition(List<ActiveSpellIcon> activeSpellList){
+            // Ensure firstBuffPosition is actually accurate.
+            // if (activeSpellList == activeSelfList){
+            //     if (activeSpellList.Count == 0){
+            //         firstBuffPosition = Vector2.zero;
+            //     }
+            // }else{
+            //     if (activeSpellList.Count == 0){
+            //         firstDeBuffPosition = Vector2.zero;
+            //     }
+            // }
+
             Panel panel = null;
             foreach (ActiveSpellIcon spell in activeSpellList){
                 if (spell.poolIndex >= maxIconPool){ break; }
@@ -896,6 +910,8 @@ namespace MapOverwritesMod
 
             // * Spells Values & Positioning
             if (firstBuffPosition != GetFirstSpellPosition(activeSelfList)){
+                Debug.Log($"firstBuffPosition: {firstBuffPosition} != {GetFirstSpellPosition(activeSelfList)}");
+                
                 if (GetEnabledSpellEffectsChanged(enabledBuffCount, activeSelfList)){ // Returns true if enabled buffs changed and sets new count.
                     SetSpellEffectsValuesBuffs(activeSelfList); // Get new values + position.
                 } else {
@@ -992,6 +1008,7 @@ namespace MapOverwritesMod
         }
 
         public void SaveLoadManager_OnLoad(){
+            Debug.Log($"LOADED NEW SAVE");
             hudElementsInitalized = false;
             if (GameManager.Instance.IsPlayerInside || GameManager.Instance.IsPlayerInsideDungeon || GameManager.Instance.IsPlayerInsideCastle){
                 ResetInteriorMapInnerComponents();
@@ -1006,9 +1023,9 @@ namespace MapOverwritesMod
             SetSpellEffects();
             // debugTexture = DaggerfallUI.CreateSolidTexture(UnityEngine.Color.white, 8);
             // 
-            hudElementsInitalized = true;
             mod.LoadSettings();
             PositionHUDElements();
+            hudElementsInitalized = true;
         }
 
         public void ForceWireFrame(){
