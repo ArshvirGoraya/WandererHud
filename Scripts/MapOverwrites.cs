@@ -14,6 +14,7 @@ using System.Reflection;
 using DaggerfallConnect;
 using static DaggerfallWorkshop.Game.UserInterface.HUDActiveSpells;
 using UnityEditor.Localization.Plugins.XLIFF.V12;
+using UnityEditor;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
@@ -90,7 +91,7 @@ namespace MapOverwritesMod
         static VerticalAlignment wandererCompassVerticalAlignment = VerticalAlignment.Bottom;
         //
         static HUDInteractionModeIcon interactionModeIcon;
-        static bool HUDInteractionModeIconEnabled = true;
+        static bool HUDInteractionModeIconEnabled = false;
         static float HUDInteractionModeIconScale = 0.5f;
         static HorizontalAlignment HUDInteractionModeHorizontalAlignment;
         static VerticalAlignment HUDInteractionModeVerticalAlignment;
@@ -201,7 +202,20 @@ namespace MapOverwritesMod
             if (!hudElementsInitalized){ return; }
 
             if (change.HasChanged("Hud", "EnableInteractionIcon")){
+                Debug.Log($"changed EnableInteractionIcon");
+                
                 SetInteractionModeIconValues();
+                // 
+                if (HUDInteractionModeIconEnabled){
+                    // Allign to interaction icon (right)
+                    activeSpellsHorizontalAlignment = HorizontalAlignment.Left;
+                    activeSpellsVerticalAlignment = VerticalAlignment.Bottom;                    
+                }else{
+                    // * Allign to compass (top)
+                    activeSpellsHorizontalAlignment = HorizontalAlignment.Center;
+                    activeSpellsVerticalAlignment = VerticalAlignment.Bottom;
+                }
+                SetSpellEffectsValues();
             }
         }
 
@@ -291,17 +305,18 @@ namespace MapOverwritesMod
             // * When changing aspect ratio correction.
             // * After unpausing: if aspect ratio correction was changed during pause.
             // * When number of enabled buffs/debuffs changes.
+            // * When relevant mod settings change (e.g., hus icon enabled/disabled).
             // ! Should be called AFTER SetWandererCompassValues().
             SetSpellEffectsValuesBuffs(activeSelfList);
             SetSpellEffectsValuesBuffs(activeOtherList);
         }
         public static void SetSpellEffectsValuesBuffs(List<ActiveSpellIcon> activeSpellList){
             if (activeSpellList == activeSelfList){
-                Debug.Log($"set buffs values");
+                Debug.Log($"set buffs values + positions");
                 // * When number of enabled Buffs changes.
                 spellEffectsBuffsRect = PositionSpellEffectIcons(activeSelfList, Rect.zero);
             }else{
-                Debug.Log($"set DeBuffs values");
+                Debug.Log($"set DeBuffs values + positions");
                 // * When number of enabled Debuggs changes
                 PositionSpellEffectIcons(activeOtherList, spellEffectsBuffsRect);
             }
@@ -467,15 +482,43 @@ namespace MapOverwritesMod
                 }
             }
 
-            // * Extra Offsets: Put above the Compass (will also be in this position)
-            // Vector2 middleOffset = GetMiddleOffsets(facePanelsHorizontalAlignment, facePanelsVerticalAlignment, panelsAggregateSize);
-            yOffset -= wandererCompass.Size.y;
-            yOffset -= 0.4f; // some padding away from the compass
-            xOffset -= panelsAggregateSize.x / 2;
-            // * Correct for screen size changes so is always at the same y location..
-            yOffset += DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.y;
+            Vector2 startingPosition;
+            if (!HUDInteractionModeIconEnabled){
+                // * Extra Offsets: Put above the Compass (will also be in this position)
+                yOffset -= wandererCompass.Size.y;
+                yOffset -= 0.4f; // some padding away from the compass
+                xOffset -= panelsAggregateSize.x / 2;
+                startingPosition = GetStartingPositionFromAlignment(activeSpellsHorizontalAlignment, activeSpellsVerticalAlignment, spellsScale, nativeRect.width, nativeRect.height, edgeMargin, xOffset, yOffset);
+            }else{
+                // Position vertically along middle of compass if hud is on.
+                startingPosition.y = GetPanelVerticalMiddle(interactionModeIcon) - panelsAggregateSize.y / 2;
+                startingPosition.x = GetPanelHorizontalRight(interactionModeIcon);
+                startingPosition.x += 0.4f; // padding
+                
+                // * horiuzontal correction for nativePadding.
+                if (DaggerfallUI.Instance.DaggerfallHUD.NativePanel.AutoSize == AutoSizeModes.ScaleToFit){
+                    startingPosition.x -= (DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.x - DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x);
+                }
+            }
 
-            Vector2 startingPosition = GetStartingPositionFromAlignment(activeSpellsHorizontalAlignment, activeSpellsVerticalAlignment, spellsScale, nativeRect.width, nativeRect.height, edgeMargin, xOffset, yOffset);
+            // * Correct for aspect ratio mode correction changes during pause.
+            if (GameManager.IsGamePaused){
+                startingPosition.y += DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.y;
+
+                if (HUDInteractionModeIconEnabled){
+                    if (DaggerfallUI.Instance.DaggerfallHUD.NativePanel.AutoSize == AutoSizeModes.ScaleToFit){
+                        if (DaggerfallUnity.Settings.RetroModeAspectCorrection == 1){
+                            startingPosition.y -= DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.y;
+                            startingPosition.y -= (DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.y - DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.y);
+                            startingPosition.x += (DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.x - DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x);
+                        }else if (DaggerfallUnity.Settings.RetroModeAspectCorrection == 2){
+                            startingPosition.x += (DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.x - DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x);
+                        }
+                    }
+                }
+            }
+            
+            // DaggerfallUI.Instance.DaggerfallHUD.NativePanel.BackgroundColor = Color.red; // ! debug
 
             // * Get total size of panels.
             Rect panelsAggregate = new Rect( // ! must be in parent scale for debuffs to position on side of buffs correctly
@@ -526,6 +569,16 @@ namespace MapOverwritesMod
             return panelsAggregate;
         }
 
+        public static float GetPanelHorizontalRight(BaseScreenComponent component){
+            return component.Position.x + component.Size.x;
+        }
+        public static float GetPanelHorizontalMiddle(BaseScreenComponent component){
+            return component.Position.x + component.Size.x / 2;
+        }
+        public static float GetPanelVerticalMiddle(BaseScreenComponent component){
+            return component.Position.y + component.Size.y / 2;
+        }
+
         public static void SetInteractionModeIconValues(){
             // * Call when interaction mode settings changes.
             // * Call when interaction mode icon size changes.
@@ -543,7 +596,11 @@ namespace MapOverwritesMod
 
             Rect boundingBox = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
 
-            Vector2 middleOffset = GetMiddleOffsets(HUDInteractionModeHorizontalAlignment, HUDInteractionModeVerticalAlignment, interactionModeSize);
+            // float xOffset = 0;
+            // float yOffset = 0;
+            // Vector2 middleOffset = GetMiddleOffsets(HUDInteractionModeHorizontalAlignment, HUDInteractionModeVerticalAlignment, interactionModeSize);
+            // xOffset += middleOffset.x;
+            // yOffset += middleOffset.y;
 
             interactionModeIconPosition = GetStartingPositionFromAlignment(
                 HUDInteractionModeHorizontalAlignment,
@@ -551,10 +608,12 @@ namespace MapOverwritesMod
                 interactionModeSize,
                 boundingBox.width, 
                 boundingBox.height,
-                edgeMargin,
-                middleOffset.x,
-                middleOffset.y
+                edgeMargin
             );
+            
+            // * allign with vertical middle of compass
+            interactionModeIconPosition.y = GetPanelVerticalMiddle(wandererCompass) - interactionModeIcon.Size.y / 2;
+            interactionModeIcon.Position = interactionModeIconPosition;
         }
 
         public static void PositionHUDElements(){
@@ -564,14 +623,15 @@ namespace MapOverwritesMod
             wandererVitals.Update();
             wandererBreathBar.Update();            
             SetWandererCompassValues();
-            SetSpellEffectsValues();
             // SetFacePanelsValues(); // ! updates each update so no need to update it here.
             SetInteractionModeIconValues();
+            SetSpellEffectsValues(); // ! should run after interaction mode and compass.
         }
 
         public static void SetInteractionModeIcon(){
             interactionModeIcon = (HUDInteractionModeIcon)GetNonPublicField(DaggerfallUI.Instance.DaggerfallHUD, "interactionModeIcon");
             interactionModeIcon.SetMargins(Margins.All, 0);
+            interactionModeIcon.Enabled = false;
             SetInteractionModeIconValues();
             // interactionModeIcon.HorizontalAlignment = HorizontalAlignment.None;
             // interactionModeIcon.VerticalAlignment = VerticalAlignment.None;
@@ -804,6 +864,14 @@ namespace MapOverwritesMod
 
         private void LateUpdate(){
             if (!hudElementsInitalized){ return; }
+            // * Spells and Compass
+            if (GameManager.IsGamePaused){
+                wandererCompass.Update();
+                wandererVitals.Update();
+                wandererBreathBar.Update();
+                DaggerfallUI.Instance.DaggerfallHUD.ActiveSpells.Enabled = true; // Gets disabled when opening pause dropdown so must re-enable it here.
+            }
+            // 
 
             // * Interaction mode:
             interactionModeIcon.Enabled = HUDInteractionModeIconEnabled;
@@ -823,15 +891,6 @@ namespace MapOverwritesMod
                     SetFacePanelsPositions(); // Just positions.
                 }
             }
-
-            // * Spells and Compass
-            if (GameManager.IsGamePaused){
-                wandererCompass.Update();
-                wandererVitals.Update();
-                wandererBreathBar.Update();
-                DaggerfallUI.Instance.DaggerfallHUD.ActiveSpells.Enabled = true; // Gets disabled when opening pause dropdown so must re-enable it here.
-            }
-            // 
 
             // * Spells Values & Positioning
             if (firstBuffPosition != GetFirstSpellPosition(activeSelfList)){
@@ -939,9 +998,10 @@ namespace MapOverwritesMod
             SetWandererCompass();
             SetVitalsHud();
             SetBreathHud();
-            SetSpellEffects();
+            // 
             SetFacePanels();
             SetInteractionModeIcon();
+            SetSpellEffects();
             // debugTexture = DaggerfallUI.CreateSolidTexture(UnityEngine.Color.white, 8);
             // 
             hudElementsInitalized = true;
@@ -1315,15 +1375,15 @@ namespace MapOverwritesMod
             ){
                 wandererCompass.Draw();
                 wandererVitals.Draw();
-                // interactionModeIcon.Draw();
+                interactionModeIcon.Draw();
             }
             if (GameManager.Instance.PlayerEnterExit.IsPlayerSubmerged & !GameManager.Instance.PlayerEntity.IsWaterBreathing){
                 wandererBreathBar.Draw();
             }
 
-            if (interactionModeIcon != null && interactionModeIcon.Enabled){
-                interactionModeIcon.Draw();
-            }
+            // if (interactionModeIcon != null && interactionModeIcon.Enabled){
+            //     interactionModeIcon.Draw();
+            // }
 
             if (facePanelsEnable && facePanels != null){
                 foreach (Panel facePanel in facePanels){
@@ -1335,6 +1395,10 @@ namespace MapOverwritesMod
             if (activeSpellsPanel != null){
                 activeSpellsPanel.Draw();
             }
+
+            // if (DaggerfallUI.Instance.DaggerfallHUD.NativePanel != null){
+            //     DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Draw();
+            // }
 
             // Debugging
             // if (debugTexture != null){
