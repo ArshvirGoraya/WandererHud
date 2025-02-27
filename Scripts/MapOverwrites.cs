@@ -145,6 +145,8 @@ namespace MapOverwritesMod
         }
 
         private void Start(){
+            DaggerfallUI.Instance.DaggerfallHUD.ShowInteractionModeIcon = false;
+
             DaggerfallUI.UIManager.OnWindowChange += UIManager_OnWindowChangeHandler;
             //
             SaveLoadManager.OnLoad += (_) => SaveLoadManager_OnLoad();
@@ -650,19 +652,19 @@ namespace MapOverwritesMod
             facePanelsParent.SetMargins(Margins.All, 0);
             facePanelsParent.AutoSize = AutoSizeModes.None;
             facePanels = (List<Panel>)GetNonPublicField(facePanelsParent, "facePanels");
-            // ! ↓ debug ↓
-            // * Add faces:
-            List<FaceDetails> faces = new List<FaceDetails>();
-            faces = (List<FaceDetails>)GetNonPublicField(facePanelsParent, "faces");
-            FaceDetails faceRef = faces[0];
-            faceRef.factionFaceIndex = UnityEngine.Random.Range(0, 61);
-            faces.Add(faceRef);
-            faceRef.factionFaceIndex = UnityEngine.Random.Range(0, 61);
-            faces.Add(faceRef);
-            faceRef.factionFaceIndex = UnityEngine.Random.Range(0, 61);
-            faces.Add(faceRef);
-            facePanelsParent.RefreshFaces();
-            // ! ↑ debug ↑
+            // // ! ↓ debug ↓
+            // // * Add faces:
+            // List<FaceDetails> faces = new List<FaceDetails>();
+            // faces = (List<FaceDetails>)GetNonPublicField(facePanelsParent, "faces");
+            // FaceDetails faceRef = faces[0];
+            // faceRef.factionFaceIndex = UnityEngine.Random.Range(0, 61);
+            // faces.Add(faceRef);
+            // faceRef.factionFaceIndex = UnityEngine.Random.Range(0, 61);
+            // faces.Add(faceRef);
+            // faceRef.factionFaceIndex = UnityEngine.Random.Range(0, 61);
+            // faces.Add(faceRef);
+            // facePanelsParent.RefreshFaces();
+            // // ! ↑ debug ↑
         }
 
         public static void SetWandererCompassValues(){
