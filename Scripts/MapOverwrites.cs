@@ -57,6 +57,8 @@ namespace MapOverwritesMod{
         static float exteriorZoomSpeed = 0;
         const float maximumExteriorZoom = 25.0f;
         const float minimumExteriorZoom = 250.0f;
+        // 
+        public class ParentDestroyer : MonoBehaviour { void OnDestroy(){Destroy(transform.parent.parent.gameObject); } }
 
         // * HUD STUFF: 
         public static Texture2D debugTexture;
@@ -1203,7 +1205,7 @@ namespace MapOverwritesMod{
 
                 foreach (Transform subChild in objPointer.transform){
                     subChild.transform.name = child.name;
-                    subChild.transform.gameObject.AddComponent<ChildDestroyed>(); // ! Add child destroyer script to all children: will delete the parent when the child is destroyed, deleting the entire object instead of just the child.
+                    subChild.transform.gameObject.AddComponent<ParentDestroyer>(); // ! Add parent destroyer script to all children: will delete the parent when the child is destroyed, deleting the entire object instead of just the child.
                 }
                 Debug.Log($"MapOverwrites: ReplaceNotesMesh");
             }
