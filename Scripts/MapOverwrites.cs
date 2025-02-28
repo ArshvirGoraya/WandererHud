@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using DaggerfallConnect;
 using static DaggerfallWorkshop.Game.UserInterface.HUDActiveSpells;
+using static DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallAutomapWindow;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
@@ -45,9 +46,17 @@ namespace MapOverwritesMod{
         readonly Dictionary<string, Transform> exitDoorRotationCorrectHelper = new Dictionary<string, Transform>(); // * Reset on Interior Entrance or Interior Load. 
         int notesCount = 0; // * Reset on Interior Entrance or Interior Load.
         int teleporterCount = 0; // * Reset on Interior Entrance or Interior Load.
+        Transform BeaconRotationPivot; // * On new dungeon.
+        AutomapViewMode automapViewMode; // * On new dungeon & opened map.
         // * Settings
         static bool forceWireFrame = false;
-        static float defaultZoomOut = 0;
+        // 
+        static float defaultInteriorZoomOut = 0;
+        static float interiorZoomSpeed = 0;
+        // 
+        static float exteriorZoomSpeed = 0;
+        const float maximumExteriorZoom = 25.0f;
+        const float minimumExteriorZoom = 250.0f;
 
         // * HUD STUFF: 
         public static Texture2D debugTexture;
@@ -219,9 +228,10 @@ namespace MapOverwritesMod{
             WandererHudSettings = modSettings;
             // * Map:
             forceWireFrame = WandererHudSettings.GetBool("InteriorMap", "ForceWireFrame");
-            defaultZoomOut = WandererHudSettings.GetFloat("InteriorMap", "DefaultZoomOut");
+            defaultInteriorZoomOut = WandererHudSettings.GetFloat("InteriorMap", "defaultInteriorZoomOut");
+            exteriorZoomSpeed = WandererHudSettings.GetFloat("ExteriorMap", "ZoomSpeed");
+            interiorZoomSpeed = WandererHudSettings.GetFloat("InteriorMap", "ZoomSpeed");
 
-            
 
             // * Interaction Mode
             HUDInteractionModeHorizontalAlignment = HorizontalAlignment.Left;
@@ -915,7 +925,60 @@ namespace MapOverwritesMod{
             }
         }
 
+        public void ExteriorZoom(bool ZoomIn = true){
+            // * Get Data
+            Camera cameraExteriorAutomap = ExteriorAutomap.instance.CameraExteriorAutomap;
+            ExteriorAutomap exteriorAutomap = ExteriorAutomap.instance;
+            float speed = exteriorZoomSpeed;
+            if (ZoomIn){ speed = -speed; }
+            // * Apply Zoom
+            float zoomSpeedCompensated = speed * exteriorAutomap.LayoutMultiplier; 
+            cameraExteriorAutomap.orthographicSize += zoomSpeedCompensated;
+            // * Clamp Zoom
+            cameraExteriorAutomap.orthographicSize = Math.Min(minimumExteriorZoom * exteriorAutomap.LayoutMultiplier, (Math.Max(maximumExteriorZoom * exteriorAutomap.LayoutMultiplier, cameraExteriorAutomap.orthographicSize)));
+        }
+
+        public void InteriorZoom(bool ZoomIn = true){
+            // * Get Data
+            Camera cameraAutomap = Automap.instance.CameraAutomap;
+            float magnitude = Vector3.Magnitude(BeaconRotationPivot.position - cameraAutomap.transform.position);
+            // * Reduce zoom magnitude if very close
+            if (automapViewMode == AutomapViewMode.View2D){
+                if (magnitude <= 150){
+                    magnitude *= 0.2f;
+                }
+            }else{
+                if (magnitude <= 30){
+                    magnitude *= 0.2f;
+                }
+            }
+            // * Dont Zoom if too far away (will still apply game's base zoom).
+            if (magnitude <= 0 || magnitude >= 10_000) { return; }
+            // * Apply Translation
+	        float zoomSpeedCompensated = interiorZoomSpeed * magnitude;
+            Vector3 translation;
+            if (ZoomIn){ translation = cameraAutomap.transform.forward * zoomSpeedCompensated;}
+            else { translation = -cameraAutomap.transform.forward * zoomSpeedCompensated; }
+            cameraAutomap.transform.position += translation;
+        }
+
+        private void MapZoom(){
+            if (!(DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow)){
+                return;
+            }
+            float mouseScroll = Input.GetAxis("Mouse ScrollWheel");
+            if (mouseScroll > 0f){
+                if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){ InteriorZoom(); }
+                else{ ExteriorZoom(); }
+            }
+            else if (mouseScroll < 0f){
+                if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){ InteriorZoom(false); }
+                else{ ExteriorZoom(false); }
+            }
+        }
+
         private void Update(){
+            MapZoom();
             DebugInputs();
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 if (GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes")){
@@ -1049,7 +1112,7 @@ namespace MapOverwritesMod{
 
         public void SetInitialInteriorCameraZoom(){
             Camera cameraAutomap = Automap.instance.CameraAutomap;
-            Vector3 translation = -cameraAutomap.transform.forward * (int)defaultZoomOut;
+            Vector3 translation = -cameraAutomap.transform.forward * (int)defaultInteriorZoomOut;
             cameraAutomap.transform.position += translation;
             Debug.Log($"MapOverwrites: SetInitialInteriorCameraZoom");
         }
@@ -1320,7 +1383,9 @@ namespace MapOverwritesMod{
 
         public void UIManager_OnWindowChangeHandler(object sender, EventArgs e){
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
-                ForceWireFrame();
+                BeaconRotationPivot = GameObject.Find("Automap/InteriorAutomap/Beacons/BeaconRotationPivotAxis").transform; // TODO: should set if is new dungeon.
+                automapViewMode = (AutomapViewMode)GetNonPublicField(DaggerfallUI.UIManager.TopWindow, "automapViewMode"); // TODO: should set if is new dungeon & opened map.
+                ForceWireFrame(); // todo: only want to do this first time entering a dungeon and every time until player changes something about this.
                 if (!InteriorMapObjectsReplaced){ // if they are not disabled, disable them (needed on each load)
                     ReplaceInteriorMapObjects();
                     SetInitialInteriorCameraZoom(); // todo: only happens once per save instead of each time entering a interior.
