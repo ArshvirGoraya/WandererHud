@@ -13,66 +13,42 @@ using System.Collections.Generic;
 using System.Reflection;
 using DaggerfallConnect;
 using static DaggerfallWorkshop.Game.UserInterface.HUDActiveSpells;
-using UnityEditor.Localization.Plugins.XLIFF.V12;
-using UnityEditor;
 
 // * Makes maps fullscreen (with autoscaling and size setting).
 // * Disables unnessary ui elements in exterior/interior maps..
 // * Disabled inner components of interior map (e.g., beacons)
 // Todo: Refactor into different files.
-namespace MapOverwritesMod
-{
-    public class MapOverwrites : MonoBehaviour
-    {
+namespace MapOverwritesMod{
+    public class MapOverwrites : MonoBehaviour{
         public static Mod mod;
-        // 
-        public DaggerfallAutomapWindow InteriorMapWindow {
-            get {return DaggerfallUI.Instance.AutomapWindow;}
-        }
-        public bool InteriorMapComponentsDisabled = false;
-        public Panel PanelRenderAutomapInterior;
-        // 
-        public DaggerfallExteriorAutomapWindow ExteriorMapWindow {
-            get {return DaggerfallUI.Instance.ExteriorAutomapWindow;}
-        }
-        public bool ExteriorMapComponentsDisabled = false;
-        public Panel PanelRenderAutomapExterior;
-        // 
-        public bool InteriorMapInnerComponentsDisabled = false;
-        ///
-        public Vector2 LastScreen = new Vector2(0, 0);
-        public float ResizeWaitSecs = 0f;
-        public bool ResizeWaiting = false;
-        // 
-        readonly String PlayerArrowPrefabName = "InteriorArrow";
-        GameObject PlayerArrowPrefab;
-        GameObject PlayerArrowObj;
-        // 
-        readonly String PlayerArrowPrefabNameExterior = "ExteriorArrow";
-        GameObject PlayerArrowPrefabExterior;
-        GameObject PlayerArrowObjExterior;
-        // 
-        readonly String ExitDoorPrefabName = "DungeonExit";
-        GameObject ExitDoorPrefab;
-        GameObject ExitDoorObj;
-        // 
-        readonly String NotePrefabName = "Note";
-        GameObject NotePrefab;
-        GameObject NoteObj;
-        // 
-        readonly String TeleportEnterName = "TeleportEnter";
-        GameObject TeleportEnterPrefab;
-        readonly string TeleporterConnectionColorName = "Door_Inner_Blue";
-        Material TeleporterConnectionColor;
-        bool ChangedConnectionColor = false;
-        readonly Dictionary<string, Transform> exitDoorRotationCorrectHelper = new Dictionary<string, Transform>();
-        const int exitStringLength = 4;
-        readonly String TeleportExitName = "TeleportExit";
-        GameObject TeleportExitPrefab;
-        int notesCount = 0;
-        int teleporterCount = 0;
-        // 
+        // * Everything stuff
         public static ModSettings WandererHudSettings;
+        public Vector2 LastScreen = new Vector2(0, 0);
+        // * Map Stuff
+        public DaggerfallAutomapWindow InteriorMapWindow {get {return DaggerfallUI.Instance.AutomapWindow;}}
+        public DaggerfallExteriorAutomapWindow ExteriorMapWindow {get {return DaggerfallUI.Instance.ExteriorAutomapWindow;}}
+        // * Prefabs Pointers:
+        GameObject PlayerInteriorArrowPrefab;
+        GameObject PlayerExteriorArrowPrefab;
+        GameObject ExitDoorPrefab;
+        GameObject NotePrefab;
+        GameObject TeleportEnterPrefab;
+        GameObject TeleportExitPrefab;
+        // * Object Pointers:
+        Material TeleporterConnectionColor;
+        GameObject objPointer; // ! If a object is initalized and used only in a SINGLE function/block, it can be initalized in this variable for a negligible performance gain lol. Use a seperate variable for certain prefabs if you need clarity regardless.
+        // * Variables
+        public bool InteriorMapPanelsDisabled = false; // * Once Per Game. Never reset to false.
+        public bool InteriorMapObjectsReplaced = false; // * Reset on interior entrance.
+        public bool ExteriorMapComponentsReplacedAndDisabled = false; // * Reset on each load and new exterior location.
+        bool ChangedConnectionColor = false; // * Reset on new teleporter connection.
+        readonly Dictionary<string, Transform> exitDoorRotationCorrectHelper = new Dictionary<string, Transform>(); // * Reset on Interior Entrance or Interior Load. 
+        int notesCount = 0; // * Reset on Interior Entrance or Interior Load.
+        int teleporterCount = 0; // * Reset on Interior Entrance or Interior Load.
+        // * Settings
+        static bool forceWireFrame = false;
+        static float defaultZoomOut = 0;
+
         // * HUD STUFF: 
         public static Texture2D debugTexture;
         public static Rect debugTextRect = new Rect(0, 0, 1, 1);
@@ -143,25 +119,23 @@ namespace MapOverwritesMod
             mod.LoadSettings();
             mod.IsReady = true;
         }
-
         private void Start(){
             DaggerfallUI.Instance.DaggerfallHUD.ShowInteractionModeIcon = false;
-
+            // 
             DaggerfallUI.UIManager.OnWindowChange += UIManager_OnWindowChangeHandler;
-            //
             SaveLoadManager.OnLoad += (_) => SaveLoadManager_OnLoad();
             PlayerEnterExit.OnTransitionInterior += (_) => OnTransitionToAnyInterior();
             PlayerEnterExit.OnTransitionDungeonInterior += (_) => OnTransitionToAnyInterior();
             PlayerGPS.OnEnterLocationRect += (_) => OnNewExteriorLocation();
             //
-            PlayerArrowPrefab = mod.GetAsset<GameObject>(PlayerArrowPrefabName, false);
-            PlayerArrowPrefabExterior = mod.GetAsset<GameObject>(PlayerArrowPrefabNameExterior, false);
-            // * Create and Child new Player Marker:
-            ExitDoorPrefab = mod.GetAsset<GameObject>(ExitDoorPrefabName, false);
-            NotePrefab = mod.GetAsset<GameObject>(NotePrefabName, false);
-            TeleportEnterPrefab = mod.GetAsset<GameObject>(TeleportEnterName, false);
-            TeleportExitPrefab = mod.GetAsset<GameObject>(TeleportExitName, false);
-            TeleporterConnectionColor = mod.GetAsset<Material>(TeleporterConnectionColorName, false);
+            // * Names = names of prefab files.
+            PlayerInteriorArrowPrefab = mod.GetAsset<GameObject>("InteriorArrow", false);
+            PlayerExteriorArrowPrefab = mod.GetAsset<GameObject>("ExteriorArrow", false);
+            ExitDoorPrefab = mod.GetAsset<GameObject>("DungeonExit", false);
+            NotePrefab = mod.GetAsset<GameObject>("Note", false);
+            TeleportEnterPrefab = mod.GetAsset<GameObject>("TeleportEnter", false);
+            TeleportExitPrefab = mod.GetAsset<GameObject>("TeleportExit", false);
+            TeleporterConnectionColor = mod.GetAsset<Material>("Door_Inner_Blue", false);
             // * HUD:
             Texture2D compasImage = mod.GetAsset<Texture2D>("COMPBOX.IMG", false);
             compassBoxSize = new Vector2(compasImage.width, compasImage.height);
@@ -171,6 +145,53 @@ namespace MapOverwritesMod
             // 
             SetLastScreen();
        }
+
+
+        public static object GetNonPublicField(object targetObject, string fieldName){
+            FieldInfo fieldInfo = targetObject.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+            return fieldInfo.GetValue(targetObject);
+        }
+        public static void SetNonPublicField(object targetObject, string fieldName, object fieldValue){
+            FieldInfo fieldInfo = targetObject.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+            fieldInfo.SetValue(targetObject, fieldValue);
+        }
+        public static void CallNonPublicFunction(object targetObject, string methodName, object[] parameters = null){
+            MethodInfo methodInfo = targetObject.GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
+            methodInfo.Invoke(targetObject, parameters);
+        }
+        public static object CreateNonPublicClassInstance(object targetObject, string className, params object[] args){
+            Type classType = targetObject.GetType().GetNestedType(className, BindingFlags.NonPublic);
+            ConstructorInfo constructor = classType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, 
+                Array.ConvertAll(args, arg => arg.GetType()), null);
+            object classInstance = constructor.Invoke(args);
+            return classInstance;
+        }
+
+        private void DebugAction(){
+            // Debug.Log($"Empty Debug Action");
+            // EscortingNPCFacePanel facePanel = DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces;
+            // List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanel, "faces");
+            // faces.RemoveAt(0);
+            // facePanel.RefreshFaces();
+
+            // SetFacePanelsValues();
+            for (int i = 0; i < facePanels.Count; i++){
+                Panel facePanel = facePanels[i];
+                if (!facePanel.Enabled){ continue; }
+                Debug.Log($"facePanel.Position: {facePanel.Position}");
+            }
+        }
+
+        private void DebugInputs(){
+            if (!Input.anyKey){ return; }
+
+            // Keycodes: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/KeyCode.html
+            if (Input.GetKeyDown(KeyCode.Slash)){
+                DebugAction();
+            }
+        }
+
+
 
         public static HorizontalAlignment GetHorizontalAlignmentFromSettings(int settingsVal){
             switch (settingsVal)
@@ -196,6 +217,11 @@ namespace MapOverwritesMod
 
         static void LoadSettings(ModSettings modSettings, ModSettingsChange change){
             WandererHudSettings = modSettings;
+            // * Map:
+            forceWireFrame = WandererHudSettings.GetBool("InteriorMap", "ForceWireFrame");
+            defaultZoomOut = WandererHudSettings.GetFloat("InteriorMap", "DefaultZoomOut");
+
+            
 
             // * Interaction Mode
             HUDInteractionModeHorizontalAlignment = HorizontalAlignment.Left;
@@ -786,57 +812,6 @@ namespace MapOverwritesMod
             wandererBreathBar.SetMargins(Margins.All, 0);
         }
 
-        public static object GetNonPublicField(object targetObject, string fieldName){
-            FieldInfo fieldInfo = targetObject.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
-            return fieldInfo.GetValue(targetObject);
-        }
-        public static void SetNonPublicField(object targetObject, string fieldName, object fieldValue){
-            FieldInfo fieldInfo = targetObject.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
-            fieldInfo.SetValue(targetObject, fieldValue);
-        }
-        public static void CallNonPublicFunction(object targetObject, string methodName, object[] parameters = null){
-            MethodInfo methodInfo = targetObject.GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
-            methodInfo.Invoke(targetObject, parameters);
-        }
-        public static object CreateNonPublicClassInstance(object targetObject, string className, params object[] args){
-            Type classType = targetObject.GetType().GetNestedType(className, BindingFlags.NonPublic);
-            ConstructorInfo constructor = classType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, 
-                Array.ConvertAll(args, arg => arg.GetType()), null);
-            // if (constructor == null){
-            //     Debug.Log($"UNABLE TO FIND CONSTRUCTOR WITH ARGS: {args}");
-            //     foreach (var arg in args){
-            //         Debug.Log($"arg: {arg.GetType()}");
-            //     }
-            //     return null;
-            // }
-            object classInstance = constructor.Invoke(args);
-            return classInstance;
-        }
-
-        private void DebugAction(){
-            // Debug.Log($"Empty Debug Action");
-            // EscortingNPCFacePanel facePanel = DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces;
-            // List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanel, "faces");
-            // faces.RemoveAt(0);
-            // facePanel.RefreshFaces();
-
-            // SetFacePanelsValues();
-            for (int i = 0; i < facePanels.Count; i++){
-                Panel facePanel = facePanels[i];
-                if (!facePanel.Enabled){ continue; }
-                Debug.Log($"facePanel.Position: {facePanel.Position}");
-            }
-        }
-
-        private void DebugInputs(){
-            if (!Input.anyKey){ return; }
-
-            // Keycodes: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/KeyCode.html
-            if (Input.GetKeyDown(KeyCode.Slash)){
-                DebugAction();
-            }
-        }
-
         public Vector2 GetFirstFacePosition(){
             Vector2 position = Vector2.zero;
             foreach (Panel facePanel in facePanels){
@@ -942,7 +917,6 @@ namespace MapOverwritesMod
 
         private void Update(){
             DebugInputs();
-
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 if (GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes")){
                     int newCount = GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes").transform.childCount;
@@ -963,31 +937,27 @@ namespace MapOverwritesMod
                 if (GameObject.Find("Automap/InteriorAutomap/Teleporter Connection") != null && !ChangedConnectionColor){
                     GameObject.Find("Automap/InteriorAutomap/Teleporter Connection").GetComponent<MeshRenderer>().material = TeleporterConnectionColor;
                     CallNonPublicFunction(DaggerfallUI.UIManager.TopWindow as DaggerfallAutomapWindow, "UpdateAutomapView");
+                    Debug.Log($"MapOverwrites: overwrite teleporter connection color");
                     ChangedConnectionColor = true;
                 }else{
                     ChangedConnectionColor = false;
                 }
-                return;    
+                return; // todo: why is this return here??? does it not resize during automap window? why not?
             }
             if (Screen.width != LastScreen.x || Screen.height != LastScreen.y){
-                if (!ResizeWaiting){
-                    StartCoroutine(WaitSeconds(ResizeWaitSecs));
-                }
+                ForceResizeAll();
             }
         }
 
-        private void SetLastScreen(){
-            LastScreen.x = Screen.width; 
-            LastScreen.y = Screen.height;
-        }
-
-        private IEnumerator WaitSeconds(float seconds){
+        public void ForceResizeAll(){
             ForceResizeMap();
             // PositionHUDElements();
             SetLastScreen();
-            ResizeWaiting = true;
-            yield return new WaitForSecondsRealtime(seconds);
-            ResizeWaiting = false;
+        }
+        
+        private void SetLastScreen(){
+            LastScreen.x = Screen.width; 
+            LastScreen.y = Screen.height;
         }
 
         public void ForceResizeMap(){
@@ -1000,20 +970,20 @@ namespace MapOverwritesMod
         }
 
         public void OnNewExteriorLocation(){
-            ExteriorMapComponentsDisabled = false;
+            ExteriorMapComponentsReplacedAndDisabled = false;
         }
 
         public void OnTransitionToAnyInterior(){
-            ResetInteriorMapInnerComponents();
+            ResetInteriorMapObjects();
         }
 
         public void SaveLoadManager_OnLoad(){
             Debug.Log($"LOADED NEW SAVE");
-            hudElementsInitalized = false;
             if (GameManager.Instance.IsPlayerInside || GameManager.Instance.IsPlayerInsideDungeon || GameManager.Instance.IsPlayerInsideCastle){
-                ResetInteriorMapInnerComponents();
+                ResetInteriorMapObjects();
             }
             // * Order = Draw Order
+            hudElementsInitalized = false;
             SetWandererCompass();
             SetVitalsHud();
             SetBreathHud();
@@ -1029,16 +999,20 @@ namespace MapOverwritesMod
         }
 
         public void ForceWireFrame(){
-            if (WandererHudSettings.GetBool("InteriorMap", "ForceWireFrame")){
+            if (forceWireFrame){
                 Automap.instance.SwitchToAutomapRenderModeWireframe();
                 Automap.instance.SlicingBiasY = float.NegativeInfinity;
-            }            
+                Debug.Log($"MapOverwrites: ForceWireFrame");
+                
+            }
         }
 
-        public void ResetInteriorMapInnerComponents(){
-            InteriorMapInnerComponentsDisabled = false;
+        public void ResetInteriorMapObjects(){
+            Debug.Log($"MapOverwrites: ResetInteriorMap Objects");
+            exitDoorRotationCorrectHelper.Clear();
             notesCount = 0;
             teleporterCount = 0;
+            InteriorMapObjectsReplaced = false;
         }
 
         public void ChangeObjectLayer(GameObject obj, int layer){
@@ -1075,9 +1049,9 @@ namespace MapOverwritesMod
 
         public void SetInitialInteriorCameraZoom(){
             Camera cameraAutomap = Automap.instance.CameraAutomap;
-            float zoomOutMagnitude = WandererHudSettings.GetFloat("InteriorMap", "DefaultZoomOut");
-            Vector3 translation = -cameraAutomap.transform.forward * (int)zoomOutMagnitude;
+            Vector3 translation = -cameraAutomap.transform.forward * (int)defaultZoomOut;
             cameraAutomap.transform.position += translation;
+            Debug.Log($"MapOverwrites: SetInitialInteriorCameraZoom");
         }
 
         public Vector3 ParseStringToVector3(string stringifiedVector3){
@@ -1094,7 +1068,7 @@ namespace MapOverwritesMod
                 string entranceParentName = exitDoor.Key + "Entrance";
                 Transform exitTeleporter = exitDoor.Value;
                 foreach (Transform child in GameObject.Find($"Automap/InteriorAutomap/TeleporterMarkers/{entranceParentName}").transform){
-                    if (child.childCount <= 0){ continue; }
+                    if (child.childCount <= 0){ continue; } // ! Heuristic for if is a entrance door that has been replaced.
                     exitTeleporter.eulerAngles = child.eulerAngles;
                     exitTeleporter.Rotate(0, 180, 0); // Face opposite direction as entrance teleporter
                 }
@@ -1103,65 +1077,51 @@ namespace MapOverwritesMod
 
         public void ReplaceTeleporters(){
             foreach (Transform child in GameObject.Find("Automap/InteriorAutomap/TeleporterMarkers").transform){
-                // * Heuristic for already having replaced the teleporter
-                if (child.transform.GetChild(0).transform.childCount > 1){ continue; }
-                // * Disable Mesh Renderer
-                Transform portalMarker = child.transform.GetChild(0).transform;
-                portalMarker.GetComponent<MeshRenderer>().enabled = false;
-
-                // * Replace
-                GameObject teleporter;
-                if (child.name.EndsWith("Entrance")){
-                    teleporter = Instantiate(TeleportEnterPrefab);
-                }else{
-                    teleporter = Instantiate(TeleportExitPrefab);
-                }
-                ChangeObjectLayer(teleporter, portalMarker.gameObject.layer);
-                teleporter.transform.position = portalMarker.position;
-                teleporter.transform.SetParent(child); // * dont child to portalMarker (for correct rotation).
-                // * Rename:
-                teleporter.transform.name = portalMarker.name;
-                // * Rotation:
-                
+                if (child.transform.GetChild(0).transform.childCount > 1){ continue; } // ! Heuristic for already having replaced the teleporter
+                // * Disable Existing
+                Transform portalMaker = child.transform.GetChild(0).transform;
+                portalMaker.GetComponent<MeshRenderer>().enabled = false;
+                // * New
+                if (child.name.EndsWith("Entrance")){ objPointer = Instantiate(TeleportEnterPrefab); }
+                else{ objPointer = Instantiate(TeleportExitPrefab); }
+                ChangeObjectLayer(objPointer, portalMaker.gameObject.layer);
+                objPointer.transform.position = portalMaker.position;
+                objPointer.transform.SetParent(child); // ? dont child to portalMaker (for correct rotation).
+                objPointer.transform.name = portalMaker.name;
+                // * Correct Rotation:
                 if (child.name.EndsWith("Exit")){ 
-                    // string doorName = child.name.Substring(0, child.name.Length - exitStringLength);
-                    // * Rotate Exit doors seperately.
-                    exitDoorRotationCorrectHelper[child.name.Substring(0, child.name.Length - exitStringLength)] = teleporter.transform;
+                    // ? Store Exit Doors Names and rotate them seperately.
+                    exitDoorRotationCorrectHelper[child.name.Substring(0, child.name.Length - 4)] = objPointer.transform;
                     continue; 
                 }
-
                 // * Find matching door:
-                Transform foundMatchingDoor = null;
+                Transform matchingActionModel = null;
                 string dungeonName = DaggerfallDungeon.GetSceneName(GameManager.Instance.PlayerGPS.CurrentLocation);
                 foreach (Transform daggerfallBlock in GameObject.Find($"Dungeon/{dungeonName}").transform){
                     if (daggerfallBlock.GetComponent<DaggerfallRDBBlock>() == null){ continue; }
                     Transform ActionModels = daggerfallBlock.Find("Action Models");
 
                     foreach (Transform actionModel in ActionModels){
-                        DaggerfallAction daggerfallAction;
-                        if (!actionModel.TryGetComponent<DaggerfallAction>(out daggerfallAction)) { continue; }
+                        if (!actionModel.TryGetComponent<DaggerfallAction>(out DaggerfallAction daggerfallAction)) { continue; }
                         if (daggerfallAction.ActionFlag != DFBlock.RdbActionFlags.Teleport){ continue; }
                         if (daggerfallAction.ModelDescription != "DOR"){ continue; }
-
                         if (
-                            actionModel.position.x == teleporter.transform.position.x &&
-                            actionModel.position.y == teleporter.transform.position.y - 1 && // Must subtract 1 for some reason. Is a unit higher than it should be.
-                            actionModel.position.z == teleporter.transform.position.z
+                            actionModel.position.x == objPointer.transform.position.x &&
+                            actionModel.position.y == objPointer.transform.position.y - 1 && // ? Must subtract 1 for some reason. Is a unit higher than it should be.
+                            actionModel.position.z == objPointer.transform.position.z
                             ){
-                            foundMatchingDoor = actionModel;
+                            matchingActionModel = actionModel;
                             break;
                         }
                     }
-                    if (foundMatchingDoor){ break; }
+                    if (matchingActionModel){ break; }
                 }
-
-                if (foundMatchingDoor){
-                    teleporter.transform.eulerAngles = foundMatchingDoor.eulerAngles;
-                    // teleporter.transform.Rotate(0, 90, 0);
-                }
+                if (matchingActionModel){ objPointer.transform.eulerAngles = matchingActionModel.eulerAngles; }
                 // * Slide down 1 unit
-                SlideObjectPosition(teleporter, new Vector3(0, -0.6f, 0)); 
+                SlideObjectPosition(objPointer, new Vector3(0, -0.6f, 0)); 
+                Debug.Log($"MapOverwrites: ReplaceTeleporters");
             }
+            objPointer = null;
         }
 
         public void ReplaceNotesMesh(){
@@ -1172,94 +1132,96 @@ namespace MapOverwritesMod
                 child.GetComponent<MeshRenderer>().enabled = false;
 
                 // * Not CustomNote Found, child one to this:
-                NoteObj = Instantiate(NotePrefab);
-                ChangeObjectLayer(NoteObj, child.gameObject.layer);
-                NoteObj.transform.position = child.transform.position;
-                NoteObj.transform.SetParent(child.transform);
-                SlideObjectPosition(NoteObj, new Vector3(0, -0.4f, 0));
+                objPointer = Instantiate(NotePrefab);
+                ChangeObjectLayer(objPointer, child.gameObject.layer);
+                objPointer.transform.position = child.transform.position;
+                objPointer.transform.SetParent(child.transform);
+                SlideObjectPosition(objPointer, new Vector3(0, -0.4f, 0));
 
-                foreach (Transform subChild in NoteObj.transform){
+                foreach (Transform subChild in objPointer.transform){
                     subChild.transform.name = child.name;
-                    subChild.transform.gameObject.AddComponent<ChildDestroyed>();
-                    // * Add child destoryer script to all children: will delete the parent when the child is destroyed, deleting the entire object instead of just the child.
+                    subChild.transform.gameObject.AddComponent<ChildDestroyed>(); // ! Add child destroyer script to all children: will delete the parent when the child is destroyed, deleting the entire object instead of just the child.
                 }
+                Debug.Log($"MapOverwrites: ReplaceNotesMesh");
             }
+            objPointer = null;
         }
 
-        public void DisableInnerInteriorMapComponents(){
+        public void ReplaceInteriorPlayerMarkerArrow(GameObject child){
+            // * Disable Existing
+            child.GetComponent<MeshRenderer>().enabled = false;
+            // * New
+            objPointer = Instantiate(PlayerInteriorArrowPrefab);
+            ChangeObjectLayer(objPointer, child.layer);
+            objPointer.transform.SetPositionAndRotation(child.transform.position, child.transform.rotation);
+            // * Correct rotation.
+            objPointer.transform.Rotate(0, -90, 0);
+            objPointer.transform.SetParent(child.transform);
+            objPointer.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
+            // * Slide Downwards
+            SlideObjectPosition(objPointer, new Vector3(0, -0.6f, 0));
+            objPointer = null;
+        }
+
+        public void ReplaceInteriorExitDoor(GameObject child){
+            // * Disable Existing:
+            child.transform.GetChild(0).gameObject.SetActive(false);
+            child.transform.GetChild(1).GetComponent<MeshRenderer>().enabled = false;
+            // * New
+            objPointer = Instantiate(ExitDoorPrefab);
+            ChangeObjectLayer(objPointer, child.transform.GetChild(1).gameObject.layer);
+            objPointer.transform.position = child.transform.GetChild(1).transform.position;
+            objPointer.transform.SetParent(child.transform.GetChild(1).transform);
+            // * Correct Rotation:
+            // * Correct Rotation for Dungeon/Castle:
+            if ((GameManager.Instance.IsPlayerInsideDungeon) || (GameManager.Instance.IsPlayerInsideCastle)){
+                objPointer.transform.position = GameManager.Instance.PlayerEnterExit.Dungeon.StartMarker.transform.position;
+                StaticDoor[] DungeonExitDoors = DaggerfallStaticDoors.FindDoorsInCollections(GameManager.Instance.PlayerEnterExit.Dungeon.StaticDoorCollections, DoorTypes.DungeonExit);
+                DaggerfallStaticDoors.FindClosestDoor(
+                    GameManager.Instance.PlayerEnterExit.Dungeon.StartMarker.transform.position,
+                    DungeonExitDoors,
+                    out StaticDoor DungeonExitDoor
+                );
+                Vector3 doorNormal = DaggerfallStaticDoors.GetDoorNormal(DungeonExitDoor);
+                objPointer.transform.rotation = Quaternion.LookRotation(doorNormal, Vector3.up);
+                objPointer.transform.Rotate(0, 90, 0);
+                // * Slide down if in Castle:
+                if (GameManager.Instance.IsPlayerInsideDungeon){
+                    SlideObjectPosition(objPointer, new Vector3(0, -0.6f, 0));
+                }
+            }
+            // * Rotaion Fix if in Interiors:
+            else{
+                Vector3 doorNormal = DaggerfallStaticDoors.GetDoorNormal(GameManager.Instance.PlayerEnterExit.Interior.EntryDoor);
+                objPointer.transform.rotation = Quaternion.LookRotation(doorNormal, Vector3.up);
+                objPointer.transform.Rotate(0, -90, 0);
+                // * Slide down:
+                SlideObjectPosition(objPointer, new Vector3(0, -1f, 0));
+            }
+            objPointer = null;
+        }
+
+        public void ReplaceInteriorMapObjects(){
             if (!GameManager.Instance.PlayerEnterExit.IsPlayerInside){
                 return;
             }
             // * Beacons/Markers:
             foreach (Transform child in GameObject.Find("Automap/InteriorAutomap/Beacons").transform){
                 if (child.name == "BeaconEntrancePosition"){
-                    // * BeaconEntrancePositionMarker
-                    child.gameObject.transform.GetChild(0).gameObject.SetActive(false);
-                    // * CubeEntrancePositionMarker
-                    child.gameObject.transform.GetChild(1).GetComponent<MeshRenderer>().enabled = false;
-                    ExitDoorObj = Instantiate(ExitDoorPrefab);
-                    ChangeObjectLayer(ExitDoorObj, child.gameObject.transform.GetChild(1).gameObject.layer);
-                    // 
-                    ExitDoorObj.transform.position = child.gameObject.transform.GetChild(1).transform.position;
-                    ExitDoorObj.transform.SetParent(child.gameObject.transform.GetChild(1).transform);
-
-                    // * Set Rotation/Direction of door:
-
-                    // ! If in dungeon:
-                    if ((GameManager.Instance.IsPlayerInsideDungeon) || (GameManager.Instance.IsPlayerInsideCastle)){
-                        ExitDoorObj.transform.position = GameManager.Instance.PlayerEnterExit.Dungeon.StartMarker.transform.position;
-                        StaticDoor[] DungeonExitDoors = DaggerfallStaticDoors.FindDoorsInCollections(GameManager.Instance.PlayerEnterExit.Dungeon.StaticDoorCollections, DoorTypes.DungeonExit);
-                        DaggerfallStaticDoors.FindClosestDoor(
-                            GameManager.Instance.PlayerEnterExit.Dungeon.StartMarker.transform.position,
-                            DungeonExitDoors,
-                            out StaticDoor DungeonExitDoor
-                        );
-
-                        // * Dungeon/Castle Rotations:
-                        Vector3 doorNormal = DaggerfallStaticDoors.GetDoorNormal(DungeonExitDoor);
-                        ExitDoorObj.transform.rotation = Quaternion.LookRotation(doorNormal, Vector3.up);
-                        ExitDoorObj.transform.Rotate(0, 90, 0);
-
-                        if (GameManager.Instance.IsPlayerInsideDungeon){
-                            SlideObjectPosition(ExitDoorObj, new Vector3(0, -0.6f, 0)); // * Slide down a unit: not in castles?
-                        }
-                    }
-                    // ! If In building:
-                    else{
-                        // * Use the direction of the normal to scale the object that way (will face that direction)
-                        // ChangeObjectDirectionToNormal(ExitDoorObj, DaggerfallStaticDoors.GetDoorNormal(GameManager.Instance.PlayerEnterExit.Interior.EntryDoor));
-
-                        Vector3 doorNormal = DaggerfallStaticDoors.GetDoorNormal(GameManager.Instance.PlayerEnterExit.Interior.EntryDoor);
-                        ExitDoorObj.transform.rotation = Quaternion.LookRotation(doorNormal, Vector3.up);
-                        ExitDoorObj.transform.Rotate(0, -90, 0);
-
-                        // * Slide Door downwards, just for buildings (not dungeons)
-                        SlideObjectPosition(ExitDoorObj, new Vector3(0, -1f, 0));
-                    }
+                    ReplaceInteriorExitDoor(child.gameObject);
                     continue;
                 }
                 if (child.name == "PlayerMarkerArrow"){
-                    child.GetComponent<MeshRenderer>().enabled = false; // * Make Default player marker invisible.
-                    PlayerArrowObj = Instantiate(PlayerArrowPrefab);
-                    // * Set layer to automap to make it properly visible in the automap.
-                    ChangeObjectLayer(PlayerArrowObj, child.gameObject.layer);
-                    // * Use new Player Marker:
-                    PlayerArrowObj.transform.SetPositionAndRotation(child.transform.position, child.transform.rotation);
-                    // * Rotate another -90 degrees to correct the rotation.
-                    PlayerArrowObj.transform.Rotate(0, -90, 0);
-                    PlayerArrowObj.transform.SetParent(child.transform);
-                    PlayerArrowObj.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
-
-                    // * Slide Interior Cursor downwards
-                    SlideObjectPosition(PlayerArrowObj, new Vector3(0, -0.6f, 0));
+                    ReplaceInteriorPlayerMarkerArrow(child.gameObject);
                     continue;
                 }
+                // * Disable any other inner components:
                 child.gameObject.SetActive(false);
             }
-            SetInitialInteriorCameraZoom();
+            Debug.Log($"MapOverwrites: ReplaceInteriorMapObjects");
         }
 
-        public void DisableInteriorMapComponents(){
+        public void DisableInteriorMapPanels(){
             InteriorMapWindow.ParentPanel.Components.OfType<Panel>().LastOrDefault().Enabled = false; // * Last panel = MicroMap/panelRenderOverlay.
 
             foreach (BaseScreenComponent component in InteriorMapWindow.NativePanel.Components){
@@ -1277,27 +1239,25 @@ namespace MapOverwritesMod
                     continue;
                 }
             }
+            Debug.Log($"MapOverwrites: DisableInteriorMapPanels");
         }
 
         public void ReplaceExteriorPlayerMarker(){
-            // * Simply scales them to 0 so we cannot see them anymore.
+            // * Disable existing
             GameObject.Find("Automap/ExteriorAutomap/PlayerMarkerArrowStamp").GetComponent<Transform>().localScale = Vector3.zero;
             GameObject.Find("Automap/ExteriorAutomap/PlayerMarkerCircle").GetComponent<Transform>().localScale = Vector3.zero;
             ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.GetComponent<MeshRenderer>().enabled = false;
-            // * Child new 3D marker:
-            PlayerArrowObjExterior = Instantiate(PlayerArrowPrefabExterior);
-            // * Set layer to automap to make it properly visible in the automap.
-            ChangeObjectLayer(PlayerArrowObjExterior, ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.layer);
-            // * Use new Player Marker:
-            PlayerArrowObjExterior.transform.SetPositionAndRotation(ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.transform.position, ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.transform.rotation);
-            // * Rotate another -90 degrees to correct the rotation.
-            PlayerArrowObjExterior.transform.Rotate(0, -90, 0);
-            PlayerArrowObjExterior.transform.SetParent(ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.transform);
-            // PlayerArrowObjExterior.transform.localScale = new Vector3(1, 1, 1);
+            // * Instance New
+            objPointer = Instantiate(PlayerExteriorArrowPrefab);
+            ChangeObjectLayer(objPointer, ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.layer);
+            objPointer.transform.SetPositionAndRotation(ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.transform.position, ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.transform.rotation);
+            // * Correct rotation
+            objPointer.transform.Rotate(0, -90, 0);
+            objPointer.transform.SetParent(ExteriorAutomap.instance.GameobjectPlayerMarkerArrow.transform);
+            objPointer = null;
         }
 
         public void DisableExteriorMapComponents(){
-            ReplaceExteriorPlayerMarker();
             foreach (BaseScreenComponent component in ExteriorMapWindow.NativePanel.Components){
                 if (component is Outline){ continue; }
                 else if (component is Button || component is HUDCompass){ // * Buttons and Compass Texture
@@ -1321,9 +1281,7 @@ namespace MapOverwritesMod
             foreach (BaseScreenComponent component in InteriorMapWindow.ParentPanel.Components){
                 if (component is Outline){ continue; }
                 if (component == InteriorMapWindow.NativePanel){ continue; }
-                if (component.Enabled && component is Panel){
-                    PanelRenderAutomapInterior = component as Panel; // * panelRenderAutomap (map texture) (scales with DummyPanelAutomap)
-                }
+                // if (component.Enabled && component is Panel){} // * panelRenderAutomap (map texture) (scales with DummyPanelAutomap)
             }
             // 
             foreach (BaseScreenComponent component in InteriorMapWindow.NativePanel.Components){
@@ -1336,17 +1294,16 @@ namespace MapOverwritesMod
                 }
             }
             ForceResizeMap(); // ! Set size to apply autoscaling!
+            Debug.Log($"MapOverwrites: ResizeInteriorMapPanels");
         }
 
         public void ResizeExteriorMapPanels(){
             ExteriorMapWindow.NativePanel.AutoSize = AutoSizeModes.ResizeToFill;
-            foreach (BaseScreenComponent component in ExteriorMapWindow.ParentPanel.Components){
-                if (component.Enabled && component is Panel){
-                    if (!$"{component.Size}".Equals($"({Screen.width}, {Screen.height})")){ // * panelRenderAutomap (map texture) (scales with DummyPanelAutomap)
-                        PanelRenderAutomapExterior = component as Panel; // ! If equal to screen size = NativePanel. Else, is panelRenderAutoMap.
-                    }
-                }
-            }
+            // foreach (BaseScreenComponent component in ExteriorMapWindow.ParentPanel.Components){
+            //     if (component.Enabled && component is Panel){
+            //         if (!$"{component.Size}".Equals($"({Screen.width}, {Screen.height})")){} // * panelRenderAutomap (map texture) (scales with DummyPanelAutomap)
+            //     }
+            // }
             // TODO: find better way to select this panels?
             foreach (BaseScreenComponent component in ExteriorMapWindow.NativePanel.Components){
                 if (component.Enabled && component is Panel){
@@ -1358,29 +1315,31 @@ namespace MapOverwritesMod
                 }
             }
             ForceResizeMap(); // ! Set size to apply autoscaling!
+            Debug.Log($"MapOverwrites: ResizeExteriorMapPanels");
         }
 
         public void UIManager_OnWindowChangeHandler(object sender, EventArgs e){
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
                 ForceWireFrame();
-                if (!InteriorMapInnerComponentsDisabled){
-                    DisableInnerInteriorMapComponents();
-                    InteriorMapInnerComponentsDisabled = true;
+                if (!InteriorMapObjectsReplaced){ // if they are not disabled, disable them (needed on each load)
+                    ReplaceInteriorMapObjects();
+                    SetInitialInteriorCameraZoom(); // todo: only happens once per save instead of each time entering a interior.
+                    InteriorMapObjectsReplaced = true;
                 }
-                if (!InteriorMapComponentsDisabled){ 
-                    DisableInteriorMapComponents();
-                    InteriorMapComponentsDisabled = true;
+                if (!InteriorMapPanelsDisabled){ // if they are not disabled, disable them (only needed once per game).
+                    DisableInteriorMapPanels();
+                    InteriorMapPanelsDisabled = true;
                 }
                 ResizeInteriorMapPanels();
-                // debugPrint();
             }
             else if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow){
-                if (!ExteriorMapComponentsDisabled){ 
+                if (!ExteriorMapComponentsReplacedAndDisabled){ // if they are not disabled, disable them (on any new exterior location). // todo: should this be set to false on new save load?
+                    ReplaceExteriorPlayerMarker();
                     DisableExteriorMapComponents();
-                    ExteriorMapComponentsDisabled = true;
+                    ExteriorMapComponentsReplacedAndDisabled = true;
+                    Debug.Log($"MapOverwrites: ExteriorMapComponentsReplacedAndDisabled");
                 }
                 ResizeExteriorMapPanels();
-                // debugPrint();
             }
         }
 
