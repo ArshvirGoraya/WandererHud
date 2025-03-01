@@ -11,7 +11,6 @@
 
 using UnityEngine;
 using DaggerfallWorkshop.Game.Entity;
-using MapOverwritesMod;
 
 namespace DaggerfallWorkshop.Game.UserInterface
 {

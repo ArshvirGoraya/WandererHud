@@ -10,7 +10,6 @@
         "Assets/Game/Mods/WandererHud/modsettings.json",
         "Assets/Game/Mods/WandererHud/wandererhud.dfmod.json",
         "Assets/Game/Mods/WandererHud/Textures/Img/AMAP00I0.IMG.png",
-        "Assets/Game/Mods/WandererHud/Scripts/MapOverwrites.cs",
         "Assets/Game/Mods/WandererHud/ModAssets/InteriorArrow.prefab",
         "Assets/Game/Mods/WandererHud/ModAssets/Cursor.png",
         "Assets/Game/Mods/WandererHud/ModAssets/DungeonExit.prefab",
@@ -25,6 +24,10 @@
         "Assets/Game/Mods/WandererHud/Textures/Img/MAIN05I0.IMG.png",
         "Assets/Game/Mods/WandererHud/Textures/Img/MAIN04I0.IMG.png",
         "Assets/Game/Mods/WandererHud/Scripts/WandererHUDBreathBar.cs",
-        "Assets/Game/Mods/WandererHud/Textures/Img/BreathBar.png"
+        "Assets/Game/Mods/WandererHud/Textures/Img/BreathBar.png",
+        "Assets/Game/Mods/WandererHud/Scripts/WandererHud.cs",
+        "Assets/Game/Mods/WandererHud/Scripts/MapOverwrites.cs",
+        "Assets/Game/Mods/WandererHud/Scripts/HudOverwrites.cs",
+        "Assets/Game/Mods/WandererHud/Scripts/ModHelpers.cs"
     ]
 }
