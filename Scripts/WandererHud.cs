@@ -1,20 +1,9 @@
 ﻿using UnityEngine;
-using DaggerfallWorkshop;
 using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
-using DaggerfallWorkshop.Game.UserInterface;
-using System;
 using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
-using System.Collections.Generic;
-using System.Reflection;
-using static DaggerfallWorkshop.Game.UserInterface.HUDActiveSpells;
-using static ModHelpers;
 
-// * Makes maps fullscreen (with autoscaling and size setting).
-// * Disables unnessary ui elements in exterior/interior maps..
-// * Disabled inner components of interior map (e.g., beacons)
-// Todo: Refactor into different files.
 namespace WandererHudMod{
     public class WandererHud : MonoBehaviour{
         public static WandererHud instance;
@@ -30,7 +19,7 @@ namespace WandererHudMod{
             mod = initParams.Mod;
             var go = new GameObject(mod.Title);
             instance = go.AddComponent<WandererHud>();
-            // Add other scripts:
+            // Add other components:
             mapOverwrites = go.AddComponent<MapOverwrites>();
             mapOverwrites.Initalize(instance);
             // 
@@ -65,16 +54,15 @@ namespace WandererHudMod{
                 ForceResizeAll();
             }
         }
-
-        private void DebugAction(){
-            Debug.Log($"Debug Action");
-        }
         private void DebugInputs(){
             if (!Input.anyKey){ return; }
             // Keycodes: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/KeyCode.html
             if (Input.GetKeyDown(KeyCode.Slash)){
                 DebugAction();
             }
+        }
+        private void DebugAction(){
+            Debug.Log($"Debug Action");
         }
 
         public void ForceResizeAll(){

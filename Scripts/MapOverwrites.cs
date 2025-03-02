@@ -229,11 +229,11 @@ public class MapOverwrites : MonoBehaviour
             else{ objPointer = Instantiate(TeleportExitPrefab); }
             ChangeObjectLayer(objPointer, portalMaker.gameObject.layer);
             objPointer.transform.position = portalMaker.position;
-            objPointer.transform.SetParent(child); // ? dont child to portalMaker (for correct rotation).
+            objPointer.transform.SetParent(child); // ! dont child to portalMaker (for correct rotation).
             objPointer.transform.name = portalMaker.name;
             // * Correct Rotation:
             if (child.name.EndsWith("Exit")){ 
-                // ? Store Exit Doors Names and rotate them seperately.
+                // * Store Exit Doors Names and rotate them seperately.
                 exitDoorRotationCorrectHelper[child.name.Substring(0, child.name.Length - 4)] = objPointer.transform;
                 continue; 
             }
@@ -250,7 +250,7 @@ public class MapOverwrites : MonoBehaviour
                     if (daggerfallAction.ModelDescription != "DOR"){ continue; }
                     if (
                         actionModel.position.x == objPointer.transform.position.x &&
-                        actionModel.position.y == objPointer.transform.position.y - 1 && // ? Must subtract 1 for some reason. Is a unit higher than it should be.
+                        actionModel.position.y == objPointer.transform.position.y - 1 && // ! Must subtract 1 for some reason. Is a unit higher than it should be.
                         actionModel.position.z == objPointer.transform.position.z
                         ){
                         matchingActionModel = actionModel;
