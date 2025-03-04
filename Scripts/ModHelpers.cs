@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Reflection;
 using UnityEngine;
+
 public static class ModHelpers{
+    // * Non-Publics
     public static object GetNonPublicField(object targetObject, string fieldName){
         FieldInfo fieldInfo = targetObject.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
         return fieldInfo.GetValue(targetObject);
@@ -21,12 +23,20 @@ public static class ModHelpers{
         object classInstance = constructor.Invoke(args);
         return classInstance;
     }
-    // 
+    // * Normalizing
     public static float NormalizeValue(float value, float min, float max){
         return (value - min) / (max - min);
     }
     public static float GetValueFromNormalize(float normalized_value, float min, float max){
         return min + normalized_value * (max - min);
     }
-    // 
+    public static float InvertUnitInterval(float value){
+        return 1f - value;
+    }
+    // * Easing
+    private const float PI = Mathf.PI; 
+    private const float HALFPI = Mathf.PI / 2.0f; 
+    static public float CircularEaseOut(float p){
+        return Mathf.Sqrt((2 - p) * p);
+    }
 }

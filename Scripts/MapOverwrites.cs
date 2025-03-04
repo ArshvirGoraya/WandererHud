@@ -12,6 +12,7 @@ using DaggerfallConnect;
 using static DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallAutomapWindow;
 using WandererHudMod;
 using static ModHelpers;
+using System.Security.Claims;
 
 public class MapOverwrites : MonoBehaviour
 {
@@ -70,6 +71,7 @@ public class MapOverwrites : MonoBehaviour
     static float exteriorZoomSpeed = 0;
     const float maximumExteriorZoom = 25.0f;
     const float minimumExteriorZoom = 250.0f;
+    const float defaultExteriorZoomSpeed = 2.0f; // What it is in game.
     // 
     public class ParentDestroyer : MonoBehaviour { void OnDestroy(){Destroy(transform.parent.parent.gameObject); } }
     // 
@@ -83,10 +85,14 @@ public class MapOverwrites : MonoBehaviour
     }
 
     public static void LoadSettings(ModSettings modSettings, ModSettingsChange change){
-        forceWireFrame = modSettings.GetBool("InteriorMap", "ForceWireFrame");
-        defaultInteriorZoomOut = modSettings.GetFloat("InteriorMap", "DefaultZoomOut");
-        exteriorZoomSpeed = modSettings.GetFloat("ExteriorMap", "ZoomSpeed");
-        interiorZoomSpeed = modSettings.GetFloat("InteriorMap", "ZoomSpeed");
+        forceWireFrame = modSettings.GetBool("Maps", "ForceWireMesh");
+        defaultInteriorZoomOut = modSettings.GetFloat("Maps", "DefaultMagnificationLevel");
+        exteriorZoomSpeed = modSettings.GetFloat("Maps", "ZoomSpeed");
+        interiorZoomSpeed = NormalizeValue(exteriorZoomSpeed, 0, 50); // ! 50 = maximum value of zoomspeed setting (no built in wat to get max value?)
+
+        // exteriorZoomSpeed = modSettings.GetFloat("ExteriorMap", "ZoomSpeed");
+        // interiorZoomSpeed = modSettings.GetFloat("InteriorMap", "ZoomSpeed");
+        Debug.Log($"exteriorZoomSpeed {exteriorZoomSpeed} - interiorZoomSpeed {interiorZoomSpeed}");
     }
 
     public void SaveLoadManager_OnLoad(){
@@ -485,29 +491,43 @@ public class MapOverwrites : MonoBehaviour
     }
 
     public void ExteriorZoom(bool ZoomIn = true){
+        if (exteriorZoomSpeed == 0){ return; } // * no need to run extra code just to apply default zoom in.
         // * Get Data
         Camera cameraExteriorAutomap = ExteriorAutomap.instance.CameraExteriorAutomap;
         ExteriorAutomap exteriorAutomap = ExteriorAutomap.instance;
+        // * Undo game's default zoom
+        float maximumZoom = minimumExteriorZoom * exteriorAutomap.LayoutMultiplier;
+        float minimumZoom = maximumExteriorZoom * exteriorAutomap.LayoutMultiplier;
+        float defaultZoom = defaultExteriorZoomSpeed;
+        if (!ZoomIn){ defaultZoom = -defaultZoom; } // * opposite direction (zoom in should zoom out)
+        float zoomSpeedCompensatedDefault = defaultZoom * exteriorAutomap.LayoutMultiplier;
+        cameraExteriorAutomap.orthographicSize += zoomSpeedCompensatedDefault;
+        cameraExteriorAutomap.orthographicSize = Mathf.Clamp(cameraExteriorAutomap.orthographicSize, minimumZoom, maximumZoom);
+        // * Get Wanderer Zoom
         float speed = exteriorZoomSpeed;
         if (ZoomIn){ speed = -speed; }
+        float exteriorZoom = speed * exteriorAutomap.LayoutMultiplier; 
+        // * Decrease zoom when close to minimum zoom in.
+        float currentZoomNormalized = NormalizeValue(cameraExteriorAutomap.orthographicSize, minimumZoom-1 , maximumZoom); // ! -1 is important or may get stuck and not apply ANY zoom after the minimum is reached.
+        currentZoomNormalized = CircularEaseOut(currentZoomNormalized);
+        exteriorZoom *= currentZoomNormalized;
         // * Apply Zoom
-        float zoomSpeedCompensated = speed * exteriorAutomap.LayoutMultiplier; 
-        cameraExteriorAutomap.orthographicSize += zoomSpeedCompensated;
-        // * Clamp Zoom
-        cameraExteriorAutomap.orthographicSize = Math.Min(minimumExteriorZoom * exteriorAutomap.LayoutMultiplier, (Math.Max(maximumExteriorZoom * exteriorAutomap.LayoutMultiplier, cameraExteriorAutomap.orthographicSize)));
+        cameraExteriorAutomap.orthographicSize += exteriorZoom;
+        cameraExteriorAutomap.orthographicSize = Mathf.Clamp(cameraExteriorAutomap.orthographicSize, minimumZoom, maximumZoom);
     }
 
     public void InteriorZoom(bool ZoomIn = true){
+        if (interiorZoomSpeed == 0) { return; } // * no need to run extra code just to apply default zoom in.
         // * Get Data
         Camera cameraAutomap = Automap.instance.CameraAutomap;
         float magnitude = Vector3.Magnitude(BeaconRotationPivot.position - cameraAutomap.transform.position);
         // * Reduce zoom magnitude if very close
         if (automapViewMode == AutomapViewMode.View2D){
-            if (magnitude <= 150){
+            if (magnitude <= 150){ // top down view
                 magnitude *= 0.2f;
             }
         }else{
-            if (magnitude <= 30){
+            if (magnitude <= 30){ // 3D view.
                 magnitude *= 0.2f;
             }
         }

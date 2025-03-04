@@ -4,7 +4,7 @@
         {
             "Name": "Hud",
             "Description": "Settings for on-screen interface",
-            "IsAdvanced": true,
+            "IsAdvanced": false,
             "Keys": [
                 {
                     "Value": true,
@@ -26,13 +26,55 @@
             "$version": "v1"
         },
         {
-            "Name": "ExteriorMap",
-            "Description": null,
+            "Name": "Maps",
+            "Description": "Settings for Interior/Exterios maps",
             "IsAdvanced": false,
             "Keys": [
                 {
+                    "Value": true,
+                    "Name": "ForceWireMesh",
+                    "Description": "Forces Wire Mesh for interior map",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
                     "Min": 0.0,
                     "Max": 100.0,
+                    "Value": 30.0,
+                    "Name": "DefaultMagnificationLevel",
+                    "Description": "How zoomed the map is when you first open it",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 0.0,
+                    "Max": 50.0,
+                    "Value": 10.0,
+                    "Name": "ZoomSpeed",
+                    "Description": "Accelerates existing zoom speed",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 0.0,
+                    "Max": 50.0,
+                    "Value": 0.0,
+                    "Name": "RotationSpeed",
+                    "Description": "Accelerates existing rotation speed",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "ExteriorMap",
+            "Description": null,
+            "IsAdvanced": true,
+            "Keys": [
+                {
+                    "Min": 0.0,
+                    "Max": 50.0,
                     "Value": 40.0,
                     "Name": "ZoomSpeed",
                     "Description": "Additive to base zoom speed.",
@@ -45,7 +87,7 @@
         {
             "Name": "InteriorMap",
             "Description": null,
-            "IsAdvanced": false,
+            "IsAdvanced": true,
             "Keys": [
                 {
                     "Min": 0.0,
@@ -55,62 +97,6 @@
                     "Description": "Additive to base zoom speed.",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
-                },
-                {
-                    "Value": true,
-                    "Name": "ForceWireFrame",
-                    "Description": "Forces wire frame view in interiors",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
-                },
-                {
-                    "Min": 0.0,
-                    "Max": 500.0,
-                    "Value": 30.0,
-                    "Name": "DefaultZoomOut",
-                    "Description": "How far the camera is zoomed out when first opening the map view",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
-                }
-            ],
-            "$version": "v1"
-        },
-        {
-            "Name": "Maps",
-            "Description": "Settings for Interior/Exterios maps",
-            "IsAdvanced": true,
-            "Keys": [
-                {
-                    "Value": true,
-                    "Name": "ForceWireMesh",
-                    "Description": "Forces Wire Mesh for interior map",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
-                },
-                {
-                    "Min": -100.0,
-                    "Max": 100.0,
-                    "Value": 0.0,
-                    "Name": "DefaultMagnificationLevel",
-                    "Description": "How zoomed the map is when you first open it",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
-                },
-                {
-                    "Min": -100.0,
-                    "Max": 100.0,
-                    "Value": 0.0,
-                    "Name": "ZoomSpeed",
-                    "Description": "Accelerates/Decelerates existing zoom speed",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
-                },
-                {
-                    "Value": false,
-                    "Name": "RotationSpeed",
-                    "Description": "Accelerates/Decelerates existing rotation speed",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
                 }
             ],
             "$version": "v1"
@@ -119,7 +105,22 @@
             "Name": "ModCompatability",
             "Description": "Settings to overwrite other mods with",
             "IsAdvanced": true,
-            "Keys": [],
+            "Keys": [
+                {
+                    "Value": false,
+                    "Name": "MobHealthBar",
+                    "Description": "Overwrites ModHealthBar Settings to integrate with WandererHud",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "HotKeyBar",
+                    "Description": "Overwrites HudKeyBar Settings to integrate with WandererHud",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                }
+            ],
             "$version": "v1"
         }
     ]
