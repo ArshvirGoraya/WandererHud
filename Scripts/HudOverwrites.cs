@@ -207,33 +207,39 @@ public class HudOverwrites : MonoBehaviour{
         Vector2 startingPosition = new Vector2(xOffset, yOffset);
         switch(horizontalAlignment){
             case HorizontalAlignment.Center: {
-                return new Vector2(
+                startingPosition = new Vector2(
                     startingPosition.x + boundingWidth / 2,
                     startingPosition.y);
+                break;
             }
             case HorizontalAlignment.Left: {
-                return new Vector2(
+                startingPosition = new Vector2(
                     startingPosition.x + edgeMargins.x,
                     startingPosition.y);
+                break;
             }
             case HorizontalAlignment.Right: {
-                return new Vector2(
+                startingPosition = new Vector2(
                     startingPosition.x + boundingWidth - panelSize.x - edgeMargins.x,
                     startingPosition.y);
+                break;
             }
         }
         switch(verticalAlignment){
             case VerticalAlignment.Bottom: {
-                return new Vector2(startingPosition.x,
+                startingPosition = new Vector2(startingPosition.x,
                     startingPosition.y + boundingHeight - panelSize.y - edgeMargins.y);
+                break;
             }
             case VerticalAlignment.Middle: {
-                return new Vector2(startingPosition.x,
+                startingPosition = new Vector2(startingPosition.x,
                     startingPosition.y + boundingHeight / 2);
+                break;
             }
             case VerticalAlignment.Top: {
-                return new Vector2(startingPosition.x,
+                startingPosition = new Vector2(startingPosition.x,
                     startingPosition.y + edgeMargins.y);
+                break;
             }
         }
         return startingPosition;
@@ -691,6 +697,7 @@ public class HudOverwrites : MonoBehaviour{
             compassPos.x,
             compassPos.y
         );
+        
         // * Vitals Positions and Size:
         // * Magic numbers: pixels taken up the vitals in the base compass texture image.
         // * Pixel Scaling:
