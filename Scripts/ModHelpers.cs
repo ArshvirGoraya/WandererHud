@@ -16,6 +16,9 @@ public static class ModHelpers{
         MethodInfo methodInfo = targetObject.GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
         methodInfo.Invoke(targetObject, parameters);
     }
+    public static MethodInfo GetNonPublicFunction(object targetObject, string methodName){
+        return targetObject.GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
+    }
     public static object CreateNonPublicClassInstance(object targetObject, string className, params object[] args){
         Type classType = targetObject.GetType().GetNestedType(className, BindingFlags.NonPublic);
         ConstructorInfo constructor = classType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, 
@@ -34,9 +37,14 @@ public static class ModHelpers{
         return 1f - value;
     }
     // * Easing
-    private const float PI = Mathf.PI; 
-    private const float HALFPI = Mathf.PI / 2.0f; 
-    static public float CircularEaseOut(float p){
-        return Mathf.Sqrt((2 - p) * p);
+    public static class Easing{
+        private const float PI = Mathf.PI; 
+        private const float HALFPI = Mathf.PI / 2.0f; 
+        static public float CircularEaseOut(float p){
+            return Mathf.Sqrt((2 - p) * p);
+        }
+        static public float SineEaseOut(float p){
+            return Mathf.Sin(p * HALFPI);
+        }
     }
 }

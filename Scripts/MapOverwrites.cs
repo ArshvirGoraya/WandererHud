@@ -13,6 +13,7 @@ using static DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallAutomapWindo
 using WandererHudMod;
 using static ModHelpers;
 using System.Security.Claims;
+using System.Reflection;
 
 public class MapOverwrites : MonoBehaviour
 {
@@ -67,6 +68,7 @@ public class MapOverwrites : MonoBehaviour
     // 
     static float defaultInteriorZoomOut = 0;
     static float interiorZoomSpeed = 0;
+    const float defaultInteriorZoomSpeed = 0.06f; // What it is in game.
     // 
     static float exteriorZoomSpeed = 0;
     const float maximumExteriorZoom = 25.0f;
@@ -74,6 +76,7 @@ public class MapOverwrites : MonoBehaviour
     const float defaultExteriorZoomSpeed = 2.0f; // What it is in game.
     // 
     public class ParentDestroyer : MonoBehaviour { void OnDestroy(){Destroy(transform.parent.parent.gameObject); } }
+    // MethodInfo UpdateAutomapView; // * non-public function
     // 
     public static Mod mod;
     WandererHud wandererHud;
@@ -87,18 +90,17 @@ public class MapOverwrites : MonoBehaviour
     public static void LoadSettings(ModSettings modSettings, ModSettingsChange change){
         forceWireFrame = modSettings.GetBool("Maps", "ForceWireMesh");
         defaultInteriorZoomOut = modSettings.GetFloat("Maps", "DefaultMagnificationLevel");
-        exteriorZoomSpeed = modSettings.GetFloat("Maps", "ZoomSpeed");
-        interiorZoomSpeed = NormalizeValue(exteriorZoomSpeed, 0, 50); // ! 50 = maximum value of zoomspeed setting (no built in wat to get max value?)
-
-        // exteriorZoomSpeed = modSettings.GetFloat("ExteriorMap", "ZoomSpeed");
-        // interiorZoomSpeed = modSettings.GetFloat("InteriorMap", "ZoomSpeed");
-        Debug.Log($"exteriorZoomSpeed {exteriorZoomSpeed} - interiorZoomSpeed {interiorZoomSpeed}");
+        interiorZoomSpeed = modSettings.GetFloat("Maps", "ZoomSpeed");
+        exteriorZoomSpeed = modSettings.GetFloat("Maps", "ZoomSpeed") * 0.65f; // ! slightly slower than interior zoom
+        Debug.Log($"exteriorZoomSpeed {exteriorZoomSpeed}\ninteriorZoomSpeed {interiorZoomSpeed}");
     }
 
     public void SaveLoadManager_OnLoad(){
         if (GameManager.Instance.IsPlayerInside || GameManager.Instance.IsPlayerInsideDungeon || GameManager.Instance.IsPlayerInsideCastle){
             ResetInteriorMapObjects();
         }
+        // * Get reference to a non-public method.
+        // UpdateAutomapView = GetNonPublicFunction(InteriorMapWindow, "UpdateAutomapView");
     }
 
     public void ScreenResizeChange(){
@@ -123,9 +125,10 @@ public class MapOverwrites : MonoBehaviour
         TeleporterConnectionColor = mod.GetAsset<Material>("Door_Inner_Blue", false);
     }
 
-    // Update is called once per frame
-    void Update(){
+    void LateUpdate(){
         MapZoom();
+    }
+    void Update(){
         if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
             if (GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes")){
                 int newCount = GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes").transform.childCount;
@@ -146,6 +149,7 @@ public class MapOverwrites : MonoBehaviour
             if (GameObject.Find("Automap/InteriorAutomap/Teleporter Connection") != null && !ChangedConnectionColor){
                 GameObject.Find("Automap/InteriorAutomap/Teleporter Connection").GetComponent<MeshRenderer>().material = TeleporterConnectionColor;
                 CallNonPublicFunction(DaggerfallUI.UIManager.TopWindow as DaggerfallAutomapWindow, "UpdateAutomapView");
+                // UpdateAutomapView.Invoke(InteriorMapWindow, null);
                 Debug.Log($"MapOverwrites: overwrite teleporter connection color");
                 ChangedConnectionColor = true;
             }else{
@@ -165,7 +169,6 @@ public class MapOverwrites : MonoBehaviour
     public void UIManager_OnWindowChangeHandler(object sender, EventArgs e){
         if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
             BeaconRotationPivot = GameObject.Find("Automap/InteriorAutomap/Beacons/BeaconRotationPivotAxis").transform; // TODO: should set if is new dungeon.
-            automapViewMode = (AutomapViewMode)GetNonPublicField(DaggerfallUI.UIManager.TopWindow, "automapViewMode"); // TODO: should set if is new dungeon & opened map.
             ForceWireFrame(); // todo: only want to do this first time entering a dungeon and every time until player changes something about this.
             if (!InteriorMapObjectsReplaced){ // if they are not disabled, disable them (needed on each load)
                 ReplaceInteriorMapObjects();
@@ -509,36 +512,48 @@ public class MapOverwrites : MonoBehaviour
         float exteriorZoom = speed * exteriorAutomap.LayoutMultiplier; 
         // * Decrease zoom when close to minimum zoom in.
         float currentZoomNormalized = NormalizeValue(cameraExteriorAutomap.orthographicSize, minimumZoom-1 , maximumZoom); // ! -1 is important or may get stuck and not apply ANY zoom after the minimum is reached.
-        currentZoomNormalized = CircularEaseOut(currentZoomNormalized);
+        currentZoomNormalized = Easing.CircularEaseOut(currentZoomNormalized);
         exteriorZoom *= currentZoomNormalized;
         // * Apply Zoom
         cameraExteriorAutomap.orthographicSize += exteriorZoom;
         cameraExteriorAutomap.orthographicSize = Mathf.Clamp(cameraExteriorAutomap.orthographicSize, minimumZoom, maximumZoom);
+        // CallNonPublicFunction(InteriorMapWindow, "UpdateAutomapView");
+        ExteriorMapWindow.UpdateAutomapView();
     }
 
     public void InteriorZoom(bool ZoomIn = true){
         if (interiorZoomSpeed == 0) { return; } // * no need to run extra code just to apply default zoom in.
         // * Get Data
+        automapViewMode = (AutomapViewMode)GetNonPublicField(InteriorMapWindow, "automapViewMode"); // todo could this be made more optimal?
         Camera cameraAutomap = Automap.instance.CameraAutomap;
-        float magnitude = Vector3.Magnitude(BeaconRotationPivot.position - cameraAutomap.transform.position);
-        // * Reduce zoom magnitude if very close
-        if (automapViewMode == AutomapViewMode.View2D){
-            if (magnitude <= 150){ // top down view
-                magnitude *= 0.2f;
-            }
-        }else{
-            if (magnitude <= 30){ // 3D view.
-                magnitude *= 0.2f;
-            }
-        }
-        // * Dont Zoom if too far away (will still apply game's base zoom).
-        if (magnitude <= 0 || magnitude >= 10_000) { return; }
-        // * Apply Translation
-        float zoomSpeedCompensated = interiorZoomSpeed * magnitude;
-        Vector3 translation;
-        if (ZoomIn){ translation = cameraAutomap.transform.forward * zoomSpeedCompensated;}
-        else { translation = -cameraAutomap.transform.forward * zoomSpeedCompensated; }
+        // ! Undo game's zoom.
+        float interiorZoom = defaultInteriorZoomSpeed * Vector3.Magnitude(Camera.main.transform.position - cameraAutomap.transform.position);
+        Vector3 translation = cameraAutomap.transform.forward * interiorZoom; 
+        if (ZoomIn){ translation = -translation; }
         cameraAutomap.transform.position += translation;
+        // * Calculate WandererZoom
+        float distance = Vector3.Magnitude(BeaconRotationPivot.position - cameraAutomap.transform.position);
+        const float maxDistance = 10_000;
+        if (distance >= maxDistance) { return; } 
+        // * Ease when getting too close.
+        float zoomSpeed = interiorZoomSpeed;
+        const float closeDistance3D = 300;
+        const float closeDistance2D = closeDistance3D * 2;
+        float closeDistance = closeDistance3D;
+        if (automapViewMode == AutomapViewMode.View2D){ 
+            closeDistance = closeDistance2D;
+            zoomSpeed *= 1.5f; // * faster zoom speed in 2D view.
+        }
+        if (distance <= closeDistance){
+            float normalizedDistance = Easing.SineEaseOut(NormalizeValue(distance, 0, closeDistance));
+            zoomSpeed *= normalizedDistance;
+        }
+        // * Apply Translation
+        Debug.Log($"distance: {distance} - zoomSpeed: {zoomSpeed}");
+        translation = -cameraAutomap.transform.forward * zoomSpeed;
+        if (ZoomIn){ translation = -translation; }
+        cameraAutomap.transform.position += translation;
+        CallNonPublicFunction(InteriorMapWindow, "UpdateAutomapView");
     }
 
     private void MapZoom(){

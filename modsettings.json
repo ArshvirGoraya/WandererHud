@@ -48,8 +48,8 @@
                 },
                 {
                     "Min": 0.0,
-                    "Max": 50.0,
-                    "Value": 10.0,
+                    "Max": 100.0,
+                    "Value": 50.0,
                     "Name": "ZoomSpeed",
                     "Description": "Accelerates existing zoom speed",
                     "$version": "v1",
