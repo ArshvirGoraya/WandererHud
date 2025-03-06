@@ -68,15 +68,18 @@ public class MapOverwrites : MonoBehaviour
     // 
     static float defaultInteriorZoomOut = 0;
     static float interiorZoomSpeed = 0;
-    const float defaultInteriorZoomSpeed = 0.06f; // What it is in game.
+    const float defaultInteriorZoomSpeed = 0.06f;
     // 
     static float exteriorZoomSpeed = 0;
     const float maximumExteriorZoom = 25.0f;
     const float minimumExteriorZoom = 250.0f;
-    const float defaultExteriorZoomSpeed = 2.0f; // What it is in game.
+    const float defaultExteriorZoomSpeed = 2.0f;
+    const float defaultExteriorRotationSpeed = 5.0f;
+    static float exteriorRotationSpeed = 0;
     // 
     public class ParentDestroyer : MonoBehaviour { void OnDestroy(){Destroy(transform.parent.parent.gameObject); } }
     // MethodInfo UpdateAutomapView; // * non-public function
+    Vector2 oldMousePosition; // for un-doing game's rotation speed.
     // 
     public static Mod mod;
     WandererHud wandererHud;
@@ -92,7 +95,7 @@ public class MapOverwrites : MonoBehaviour
         defaultInteriorZoomOut = modSettings.GetFloat("Maps", "DefaultMagnificationLevel");
         interiorZoomSpeed = modSettings.GetFloat("Maps", "ZoomSpeed");
         exteriorZoomSpeed = modSettings.GetFloat("Maps", "ZoomSpeed") * 0.65f; // ! slightly slower than interior zoom
-        Debug.Log($"exteriorZoomSpeed {exteriorZoomSpeed}\ninteriorZoomSpeed {interiorZoomSpeed}");
+        exteriorRotationSpeed = modSettings.GetFloat("Maps", "RotationSpeed");
     }
 
     public void SaveLoadManager_OnLoad(){
@@ -127,6 +130,11 @@ public class MapOverwrites : MonoBehaviour
 
     void LateUpdate(){
         MapZoom();
+        MapRotate();
+        if (!(DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow)){
+            return;
+        }
+        oldMousePosition = new Vector2(InputManager.Instance.MousePosition.x, Screen.height - InputManager.Instance.MousePosition.y);
     }
     void Update(){
         if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
@@ -549,13 +557,34 @@ public class MapOverwrites : MonoBehaviour
             zoomSpeed *= normalizedDistance;
         }
         // * Apply Translation
-        Debug.Log($"distance: {distance} - zoomSpeed: {zoomSpeed}");
         translation = -cameraAutomap.transform.forward * zoomSpeed;
         if (ZoomIn){ translation = -translation; }
         cameraAutomap.transform.position += translation;
         CallNonPublicFunction(InteriorMapWindow, "UpdateAutomapView");
     }
 
+    private void MapRotate(){
+        if (!(DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow)){
+            return;
+        }
+        if (!Input.GetMouseButton(1)){ return; }
+        // * Get Data
+        ExteriorAutomap exteriorAutomap = ExteriorAutomap.instance;
+        Camera cameraExteriorAutomap = exteriorAutomap.CameraExteriorAutomap;
+        // * Calc Rotation
+        Vector2 mousePosition = new Vector2(InputManager.Instance.MousePosition.x, Screen.height - InputManager.Instance.MousePosition.y);
+        Vector2 mouseDistance = mousePosition - oldMousePosition;
+        // * Undo Game's Rotation
+        float rotationAmount = -(defaultExteriorRotationSpeed * mouseDistance.x);
+        cameraExteriorAutomap.transform.RotateAround(cameraExteriorAutomap.transform.position, -Vector3.up, -rotationAmount * Time.unscaledDeltaTime);
+        exteriorAutomap.RotateBuildingNameplates(rotationAmount * Time.unscaledDeltaTime);
+        // * Apply 
+        rotationAmount = exteriorRotationSpeed * mouseDistance.x;
+        cameraExteriorAutomap.transform.RotateAround(cameraExteriorAutomap.transform.position, -Vector3.up, -rotationAmount * Time.unscaledDeltaTime);
+        exteriorAutomap.RotateBuildingNameplates(rotationAmount * Time.unscaledDeltaTime);
+        // 
+        ExteriorMapWindow.UpdateAutomapView();
+    }
     private void MapZoom(){
         if (!(DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow)){
             return;
