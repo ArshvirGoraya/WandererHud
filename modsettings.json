@@ -51,50 +51,16 @@
                     "Max": 100.0,
                     "Value": 50.0,
                     "Name": "ZoomSpeed",
-                    "Description": "Accelerates existing zoom speed",
+                    "Description": ">0 Replaces Game's Zoom Speed.",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 },
                 {
                     "Min": 0.0,
                     "Max": 50.0,
-                    "Value": 0.0,
+                    "Value": 10.0,
                     "Name": "RotationSpeed",
-                    "Description": "Accelerates existing rotation speed",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
-                }
-            ],
-            "$version": "v1"
-        },
-        {
-            "Name": "ExteriorMap",
-            "Description": null,
-            "IsAdvanced": true,
-            "Keys": [
-                {
-                    "Min": 0.0,
-                    "Max": 50.0,
-                    "Value": 40.0,
-                    "Name": "ZoomSpeed",
-                    "Description": "Additive to base zoom speed.",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
-                }
-            ],
-            "$version": "v1"
-        },
-        {
-            "Name": "InteriorMap",
-            "Description": null,
-            "IsAdvanced": true,
-            "Keys": [
-                {
-                    "Min": 0.0,
-                    "Max": 0.9,
-                    "Value": 0.6,
-                    "Name": "ZoomSpeed",
-                    "Description": "Additive to base zoom speed.",
+                    "Description": ">0 Replaces Game's Rotation Speed.",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 }

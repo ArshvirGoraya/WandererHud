@@ -69,6 +69,10 @@ public class MapOverwrites : MonoBehaviour
     static float defaultInteriorZoomOut = 0;
     static float interiorZoomSpeed = 0;
     const float defaultInteriorZoomSpeed = 0.06f;
+    const float defaultInteriorRotationSpeed3D = 4.5f;
+    const float defaultInteriorRotationSpeed3DYZ = 5.0f;
+    const float defaultInteriorRotationSpeed2D = 5.0f;
+    static float interiorRotationSpeed = 0;
     // 
     static float exteriorZoomSpeed = 0;
     const float maximumExteriorZoom = 25.0f;
@@ -79,6 +83,7 @@ public class MapOverwrites : MonoBehaviour
     // 
     public class ParentDestroyer : MonoBehaviour { void OnDestroy(){Destroy(transform.parent.parent.gameObject); } }
     // MethodInfo UpdateAutomapView; // * non-public function
+    Vector2 frameStartMousePosition; // for un-doing game's rotation speed.
     Vector2 oldMousePosition; // for un-doing game's rotation speed.
     // 
     public static Mod mod;
@@ -95,7 +100,8 @@ public class MapOverwrites : MonoBehaviour
         defaultInteriorZoomOut = modSettings.GetFloat("Maps", "DefaultMagnificationLevel");
         interiorZoomSpeed = modSettings.GetFloat("Maps", "ZoomSpeed");
         exteriorZoomSpeed = modSettings.GetFloat("Maps", "ZoomSpeed") * 0.65f; // ! slightly slower than interior zoom
-        exteriorRotationSpeed = modSettings.GetFloat("Maps", "RotationSpeed");
+        interiorRotationSpeed = modSettings.GetFloat("Maps", "RotationSpeed");
+        exteriorRotationSpeed = interiorRotationSpeed * 0.4f;
     }
 
     public void SaveLoadManager_OnLoad(){
@@ -129,12 +135,15 @@ public class MapOverwrites : MonoBehaviour
     }
 
     void LateUpdate(){
-        MapZoom();
-        MapRotate();
-        if (!(DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow)){
-            return;
+        // if (){
+        //     ExteriorMapWindow.mouse
+        // }
+        frameStartMousePosition = new Vector2(InputManager.Instance.MousePosition.x, Screen.height - InputManager.Instance.MousePosition.y);
+        if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){ 
+            MapZoom();
+            MapRotate();
         }
-        oldMousePosition = new Vector2(InputManager.Instance.MousePosition.x, Screen.height - InputManager.Instance.MousePosition.y);
+        oldMousePosition = frameStartMousePosition;
     }
     void Update(){
         if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
@@ -563,32 +572,80 @@ public class MapOverwrites : MonoBehaviour
         CallNonPublicFunction(InteriorMapWindow, "UpdateAutomapView");
     }
 
-    private void MapRotate(){
-        if (!(DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow)){
-            return;
-        }
+    
+    private void ExteriorRotate(){
+        if (exteriorRotationSpeed == 0) { return; }
         if (!Input.GetMouseButton(1)){ return; }
-        // * Get Data
-        ExteriorAutomap exteriorAutomap = ExteriorAutomap.instance;
-        Camera cameraExteriorAutomap = exteriorAutomap.CameraExteriorAutomap;
         // * Calc Rotation
-        Vector2 mousePosition = new Vector2(InputManager.Instance.MousePosition.x, Screen.height - InputManager.Instance.MousePosition.y);
-        Vector2 mouseDistance = mousePosition - oldMousePosition;
+        Vector2 mouseDistance = frameStartMousePosition - oldMousePosition;
+        if (mouseDistance == Vector2.zero){ return; }
         // * Undo Game's Rotation
         float rotationAmount = -(defaultExteriorRotationSpeed * mouseDistance.x);
-        cameraExteriorAutomap.transform.RotateAround(cameraExteriorAutomap.transform.position, -Vector3.up, -rotationAmount * Time.unscaledDeltaTime);
-        exteriorAutomap.RotateBuildingNameplates(rotationAmount * Time.unscaledDeltaTime);
-        // * Apply 
+        RotateExteriorMap(rotationAmount);
+        // * Apply WandererRotation
         rotationAmount = exteriorRotationSpeed * mouseDistance.x;
-        cameraExteriorAutomap.transform.RotateAround(cameraExteriorAutomap.transform.position, -Vector3.up, -rotationAmount * Time.unscaledDeltaTime);
-        exteriorAutomap.RotateBuildingNameplates(rotationAmount * Time.unscaledDeltaTime);
-        // 
+        RotateExteriorMap(rotationAmount);
         ExteriorMapWindow.UpdateAutomapView();
     }
-    private void MapZoom(){
-        if (!(DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow)){
-            return;
+
+    private void RotateExteriorMap(float rotationAmount){
+        ExteriorAutomap exteriorAutomap = ExteriorAutomap.instance;
+        Camera cameraExteriorAutomap = exteriorAutomap.CameraExteriorAutomap;
+        // 
+        cameraExteriorAutomap.transform.RotateAround(cameraExteriorAutomap.transform.position, -Vector3.up, -rotationAmount * Time.unscaledDeltaTime);
+        exteriorAutomap.RotateBuildingNameplates(rotationAmount * Time.unscaledDeltaTime);
+    }
+
+    private void RotateInteriorMap(float rotation2D, float rotation3DX, float rotation3DY){
+        Automap automap = Automap.instance;
+        Camera cameraAutomap = Automap.instance.CameraAutomap;
+        Vector3 vecRotationCenter = automap.CameraAutomap.transform.position;
+        Vector3 rotationPivotAxisPositionView3D = automap.RotationPivotAxisPosition;
+        automapViewMode = (AutomapViewMode)GetNonPublicField(InteriorMapWindow, "automapViewMode"); // todo could this be made more optimal?
+        // 
+        if (automapViewMode == AutomapViewMode.View2D){
+            cameraAutomap.transform.RotateAround(vecRotationCenter, Vector3.up, -rotation2D * Time.unscaledDeltaTime);
+        }else{
+            // X
+            cameraAutomap.transform.RotateAround(rotationPivotAxisPositionView3D, -Vector3.up, -rotation3DX * Time.unscaledDeltaTime);
+            // Y
+            cameraAutomap.transform.RotateAround(rotationPivotAxisPositionView3D, cameraAutomap.transform.right, -rotation3DY * Time.unscaledDeltaTime);
+            Vector3 transformedUp = cameraAutomap.transform.TransformDirection(Vector3.up);
+            if (transformedUp.y < 0){
+                float rotateBack = Vector3.SignedAngle(transformedUp, Vector3.ProjectOnPlane(transformedUp, Vector3.up), cameraAutomap.transform.right);
+                cameraAutomap.transform.RotateAround(rotationPivotAxisPositionView3D, cameraAutomap.transform.right, rotateBack);
+            }
         }
+    }
+    
+
+    private void InteriorRotate(){
+        if (interiorRotationSpeed == 0) { return; }
+        if (!Input.GetMouseButton(1)){ return; }
+        // * Calc Rotation
+        Vector2 mouseDistance = frameStartMousePosition - oldMousePosition;
+        if (mouseDistance == Vector2.zero){ return; }
+        // * Undo Game's Rotation:
+        float rotation2D = -(defaultInteriorRotationSpeed2D * mouseDistance.x);
+        float rotation3DX = -(defaultInteriorRotationSpeed3D * mouseDistance.x); 
+        float rotation3DY = defaultInteriorRotationSpeed3DYZ * mouseDistance.y;
+        RotateInteriorMap(rotation2D, rotation3DX, rotation3DY);
+        // * Apply WandererRotation
+        rotation2D = interiorRotationSpeed * mouseDistance.x;
+        rotation3DX = interiorRotationSpeed * mouseDistance.x;
+        rotation3DY = -interiorRotationSpeed * mouseDistance.y;
+        RotateInteriorMap(rotation2D, rotation3DX, rotation3DY);
+        CallNonPublicFunction(InteriorMapWindow, "UpdateAutomapView");
+    }
+
+    private void MapRotate(){
+        if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow){
+            ExteriorRotate();
+        } else {
+            InteriorRotate();
+        }
+    }
+    private void MapZoom(){
         float mouseScroll = Input.GetAxis("Mouse ScrollWheel");
         if (mouseScroll > 0f){
             if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){ InteriorZoom(); }
