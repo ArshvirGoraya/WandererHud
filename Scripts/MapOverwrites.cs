@@ -81,6 +81,13 @@ public class MapOverwrites : MonoBehaviour
     const float defaultExteriorRotationSpeed = 5.0f;
     static float exteriorRotationSpeed = 0;
     // 
+    static float exteriorDragSpeed = 0;
+    const float defaultExteriorDragSpeed = 0.00345f;
+    // 
+    static float interiorDragSpeed = 0;
+    const float defaultDragSpeedInView3D = 0.002f;
+    const float defaultDragSpeedInTopView = 0.0002f;
+
     public class ParentDestroyer : MonoBehaviour { void OnDestroy(){Destroy(transform.parent.parent.gameObject); } }
     // MethodInfo UpdateAutomapView; // * non-public function
     Vector2 frameStartMousePosition; // for un-doing game's rotation speed.
@@ -98,10 +105,15 @@ public class MapOverwrites : MonoBehaviour
     public static void LoadSettings(ModSettings modSettings, ModSettingsChange change){
         forceWireFrame = modSettings.GetBool("Maps", "ForceWireMesh");
         defaultInteriorZoomOut = modSettings.GetFloat("Maps", "DefaultMagnificationLevel");
+        // 
         interiorZoomSpeed = modSettings.GetFloat("Maps", "ZoomSpeed");
         exteriorZoomSpeed = modSettings.GetFloat("Maps", "ZoomSpeed") * 0.65f; // ! slightly slower than interior zoom
+        // 
         interiorRotationSpeed = modSettings.GetFloat("Maps", "RotationSpeed");
         exteriorRotationSpeed = interiorRotationSpeed * 0.4f;
+        // 
+        exteriorDragSpeed = modSettings.GetFloat("Maps", "DragSpeed");
+        interiorDragSpeed = modSettings.GetFloat("Maps", "DragSpeed");
     }
 
     public void SaveLoadManager_OnLoad(){
@@ -140,6 +152,7 @@ public class MapOverwrites : MonoBehaviour
         // }
         frameStartMousePosition = new Vector2(InputManager.Instance.MousePosition.x, Screen.height - InputManager.Instance.MousePosition.y);
         if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){ 
+            MapDrag();
             MapZoom();
             MapRotate();
         }
@@ -575,7 +588,6 @@ public class MapOverwrites : MonoBehaviour
     
     private void ExteriorRotate(){
         if (exteriorRotationSpeed == 0) { return; }
-        if (!Input.GetMouseButton(1)){ return; }
         // * Calc Rotation
         Vector2 mouseDistance = frameStartMousePosition - oldMousePosition;
         if (mouseDistance == Vector2.zero){ return; }
@@ -621,7 +633,6 @@ public class MapOverwrites : MonoBehaviour
 
     private void InteriorRotate(){
         if (interiorRotationSpeed == 0) { return; }
-        if (!Input.GetMouseButton(1)){ return; }
         // * Calc Rotation
         Vector2 mouseDistance = frameStartMousePosition - oldMousePosition;
         if (mouseDistance == Vector2.zero){ return; }
@@ -638,7 +649,59 @@ public class MapOverwrites : MonoBehaviour
         CallNonPublicFunction(InteriorMapWindow, "UpdateAutomapView");
     }
 
+    private void ExteriorDrag(){
+        if (exteriorDragSpeed == 0 || exteriorDragSpeed == 1){ return; }
+        // * Get Data
+        ExteriorAutomap exteriorAutomap = ExteriorAutomap.instance;
+        Camera cameraExteriorAutomap = exteriorAutomap.CameraExteriorAutomap;
+        // * Undo Game's drag
+        float dragSpeed = defaultExteriorDragSpeed * cameraExteriorAutomap.orthographicSize;
+        Vector2 mouseDistance = frameStartMousePosition - oldMousePosition;
+        Vector3 translation = dragSpeed * mouseDistance.x * -cameraExteriorAutomap.transform.right + dragSpeed * mouseDistance.y * cameraExteriorAutomap.transform.up;
+        cameraExteriorAutomap.transform.position -= translation;
+        // * Apply WandererDrag
+        dragSpeed = (defaultExteriorDragSpeed * exteriorDragSpeed) * cameraExteriorAutomap.orthographicSize;
+        translation = 
+            dragSpeed * mouseDistance.x * -cameraExteriorAutomap.transform.right 
+            + dragSpeed * mouseDistance.y * cameraExteriorAutomap.transform.up;
+        cameraExteriorAutomap.transform.position += translation;
+    }
+
+    private void InteriorDrag(){
+        if (interiorDragSpeed == 0){ return; }
+        // * Get Data
+        Camera cameraAutomap = Automap.instance.CameraAutomap;
+        automapViewMode = (AutomapViewMode)GetNonPublicField(InteriorMapWindow, "automapViewMode"); // todo could this be made more optimal?
+        // * Undo Game's drag
+        float dragSpeed;
+        if (automapViewMode == AutomapViewMode.View2D){
+            dragSpeed = defaultDragSpeedInTopView * Vector3.Magnitude(Camera.main.transform.position - cameraAutomap.transform.position);
+        } else { 
+            dragSpeed = defaultDragSpeedInView3D * Vector3.Magnitude(Camera.main.transform.position - cameraAutomap.transform.position);
+        }
+        Vector2 mouseDistance = frameStartMousePosition - oldMousePosition;
+        Vector3 translation = mouseDistance.x * dragSpeed * -cameraAutomap.transform.right + mouseDistance.y * dragSpeed * cameraAutomap.transform.up;
+        cameraAutomap.transform.position -= translation;
+        // * Apply WandererDrag
+        if (automapViewMode == AutomapViewMode.View2D){
+            dragSpeed = (defaultDragSpeedInView3D * (interiorDragSpeed * 0.3125f)) * Vector3.Magnitude(Camera.main.transform.position - cameraAutomap.transform.position);
+        } else { 
+            dragSpeed = (defaultDragSpeedInView3D * interiorDragSpeed) * Vector3.Magnitude(Camera.main.transform.position - cameraAutomap.transform.position);
+        }
+        translation = mouseDistance.x * dragSpeed * -cameraAutomap.transform.right + mouseDistance.y * dragSpeed * cameraAutomap.transform.up;
+        cameraAutomap.transform.position += translation;
+    }
+
+    private void MapDrag(){
+        if (!Input.GetMouseButton(0)){ return; }
+        if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow){
+            ExteriorDrag();
+        } else {
+            InteriorDrag();
+        }
+    }
     private void MapRotate(){
+        if (!Input.GetMouseButton(1)){ return; }
         if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow){
             ExteriorRotate();
         } else {

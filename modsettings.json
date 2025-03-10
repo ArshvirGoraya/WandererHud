@@ -48,6 +48,15 @@
                 },
                 {
                     "Min": 0.0,
+                    "Max": 10.0,
+                    "Value": 1.0,
+                    "Name": "DragSpeed",
+                    "Description": ">0 Replaces Game's Drag Speed.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 0.0,
                     "Max": 100.0,
                     "Value": 50.0,
                     "Name": "ZoomSpeed",
