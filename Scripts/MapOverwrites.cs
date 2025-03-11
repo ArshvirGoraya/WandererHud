@@ -81,10 +81,11 @@ public class MapOverwrites : MonoBehaviour
     const float defaultExteriorRotationSpeed = 5.0f;
     static float exteriorRotationSpeed = 0;
     // 
-    static float exteriorDragSpeed = 0;
+    readonly static float exteriorDragSpeed = 1;
     const float defaultExteriorDragSpeed = 0.00345f;
     // 
-    static float interiorDragSpeed = 0;
+    readonly static float interiorDragSpeed = 1;
+    readonly static float interiorDragSpeed2D = interiorDragSpeed * 0.3125f;
     const float defaultDragSpeedInView3D = 0.002f;
     const float defaultDragSpeedInTopView = 0.0002f;
 
@@ -111,9 +112,6 @@ public class MapOverwrites : MonoBehaviour
         // 
         interiorRotationSpeed = modSettings.GetFloat("Maps", "RotationSpeed");
         exteriorRotationSpeed = interiorRotationSpeed * 0.4f;
-        // 
-        exteriorDragSpeed = modSettings.GetFloat("Maps", "DragSpeed");
-        interiorDragSpeed = modSettings.GetFloat("Maps", "DragSpeed");
     }
 
     public void SaveLoadManager_OnLoad(){
@@ -684,7 +682,7 @@ public class MapOverwrites : MonoBehaviour
         cameraAutomap.transform.position -= translation;
         // * Apply WandererDrag
         if (automapViewMode == AutomapViewMode.View2D){
-            dragSpeed = (defaultDragSpeedInView3D * (interiorDragSpeed * 0.3125f)) * Vector3.Magnitude(Camera.main.transform.position - cameraAutomap.transform.position);
+            dragSpeed = (defaultDragSpeedInView3D * interiorDragSpeed2D) * Vector3.Magnitude(Camera.main.transform.position - cameraAutomap.transform.position);
         } else { 
             dragSpeed = (defaultDragSpeedInView3D * interiorDragSpeed) * Vector3.Magnitude(Camera.main.transform.position - cameraAutomap.transform.position);
         }

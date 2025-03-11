@@ -48,15 +48,6 @@
                 },
                 {
                     "Min": 0.0,
-                    "Max": 10.0,
-                    "Value": 1.0,
-                    "Name": "DragSpeed",
-                    "Description": ">0 Replaces Game's Drag Speed.",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
-                },
-                {
-                    "Min": 0.0,
                     "Max": 100.0,
                     "Value": 50.0,
                     "Name": "ZoomSpeed",
@@ -72,28 +63,6 @@
                     "Description": ">0 Replaces Game's Rotation Speed.",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
-                }
-            ],
-            "$version": "v1"
-        },
-        {
-            "Name": "ModCompatability",
-            "Description": "Settings to overwrite other mods with",
-            "IsAdvanced": true,
-            "Keys": [
-                {
-                    "Value": false,
-                    "Name": "MobHealthBar",
-                    "Description": "Overwrites ModHealthBar Settings to integrate with WandererHud",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
-                },
-                {
-                    "Value": false,
-                    "Name": "HotKeyBar",
-                    "Description": "Overwrites HudKeyBar Settings to integrate with WandererHud",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
                 }
             ],
             "$version": "v1"
