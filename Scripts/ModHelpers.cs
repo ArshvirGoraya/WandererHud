@@ -36,6 +36,24 @@ public static class ModHelpers{
     public static float InvertUnitInterval(float value){
         return 1f - value;
     }
+    // * Numbers
+    public static bool IsEven(int value){
+        if (value % 2 == 0){return true;}
+        return false;
+    }
+    public static bool IsOdd(int value){
+        if (value % 2 != 0){return true;}
+        return false;
+    }
+    public static int GetLastNonZeroDigit(float value){
+        string strValue = value.ToString("G"); // Convert float to string
+        for (int i = strValue.Length - 1; i >= 0; i--){
+            if (strValue[i] != '0'){
+                return strValue[i] - '0';
+            }
+        }
+        return 0;
+    }
     // * Easing
     public static class Easing{
         private const float PI = Mathf.PI; 

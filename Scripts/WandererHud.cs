@@ -26,7 +26,7 @@ namespace WandererHudMod{
             hudOverwrites = go.AddComponent<HudOverwrites>();
             hudOverwrites.Initalize(instance);
             // 
-            mod.LoadSettingsCallback = LoadSettings;
+            mod.LoadSettingsCallback = (ModSettings modSettings, ModSettingsChange change) => instance.LoadSettings(modSettings, change);
             mod.LoadSettings();
             mod.IsReady = true;
         }
@@ -36,10 +36,10 @@ namespace WandererHudMod{
             SetLastScreen();
        }
 
-        static void LoadSettings(ModSettings modSettings, ModSettingsChange change){
+        public void LoadSettings(ModSettings modSettings, ModSettingsChange change){
             WandererHudSettings = modSettings;
-            MapOverwrites.LoadSettings(modSettings, change);
-            HudOverwrites.LoadSettings(modSettings, change);
+            mapOverwrites.LoadSettings(modSettings, change);
+            hudOverwrites.LoadSettings(modSettings, change);
         }
 
         public void SaveLoadManager_OnLoad(){
@@ -62,7 +62,8 @@ namespace WandererHudMod{
             }
         }
         private void DebugAction(){
-            Debug.Log($"Debug Action");
+            hudOverwrites.DebugAction();
+            mapOverwrites.DebugAction();
         }
 
         public void ForceResizeAll(){

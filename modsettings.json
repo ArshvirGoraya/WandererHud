@@ -9,7 +9,7 @@
                 {
                     "Value": true,
                     "Name": "EnableInteractionIcon",
-                    "Description": "Hides or Shows the Interaction Mode Icon. Scrolable Interaction Mode recommended to substitute use of this icon.",
+                    "Description": "Hides or Shows the Interaction Mode Icon. Scrollable Interaction Mode Mod recommended to substitute use of this icon.",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
                 },
@@ -17,8 +17,8 @@
                     "Min": 0.1,
                     "Max": 3.0,
                     "Value": 1.0,
-                    "Name": "Scaling",
-                    "Description": "Resizes all HUD elements.",
+                    "Name": "Scale",
+                    "Description": "Resizes all HUD elements. Odd number increments may lead to missalignments so will be set to up 0.1!",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 }

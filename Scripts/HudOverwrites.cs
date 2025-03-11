@@ -35,6 +35,7 @@ public class HudOverwrites : MonoBehaviour{
     readonly static VerticalAlignment facePanelsVerticalAlignment = VerticalAlignment.Bottom;
     public static int enabledFaceCount = 0;
     public static bool facePanelsEnable = false;
+    public static bool facePanelsDEBUG = false;
     public static bool facePanelsHorizontalOrientation = false;
     public static Vector2 facePanelsScale = Vector2.zero;
     public const int facePanelsDefaultSize = 48;
@@ -65,7 +66,9 @@ public class HudOverwrites : MonoBehaviour{
     public static Color32 debugColor = new Color32(255, 255, 255, 255);
     // * All:
     public static bool hudElementsInitalized = false;
+    public static bool hudElementsReady = false;
     static Vector2 edgeMargin = new Vector2(10, 10);
+    public static Vector2 hudScale = new Vector2(1, 1);
     static float inGameAspectX = 0;
     static bool updateOnUnPause = false;
     public static Mod mod;
@@ -76,10 +79,34 @@ public class HudOverwrites : MonoBehaviour{
         mod = WandererHud.mod;
     }
 
-    public static void LoadSettings(ModSettings modSettings, ModSettingsChange change){
+    public void LoadSettings(ModSettings modSettings, ModSettingsChange change){
         if (!hudElementsInitalized){ return; }
-
-        if (change.HasChanged("Hud", "EnableInteractionIcon")){
+        DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces.Enabled = facePanelsEnable;
+        // 
+        if (change.HasChanged("Hud", "Scale")){
+            float scale = modSettings.GetFloat("Hud", "Scale");
+            // * Correct for odd increments leading to misalignments by just making them even.
+            if (!Mathf.Approximately(scale, Mathf.Round(scale))){
+                // * Turn last digit to even number if is odd. And if not a whole number.
+                // ! Relies on it never being more precise than a single decimal value!!: 0.1, 0.2, 0.3, etc.
+                if (IsOdd(GetLastNonZeroDigit(scale))){
+                    scale += 0.1f;
+                }
+            }
+            hudScale = new Vector2 (
+                scale,
+                scale
+            );
+            wandererCompassScale = hudScale.x;
+            facePanelsScale = hudScale * 100;
+            activeSpellsScale = hudScale * 8;
+            HUDInteractionModeIconScale = activeSpellsScale.x * 0.0528f;
+            PositionHUDElements();
+        }
+        // 
+        HUDInteractionModeIconEnabled = modSettings.GetBool("Hud", "EnableInteractionIcon");
+        DaggerfallUI.Instance.DaggerfallHUD.ShowInteractionModeIcon = HUDInteractionModeIconEnabled;
+        if (hudElementsReady && change.HasChanged("Hud", "EnableInteractionIcon")){
             Debug.Log($"changed EnableInteractionIcon");
             SetInteractionModeIconValues();
             SetSpellEffectsValues();
@@ -89,6 +116,7 @@ public class HudOverwrites : MonoBehaviour{
     public void SaveLoadManager_OnLoad(){
         // * Order = Draw Order
         hudElementsInitalized = false;
+        hudElementsReady = false;
         SetWandererCompass();
         SetVitalsHud();
         SetBreathHud();
@@ -97,13 +125,22 @@ public class HudOverwrites : MonoBehaviour{
         SetInteractionModeIcon();
         SetSpellEffects();
         // 
+        hudElementsInitalized = true;
         mod.LoadSettings();
         PositionHUDElements();
-        hudElementsInitalized = true;
+        hudElementsReady = true;
     }
 
     public void ScreenResizeChange(){
         // PositionHUDElements(); // todo: test if hud elements reposition correctly on screen size change.
+    }
+
+    public void DebugAction(){
+        if (facePanelsDEBUG){
+            List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanelsParent, "faces");
+            faces.RemoveAt(faces.Count - 1);
+            facePanelsParent.RefreshFaces();
+        }
     }
 
     void Start(){
@@ -117,7 +154,7 @@ public class HudOverwrites : MonoBehaviour{
     }
 
     private void LateUpdate(){
-        if (!hudElementsInitalized){ return; }
+        if (!hudElementsReady){ return; }
         // * Spells and Compass
         if (GameManager.IsGamePaused){
             wandererCompass.Update();
@@ -126,15 +163,13 @@ public class HudOverwrites : MonoBehaviour{
             DaggerfallUI.Instance.DaggerfallHUD.ActiveSpells.Enabled = true; // Gets disabled when opening pause dropdown so must re-enable it here.
         }
         // * Interaction mode:
-        interactionModeIcon.Enabled = HUDInteractionModeIconEnabled; // todo does this need to be set each update?
         if (interactionModeSize != interactionModeIcon.Size){
             // * New size = new logo -> may need to allign with new center value.
             interactionModeSize = interactionModeIcon.Size;
             SetInteractionModeIconValues();
         }
-        interactionModeIcon.Position = interactionModeIconPosition; // todo: does this need to be set each update?
+        interactionModeIcon.Position = interactionModeIconPosition; // * must be each update
         // * Face Panels:
-        DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces.Enabled = facePanelsEnable; // todo: does this need to be set each update?
         if (facePanelsEnable){
             if (GetEnabledFaceCountChanged()){ // * If enabled face count has changed
                 SetFacePanelsValues(); // Determine new values + set position
@@ -314,9 +349,9 @@ public class HudOverwrites : MonoBehaviour{
         wandererVitals.Update();
         wandererBreathBar.Update();            
         SetWandererCompassValues();
-        // SetFacePanelsValues(); // ! updates each update so no need to update it here.
-        SetInteractionModeIconValues();
-        SetSpellEffectsValues(); // ! should run after interaction mode and compass.
+        // SetFacePanelsValues(); // ! called each update so no need to do it here.
+        SetInteractionModeIconValues(); // ! Called after compass.
+        SetSpellEffectsValues(); // ! should run AFTER interaction mode and compass.
     }
 
     public static void SetSpellEffects(){
@@ -393,9 +428,9 @@ public class HudOverwrites : MonoBehaviour{
             startingPosition = GetStartingPositionFromAlignment(activeSpellsHorizontalAlignment, activeSpellsVerticalAlignment, spellsScale, nativeRect.width, nativeRect.height, edgeMargin, xOffset, yOffset);
         }else{
             // * Position vertically along middle of compass if hud is on.
-            startingPosition.y = GetPanelVerticalMiddle(interactionModeIcon) - panelsAggregateSize.y / 2;
+            startingPosition.y = GetPanelVerticalMiddle(wandererCompass) - panelsAggregateSize.y / 2;
             startingPosition.x = GetPanelHorizontalRight(interactionModeIcon);
-            startingPosition.x += 2f; // padding
+            startingPosition.x += 2f; // padding away from interaction mode
             // * horizontal correction for nativePanel's padding away from the screen edge.
             if (DaggerfallUI.Instance.DaggerfallHUD.NativePanel.AutoSize == AutoSizeModes.ScaleToFit){
                 startingPosition.x -= (DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.x - DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x);
@@ -490,6 +525,7 @@ public class HudOverwrites : MonoBehaviour{
             panelPointer = iconPool[spell.poolIndex];
             if (!panelPointer.Enabled) { continue; }
             panelPointer.Position = referenceList[i];
+            panelPointer.Size = activeSpellsScale;
         }
     }
 
@@ -506,19 +542,20 @@ public class HudOverwrites : MonoBehaviour{
         facePanelsParent.SetMargins(Margins.All, 0);
         facePanelsParent.AutoSize = AutoSizeModes.None;
         facePanels = (List<Panel>)GetNonPublicField(facePanelsParent, "facePanels");
-        // ! ↓ debug ↓
-        // * Add faces:
-        // List<FaceDetails> faces = new List<FaceDetails>();
-        // faces = (List<FaceDetails>)GetNonPublicField(facePanelsParent, "faces");
-        // FaceDetails faceRef = faces[0];
-        // faceRef.factionFaceIndex = UnityEngine.Random.Range(0, 61);
-        // faces.Add(faceRef);
-        // faceRef.factionFaceIndex = UnityEngine.Random.Range(0, 61);
-        // faces.Add(faceRef);
-        // faceRef.factionFaceIndex = UnityEngine.Random.Range(0, 61);
-        // faces.Add(faceRef);
-        // facePanelsParent.RefreshFaces();
-        // ! ↑ debug ↑
+        if (facePanelsDEBUG){
+            // * Add faces for debug:
+            List<FaceDetails> faces = (List<FaceDetails>)GetNonPublicField(facePanelsParent, "faces");
+            if (faces.Count > 0){
+                FaceDetails faceRef = faces[0];
+                faceRef.factionFaceIndex = UnityEngine.Random.Range(0, 61);
+                faces.Add(faceRef);
+                faceRef.factionFaceIndex = UnityEngine.Random.Range(0, 61);
+                faces.Add(faceRef);
+                faceRef.factionFaceIndex = UnityEngine.Random.Range(0, 61);
+                faces.Add(faceRef);
+                facePanelsParent.RefreshFaces();
+            }
+        }
     }
 
     public static void SetFacePanelsValues(){
@@ -586,19 +623,13 @@ public class HudOverwrites : MonoBehaviour{
     public static void SetInteractionModeIcon(){
         interactionModeIcon = (HUDInteractionModeIcon)GetNonPublicField(DaggerfallUI.Instance.DaggerfallHUD, "interactionModeIcon");
         interactionModeIcon.SetMargins(Margins.All, 0);
-        interactionModeIcon.Enabled = false;
-        SetInteractionModeIconValues(); // todo: should this be called here?
-        // interactionModeIcon.HorizontalAlignment = HorizontalAlignment.None;
-        // interactionModeIcon.VerticalAlignment = VerticalAlignment.None;
     }
 
     public static void SetInteractionModeIconValues(){
         // * Call when interaction mode settings changes.
         // * Call when interaction mode icon size changes.
         Debug.Log($"set interaction mode values");
-        HUDInteractionModeIconEnabled = WandererHud.WandererHudSettings.GetBool("Hud", "EnableInteractionIcon"); // todo: why is this set here and not load settings?
-        interactionModeIcon.Enabled = HUDInteractionModeIconEnabled;
-        if (!interactionModeIcon.Enabled) { return; }
+        if (!HUDInteractionModeIconEnabled) { return; }
         Debug.Log($"set interaction mode position");
         // * Set size
         SetNonPublicField(interactionModeIcon, "displayScale", HUDInteractionModeIconScale);
@@ -616,7 +647,7 @@ public class HudOverwrites : MonoBehaviour{
         );
         // * modify position to allign with vertical middle of compass
         interactionModeIconPosition.y = GetPanelVerticalMiddle(wandererCompass) - interactionModeIcon.Size.y / 2;
-        interactionModeIcon.Position = interactionModeIconPosition;
+        interactionModeIcon.Position = interactionModeIconPosition; // * Must be set here even if is set on each update due to relative positioning of other element right after this function is run.
     }
 
     public static void SetWandererCompass(){

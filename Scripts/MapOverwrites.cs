@@ -103,7 +103,7 @@ public class MapOverwrites : MonoBehaviour
         mod = WandererHud.mod;
     }
 
-    public static void LoadSettings(ModSettings modSettings, ModSettingsChange change){
+    public void LoadSettings(ModSettings modSettings, ModSettingsChange change){
         forceWireFrame = modSettings.GetBool("Maps", "ForceWireMesh");
         defaultInteriorZoomOut = modSettings.GetFloat("Maps", "DefaultMagnificationLevel");
         // 
@@ -125,6 +125,8 @@ public class MapOverwrites : MonoBehaviour
     public void ScreenResizeChange(){
         ForceResizeMap();
     }
+
+    public void DebugAction(){}
 
     // Start is called before the first frame update
     void Start(){
