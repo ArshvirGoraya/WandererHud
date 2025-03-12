@@ -13,14 +13,15 @@ namespace WandererHudMod{
         public static HudOverwrites hudOverwrites;
         public static Mod mod;
         public static ModSettings WandererHudSettings;
+        public bool debugLogging = false;
         public Vector2 LastScreen = new Vector2(0, 0);
         // 
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams){
-            Debug.Log($"WandererHud Init");
             mod = initParams.Mod;
             var go = new GameObject(mod.Title);
             instance = go.AddComponent<WandererHud>();
+            WandererHud.DebugLog("WandererHud Init");
             // Add other mod components:
             mapOverwrites = go.AddComponent<MapOverwrites>();
             mapOverwrites.Initalize(instance);
@@ -33,19 +34,20 @@ namespace WandererHudMod{
             mod.IsReady = true;
         }
         private void Start(){
-            Debug.Log($"WandererHud start");
+            DebugLog("Start");
             SaveLoadManager.OnLoad += (_) => SaveLoadManager_OnLoad();
             SetLastScreen();
        }
 
         public void LoadSettings(ModSettings modSettings, ModSettingsChange change){
             WandererHudSettings = modSettings;
+            instance.debugLogging = WandererHudSettings.GetBool("Debug", "Logging");
             mapOverwrites.LoadSettings(modSettings, change);
             hudOverwrites.LoadSettings(modSettings, change);
         }
 
         public void SaveLoadManager_OnLoad(){
-            Debug.Log($"LOADED NEW SAVE");
+            DebugLog("LOADED NEW SAVE");
             mapOverwrites.SaveLoadManager_OnLoad();
             hudOverwrites.SaveLoadManager_OnLoad();
         }
@@ -56,6 +58,13 @@ namespace WandererHudMod{
                 ForceResizeAll();
             }
         }
+
+        public static void DebugLog(string message){
+            if (instance.debugLogging){
+                Debug.Log($"WandererHud: {message}");
+            }
+        }
+
         private void DebugInputs(){
             if (!Input.anyKey){ return; }
             if (Input.GetKeyDown(KeyCode.Slash)){

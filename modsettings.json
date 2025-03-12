@@ -7,18 +7,18 @@
             "IsAdvanced": false,
             "Keys": [
                 {
-                    "Value": true,
+                    "Value": false,
                     "Name": "EnableInteractionIcon",
                     "Description": "Hides or Shows the Interaction Mode Icon. Scrollable Interaction Mode Mod recommended to substitute use of this icon.",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
                 },
                 {
-                    "Min": 0.1,
-                    "Max": 3.0,
+                    "Min": 0.6,
+                    "Max": 1.5,
                     "Value": 1.0,
                     "Name": "Scale",
-                    "Description": "Resizes all HUD elements. Odd number increments may lead to missalignments so will be set to up 0.1!",
+                    "Description": "Resizes all HUD elements. Odd number increments may lead to missalignments!",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 }
@@ -47,22 +47,37 @@
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 },
                 {
-                    "Min": 0.0,
+                    "Min": 10.0,
                     "Max": 100.0,
-                    "Value": 50.0,
+                    "Value": 75.0,
                     "Name": "ZoomSpeed",
                     "Description": ">0 Replaces Game's Zoom Speed.",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 },
                 {
-                    "Min": 0.0,
-                    "Max": 50.0,
-                    "Value": 10.0,
+                    "Min": 10.0,
+                    "Max": 40.0,
+                    "Value": 30.0,
                     "Name": "RotationSpeed",
                     "Description": ">0 Replaces Game's Rotation Speed.",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "Debug",
+            "Description": "Settings to engage debugging. Keep disabled unless needed.",
+            "IsAdvanced": true,
+            "Keys": [
+                {
+                    "Value": false,
+                    "Name": "Logging",
+                    "Description": "Enables logging in your player.log file",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
                 }
             ],
             "$version": "v1"

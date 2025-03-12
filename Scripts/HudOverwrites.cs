@@ -78,7 +78,7 @@ public class HudOverwrites : MonoBehaviour{
     public static Mod mod;
     WandererHud wandererHud;
     public void Initalize(WandererHud wandererMod){
-        Debug.Log($"HudOverwrites Initalize");
+        WandererHud.DebugLog("HudOverwrites Initalize");
         wandererHud = wandererMod;
         mod = WandererHud.mod;
     }
@@ -89,14 +89,14 @@ public class HudOverwrites : MonoBehaviour{
         // 
         if (change.HasChanged("Hud", "Scale")){
             float scale = modSettings.GetFloat("Hud", "Scale");
-            // * Correct for odd increments leading to misalignments by just making them even.
-            if (!Mathf.Approximately(scale, Mathf.Round(scale))){
-                // * Turn last digit to even number if is odd. And if not a whole number.
-                // ! Relies on it never being more precise than a single decimal value!!: 0.1, 0.2, 0.3, etc.
-                if (IsOdd(GetLastNonZeroDigit(scale))){
-                    scale += 0.1f;
-                }
-            }
+            // // * Correct for odd increments leading to misalignments by just making them even.
+            // if (!Mathf.Approximately(scale, Mathf.Round(scale))){
+            //     // * Turn last digit to even number if is odd. And if not a whole number.
+            //     // ! Relies on it never being more precise than a single decimal value!!: 0.1, 0.2, 0.3, etc.
+            //     if (IsOdd(GetLastNonZeroDigit(scale))){
+            //         scale += 0.1f;
+            //     }
+            // }
             hudScale = new Vector2 (
                 scale,
                 scale
@@ -111,7 +111,7 @@ public class HudOverwrites : MonoBehaviour{
         HUDInteractionModeIconEnabled = modSettings.GetBool("Hud", "EnableInteractionIcon");
         DaggerfallUI.Instance.DaggerfallHUD.ShowInteractionModeIcon = HUDInteractionModeIconEnabled;
         if (hudElementsReady && change.HasChanged("Hud", "EnableInteractionIcon")){
-            Debug.Log($"changed EnableInteractionIcon");
+            WandererHud.DebugLog("changed EnableInteractionIcon");
             SetInteractionModeIconValues();
             SetSpellEffectsValues();
         }
@@ -148,7 +148,7 @@ public class HudOverwrites : MonoBehaviour{
     }
 
     void Start(){
-        Debug.Log($"HudOverwrites Start");
+        WandererHud.DebugLog("HudOverwrites Start");
         DaggerfallUI.Instance.DaggerfallHUD.ShowInteractionModeIcon = false;
         Texture2D compassImage = mod.GetAsset<Texture2D>("COMPBOX.IMG", false);
         compassBoxSize = new Vector2(compassImage.width, compassImage.height);
@@ -337,7 +337,7 @@ public class HudOverwrites : MonoBehaviour{
     }
 
     public static void SetSpellEffects(){
-        Debug.Log($"SET SPELL EFFECTS");
+        WandererHud.DebugLog("Set spell effects");
         activeSpellsPanel = DaggerfallUI.Instance.DaggerfallHUD.ActiveSpells;
         activeSpellsPanel.SetMargins(Margins.All, 0);
         activeSelfList = (List<ActiveSpellIcon>)GetNonPublicField(activeSpellsPanel, "activeSelfList");
@@ -359,11 +359,11 @@ public class HudOverwrites : MonoBehaviour{
 
     public static void SetSpellEffectsValuesBuffs(List<ActiveSpellIcon> activeSpellList){
         if (activeSpellList == activeSelfList){
-            Debug.Log($"set buffs values + positions");
+            WandererHud.DebugLog("set buffs values + positions");
             // * When number of enabled Buffs changes.
             spellEffectsBuffsRect = PositionSpellEffectIcons(activeSelfList, Rect.zero);
         }else{
-            Debug.Log($"set DeBuffs values + positions");
+            WandererHud.DebugLog("set DeBuffs values + positions");
             // * When number of enabled Debuggs changes
             PositionSpellEffectIcons(activeOtherList, spellEffectsBuffsRect);
         }
@@ -487,10 +487,10 @@ public class HudOverwrites : MonoBehaviour{
     public static void SetSpellEffectsValuesPositions(List<ActiveSpellIcon> activeSpellList){
         List<Vector2> referenceList;
         if (activeSpellList == activeSelfList){
-            Debug.Log($"set Buffs positions");
+            WandererHud.DebugLog("set Buffs positions");
             referenceList = activeSelfListPositions;
         }else{
-            Debug.Log($"set DeBuffs positions");
+            WandererHud.DebugLog("set DeBuffs positions");
             referenceList = activeOtherListPositions;
         }
         Panel panelPointer;
@@ -537,7 +537,7 @@ public class HudOverwrites : MonoBehaviour{
         // * Call when number of enabled faces changes
         if (!facePanelsEnable){ return; }
         if (facePanels.Count <= 0){ return; }
-        Debug.Log($"set face panels values");
+        WandererHud.DebugLog("set face panels values");
         int panelCount = enabledFaceCount;
         Rect boundingBox = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle;
         bool growLeft = facePanelsHorizontalAlignment == HorizontalAlignment.Right;
@@ -597,9 +597,9 @@ public class HudOverwrites : MonoBehaviour{
     public static void SetInteractionModeIconValues(){
         // * Call when interaction mode settings changes.
         // * Call when interaction mode icon size changes.
-        Debug.Log($"set interaction mode values");
+        WandererHud.DebugLog("set interaction mode values");
         if (!HUDInteractionModeIconEnabled) { return; }
-        Debug.Log($"set interaction mode position");
+        WandererHud.DebugLog("set interaction mode position");
         // * Set size
         SetNonPublicField(interactionModeIcon, "displayScale", HUDInteractionModeIconScale);
         interactionModeIcon.Update();  // ! Ensure size is updated.
@@ -676,7 +676,7 @@ public class HudOverwrites : MonoBehaviour{
     public static void SetWandererCompassValues(){
         // * On Retro Aspect Ratio Correct Change
         // * On relevant settings changes
-        Debug.Log($"set wanderer compass");
+        WandererHud.DebugLog("set wanderer compass");
         // * Set size:
         wandererCompass.Scale = new Vector2(
             defaultWandererCompassScale.x * wandererCompassScale,

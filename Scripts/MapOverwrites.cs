@@ -96,7 +96,7 @@ public class MapOverwrites : MonoBehaviour{
     WandererHud wandererHud;
 
     public void Initalize(WandererHud wandererMod){
-        Debug.Log($"MapOverwrites Initalize");
+        WandererHud.DebugLog("MapOverwrites Initalize");
         wandererHud = wandererMod;
         mod = WandererHud.mod;
     }
@@ -123,7 +123,7 @@ public class MapOverwrites : MonoBehaviour{
     public void DebugAction(){}
 
     void Start(){
-        Debug.Log($"MapOverwrites Start");
+        WandererHud.DebugLog("MapOverwrites Start");
         DaggerfallUI.UIManager.OnWindowChange += UIManager_OnWindowChangeHandler;
         PlayerEnterExit.OnTransitionInterior += (_) => OnTransitionToAnyInterior();
         PlayerEnterExit.OnTransitionDungeonInterior += (_) => OnTransitionToAnyInterior();
@@ -168,7 +168,7 @@ public class MapOverwrites : MonoBehaviour{
             if (GameObject.Find("Automap/InteriorAutomap/Teleporter Connection") != null && !ChangedConnectionColor){
                 GameObject.Find("Automap/InteriorAutomap/Teleporter Connection").GetComponent<MeshRenderer>().material = TeleporterConnectionColor;
                 CallNonPublicFunction(DaggerfallUI.UIManager.TopWindow as DaggerfallAutomapWindow, "UpdateAutomapView");
-                Debug.Log($"MapOverwrites: overwrite teleporter connection color");
+                WandererHud.DebugLog("MapOverwrites: overwrite teleporter connection color");
                 ChangedConnectionColor = true;
             }else{
                 ChangedConnectionColor = false;
@@ -205,14 +205,14 @@ public class MapOverwrites : MonoBehaviour{
                 ReplaceExteriorPlayerMarker();
                 DisableExteriorMapPanels();
                 ExteriorMapComponentsReplacedAndDisabled = true;
-                Debug.Log($"MapOverwrites: ExteriorMapComponentsReplacedAndDisabled");
+                WandererHud.DebugLog("MapOverwrites: ExteriorMapComponentsReplacedAndDisabled");
             }
             ResizeExteriorMapPanels();
         }
     }
 
     public void ResetInteriorMapObjects(){
-        Debug.Log($"MapOverwrites: ResetInteriorMap Objects");
+        WandererHud.DebugLog("MapOverwrites: ResetInteriorMap Objects");
         exitDoorRotationCorrectHelper.Clear();
         notesCount = 0;
         teleporterCount = 0;
@@ -290,7 +290,7 @@ public class MapOverwrites : MonoBehaviour{
             if (matchingActionModel){ objPointer.transform.eulerAngles = matchingActionModel.eulerAngles; }
             // * Slide down 1 unit
             SlideObjectPosition(objPointer, new Vector3(0, -0.6f, 0)); 
-            Debug.Log($"MapOverwrites: ReplaceTeleporters");
+            WandererHud.DebugLog("MapOverwrites: ReplaceTeleporters");
         }
         objPointer = null;
     }
@@ -308,7 +308,7 @@ public class MapOverwrites : MonoBehaviour{
                 subChild.transform.name = child.name;
                 subChild.transform.gameObject.AddComponent<ParentDestroyer>(); // ! Add parent destroyer script to all children: will delete the parent when the child is destroyed, deleting the entire object instead of just the child.
             }
-            Debug.Log($"MapOverwrites: ReplaceNotesMesh");
+            WandererHud.DebugLog("MapOverwrites: ReplaceNotesMesh");
         }
         objPointer = null;
     }
@@ -384,7 +384,7 @@ public class MapOverwrites : MonoBehaviour{
             // * Disable any other inner components:
             child.gameObject.SetActive(false);
         }
-        Debug.Log($"MapOverwrites: ReplaceInteriorMapObjects");
+        WandererHud.DebugLog("MapOverwrites: ReplaceInteriorMapObjects");
     }
 
     public void ReplaceExteriorPlayerMarker(){
@@ -420,7 +420,7 @@ public class MapOverwrites : MonoBehaviour{
                 continue;
             }
         }
-        Debug.Log($"MapOverwrites: DisableInteriorMapPanels");
+        WandererHud.DebugLog("MapOverwrites: DisableInteriorMapPanels");
     }
 
     public void DisableExteriorMapPanels(){
@@ -460,7 +460,7 @@ public class MapOverwrites : MonoBehaviour{
             }
         }
         ForceResizeMap(); // ! Set size to apply autoscaling!
-        Debug.Log($"MapOverwrites: ResizeInteriorMapPanels");
+        WandererHud.DebugLog("MapOverwrites: ResizeInteriorMapPanels");
     }
 
     public void ResizeExteriorMapPanels(){
@@ -481,7 +481,7 @@ public class MapOverwrites : MonoBehaviour{
             }
         }
         ForceResizeMap(); // ! Set size to apply autoscaling!
-        Debug.Log($"MapOverwrites: ResizeExteriorMapPanels");
+        WandererHud.DebugLog("MapOverwrites: ResizeExteriorMapPanels");
     }
 
     public void ForceResizeMap(){
@@ -497,7 +497,7 @@ public class MapOverwrites : MonoBehaviour{
         if (forceWireFrame){
             Automap.instance.SwitchToAutomapRenderModeWireframe();
             Automap.instance.SlicingBiasY = float.NegativeInfinity;
-            Debug.Log($"MapOverwrites: ForceWireFrame");
+            WandererHud.DebugLog("MapOverwrites: ForceWireFrame");
         }
     }
 
@@ -505,7 +505,7 @@ public class MapOverwrites : MonoBehaviour{
         Camera cameraAutomap = Automap.instance.CameraAutomap;
         Vector3 translation = -cameraAutomap.transform.forward * (int)defaultInteriorZoomOut;
         cameraAutomap.transform.position += translation;
-        Debug.Log($"MapOverwrites: SetInitialInteriorCameraZoom");
+        WandererHud.DebugLog("MapOverwrites: SetInitialInteriorCameraZoom");
     }
 
     public void ExteriorZoom(bool ZoomIn = true){
