@@ -12,60 +12,62 @@ using DaggerfallConnect;
 using static DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallAutomapWindow;
 using WandererHudMod;
 using static ModHelpers;
-using System.Security.Claims;
-using System.Reflection;
 
-public class MapOverwrites : MonoBehaviour
-{
-    // * Exterior Map Notes:
-        // * ExteriorMapWindow.ParentPanel
-            // * 320.0, 200.0: native Panel
-            // * 1144.8, 608.4: panelRenderAutomap (map texture) Scales with DummyPanelAutomap.
-                // ! Inconsistent Sizing: has a texture2D
-        // * ExteriorMapWindow.NativePanel
-            // * 318.0, 169.0: DummyPanelAutomap (nameplates)
-            // * 320.0, 10.0: panelCaption (map legend)
-            // * 76.0, 17.0: dummyPanelCompass (map click function)
-    // * Interior Map Notes:
-        // * InteriorMapWindow.ParentPanel
-            // * 320.0, 200.0: native Panel (ScaleToFit by default)
-            // * 974.7, 518.0: panelRenderAutomap (map texture) Scales with DummyPanelAutomap. Has texture2d
-                // ! Inconsistent Sizing: has a texture2D.
-            //  * 85.8, 85.8: panelRenderOverlay (micro-map).
-                // ! Inconsistent Sizing: has a texture2D.
-                // ! Always smaller than panelRenderAutomap.
-                // ! Always last in the components collection.
-        // * InteriorMapWindow.NativePanel
-            // * 318.0, 169.0: DummyPanelAutomap (nameplates)
-            //  * 28.0, 28.0: (dummyPanelOverlay) -> for PanelRenderOverlay (micro-map).
-            // * 76.0, 17.0: dummyPanelCompass (map click function)
-            // * 0.0, 7.0: TextLabel (labelHoverText)
-
+/// <summary>
+/// WandererHUD Component: overwrites, disabled or replaces map elements including UI and Models/Sprites.
+/// <summary>
+public class MapOverwrites : MonoBehaviour{
+/*
+* Exterior Map Notes:
+    * ExteriorMapWindow.ParentPanel
+        * 320.0, 200.0: native Panel
+        * 1144.8, 608.4: panelRenderAutomap (map texture) Scales with DummyPanelAutomap.
+            ! Inconsistent Sizing: has a texture2D
+    * ExteriorMapWindow.NativePanel
+        * 318.0, 169.0: DummyPanelAutomap (nameplates)
+        * 320.0, 10.0: panelCaption (map legend)
+        * 76.0, 17.0: dummyPanelCompass (map click function)
+*/
+/*
+* Interior Map Notes:
+    * InteriorMapWindow.ParentPanel
+        * 320.0, 200.0: native Panel (ScaleToFit by default)
+        * 974.7, 518.0: panelRenderAutomap (map texture) Scales with DummyPanelAutomap. Has texture2d
+            ! Inconsistent Sizing: has a texture2D.
+            * 85.8, 85.8: panelRenderOverlay (micro-map).
+            ! Inconsistent Sizing: has a texture2D.
+            ! Always smaller than panelRenderAutomap.
+            ! Always last in the components collection.
+    * InteriorMapWindow.NativePanel
+        * 318.0, 169.0: DummyPanelAutomap (nameplates)
+            * 28.0, 28.0: (dummyPanelOverlay) -> for PanelRenderOverlay (micro-map).
+        * 76.0, 17.0: dummyPanelCompass (map click function)
+        * 0.0, 7.0: TextLabel (labelHoverText)
+*/
     public DaggerfallAutomapWindow InteriorMapWindow {get {return DaggerfallUI.Instance.AutomapWindow;}}
     public DaggerfallExteriorAutomapWindow ExteriorMapWindow {get {return DaggerfallUI.Instance.ExteriorAutomapWindow;}}
-    // * Prefabs Pointers:
+    // Prefabs Pointers:
     GameObject PlayerInteriorArrowPrefab;
     GameObject PlayerExteriorArrowPrefab;
     GameObject ExitDoorPrefab;
     GameObject NotePrefab;
     GameObject TeleportEnterPrefab;
     GameObject TeleportExitPrefab;
-    // * Object Pointers:
+    // Object Pointers:
     Material TeleporterConnectionColor;
-    GameObject objPointer; // ! If a object is initalized and used only in a SINGLE function/block, it can be initalized in this variable for a negligible performance gain lol. Use a seperate variable for certain prefabs if you need clarity regardless.
-    // * Variables
-    public bool InteriorMapPanelsDisabled = false; // * Once Per Game. Never reset to false.
-    public bool InteriorMapObjectsReplaced = false; // * Reset on interior entrance.
-    public bool ExteriorMapComponentsReplacedAndDisabled = false; // * Reset on each load and new exterior location.
-    bool ChangedConnectionColor = false; // * Reset on new teleporter connection.
-    readonly Dictionary<string, Transform> exitDoorRotationCorrectHelper = new Dictionary<string, Transform>(); // * Reset on Interior Entrance or Interior Load. 
-    int notesCount = 0; // * Reset on Interior Entrance or Interior Load.
-    int teleporterCount = 0; // * Reset on Interior Entrance or Interior Load.
-    Transform BeaconRotationPivot; // * On new dungeon.
-    AutomapViewMode automapViewMode; // * On new dungeon & opened map.
-    // * Settings
+    GameObject objPointer; // ! If an object is initalized and used only in a SINGLE function/block, it can be initalized in this variable for a negligible performance gain lol. Use a seperate variable for certain prefabs if you need clarity instead.
+    // Variables
+    public bool InteriorMapPanelsDisabled = false; // ! Once Per Game. Never reset to false.
+    public bool InteriorMapObjectsReplaced = false; // ! Reset on interior entrance.
+    public bool ExteriorMapComponentsReplacedAndDisabled = false; // ! Reset on each load and new exterior location.
+    bool ChangedConnectionColor = false; // ! Reset on new teleporter connection.
+    readonly Dictionary<string, Transform> exitDoorRotationCorrectHelper = new Dictionary<string, Transform>(); // ! Reset on Interior Entrance or Interior Load. 
+    int notesCount = 0; // ! Reset on Interior Entrance or Interior Load.
+    int teleporterCount = 0; // ! Reset on Interior Entrance or Interior Load.
+    Transform BeaconRotationPivot; // ! Reset on new dungeon.
+    AutomapViewMode automapViewMode; // ! Reset on new dungeon & opened map.
+    // Interior Settings
     static bool forceWireFrame = false;
-    // 
     static float defaultInteriorZoomOut = 0;
     static float interiorZoomSpeed = 0;
     const float defaultInteriorZoomSpeed = 0.06f;
@@ -73,27 +75,23 @@ public class MapOverwrites : MonoBehaviour
     const float defaultInteriorRotationSpeed3DYZ = 5.0f;
     const float defaultInteriorRotationSpeed2D = 5.0f;
     static float interiorRotationSpeed = 0;
-    // 
+    readonly static float interiorDragSpeed = 1;
+    readonly static float interiorDragSpeed2D = interiorDragSpeed * 0.3125f;
+    const float defaultDragSpeedInView3D = 0.002f;
+    const float defaultDragSpeedInTopView = 0.0002f;
+    // Exterior Settings
     static float exteriorZoomSpeed = 0;
     const float maximumExteriorZoom = 25.0f;
     const float minimumExteriorZoom = 250.0f;
     const float defaultExteriorZoomSpeed = 2.0f;
     const float defaultExteriorRotationSpeed = 5.0f;
     static float exteriorRotationSpeed = 0;
-    // 
     readonly static float exteriorDragSpeed = 1;
     const float defaultExteriorDragSpeed = 0.00345f;
     // 
-    readonly static float interiorDragSpeed = 1;
-    readonly static float interiorDragSpeed2D = interiorDragSpeed * 0.3125f;
-    const float defaultDragSpeedInView3D = 0.002f;
-    const float defaultDragSpeedInTopView = 0.0002f;
-
-    public class ParentDestroyer : MonoBehaviour { void OnDestroy(){Destroy(transform.parent.parent.gameObject); } }
-    // MethodInfo UpdateAutomapView; // * non-public function
-    Vector2 frameStartMousePosition; // for un-doing game's rotation speed.
-    Vector2 oldMousePosition; // for un-doing game's rotation speed.
-    // 
+    public class ParentDestroyer : MonoBehaviour { void OnDestroy(){Destroy(transform.parent.parent.gameObject); } } // * added to certain objects to destroy all their siblings+parent when they get destroyed.
+    Vector2 frameStartMousePosition; // * used for un-doing game's rotation speed.
+    Vector2 oldMousePosition; // * used for un-doing game's rotation speed.
     public static Mod mod;
     WandererHud wandererHud;
 
@@ -106,10 +104,8 @@ public class MapOverwrites : MonoBehaviour
     public void LoadSettings(ModSettings modSettings, ModSettingsChange change){
         forceWireFrame = modSettings.GetBool("Maps", "ForceWireMesh");
         defaultInteriorZoomOut = modSettings.GetFloat("Maps", "DefaultMagnificationLevel");
-        // 
         interiorZoomSpeed = modSettings.GetFloat("Maps", "ZoomSpeed");
-        exteriorZoomSpeed = modSettings.GetFloat("Maps", "ZoomSpeed") * 0.65f; // ! slightly slower than interior zoom
-        // 
+        exteriorZoomSpeed = modSettings.GetFloat("Maps", "ZoomSpeed") * 0.65f;
         interiorRotationSpeed = modSettings.GetFloat("Maps", "RotationSpeed");
         exteriorRotationSpeed = interiorRotationSpeed * 0.4f;
     }
@@ -118,8 +114,6 @@ public class MapOverwrites : MonoBehaviour
         if (GameManager.Instance.IsPlayerInside || GameManager.Instance.IsPlayerInsideDungeon || GameManager.Instance.IsPlayerInsideCastle){
             ResetInteriorMapObjects();
         }
-        // * Get reference to a non-public method.
-        // UpdateAutomapView = GetNonPublicFunction(InteriorMapWindow, "UpdateAutomapView");
     }
 
     public void ScreenResizeChange(){
@@ -128,15 +122,13 @@ public class MapOverwrites : MonoBehaviour
 
     public void DebugAction(){}
 
-    // Start is called before the first frame update
     void Start(){
         Debug.Log($"MapOverwrites Start");
         DaggerfallUI.UIManager.OnWindowChange += UIManager_OnWindowChangeHandler;
-        // SaveLoadManager.OnLoad += (_) => SaveLoadManager_OnLoad();
         PlayerEnterExit.OnTransitionInterior += (_) => OnTransitionToAnyInterior();
         PlayerEnterExit.OnTransitionDungeonInterior += (_) => OnTransitionToAnyInterior();
         PlayerGPS.OnEnterLocationRect += (_) => OnNewExteriorLocation();
-        // * Names = names of prefab files.
+        // ! Names = literal names of mod's prefab files.
         PlayerInteriorArrowPrefab = mod.GetAsset<GameObject>("InteriorArrow", false);
         PlayerExteriorArrowPrefab = mod.GetAsset<GameObject>("ExteriorArrow", false);
         ExitDoorPrefab = mod.GetAsset<GameObject>("DungeonExit", false);
@@ -147,9 +139,6 @@ public class MapOverwrites : MonoBehaviour
     }
 
     void LateUpdate(){
-        // if (){
-        //     ExteriorMapWindow.mouse
-        // }
         frameStartMousePosition = new Vector2(InputManager.Instance.MousePosition.x, Screen.height - InputManager.Instance.MousePosition.y);
         if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow || DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){ 
             MapDrag();
@@ -179,7 +168,6 @@ public class MapOverwrites : MonoBehaviour
             if (GameObject.Find("Automap/InteriorAutomap/Teleporter Connection") != null && !ChangedConnectionColor){
                 GameObject.Find("Automap/InteriorAutomap/Teleporter Connection").GetComponent<MeshRenderer>().material = TeleporterConnectionColor;
                 CallNonPublicFunction(DaggerfallUI.UIManager.TopWindow as DaggerfallAutomapWindow, "UpdateAutomapView");
-                // UpdateAutomapView.Invoke(InteriorMapWindow, null);
                 Debug.Log($"MapOverwrites: overwrite teleporter connection color");
                 ChangedConnectionColor = true;
             }else{
@@ -200,19 +188,20 @@ public class MapOverwrites : MonoBehaviour
         if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
             BeaconRotationPivot = GameObject.Find("Automap/InteriorAutomap/Beacons/BeaconRotationPivotAxis").transform; // TODO: should set if is new dungeon.
             ForceWireFrame(); // todo: only want to do this first time entering a dungeon and every time until player changes something about this.
-            if (!InteriorMapObjectsReplaced){ // if they are not disabled, disable them (needed on each load)
+            if (!InteriorMapObjectsReplaced){ // ! if they are not disabled, disable them (needed on each iunterior entrance)
                 ReplaceInteriorMapObjects();
                 SetInitialInteriorCameraZoom(); // todo: only happens once per save instead of each time entering a interior.
                 InteriorMapObjectsReplaced = true;
             }
-            if (!InteriorMapPanelsDisabled){ // if they are not disabled, disable them (only needed once per game).
+            if (!InteriorMapPanelsDisabled){ // ! if they are not disabled, disable them (only needed once per game).
                 DisableInteriorMapPanels();
                 InteriorMapPanelsDisabled = true;
             }
             ResizeInteriorMapPanels();
         }
         else if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow){
-            if (!ExteriorMapComponentsReplacedAndDisabled){ // if they are not disabled, disable them (on any new exterior location). // todo: should this be set to false on new save load?
+            if (!ExteriorMapComponentsReplacedAndDisabled){ // ! if they are not disabled, disable them (on any new exterior location).
+                // todo: should this be set to false on new save load?
                 ReplaceExteriorPlayerMarker();
                 DisableExteriorMapPanels();
                 ExteriorMapComponentsReplacedAndDisabled = true;
@@ -272,7 +261,7 @@ public class MapOverwrites : MonoBehaviour
             objPointer.transform.name = portalMaker.name;
             // * Correct Rotation:
             if (child.name.EndsWith("Exit")){ 
-                // * Store Exit Doors Names and rotate them seperately.
+                // ! Store Exit Doors Names and rotate them seperately.
                 exitDoorRotationCorrectHelper[child.name.Substring(0, child.name.Length - 4)] = objPointer.transform;
                 continue; 
             }
@@ -289,7 +278,7 @@ public class MapOverwrites : MonoBehaviour
                     if (daggerfallAction.ModelDescription != "DOR"){ continue; }
                     if (
                         actionModel.position.x == objPointer.transform.position.x &&
-                        actionModel.position.y == objPointer.transform.position.y - 1 && // ! Must subtract 1 for some reason. Is a unit higher than it should be.
+                        actionModel.position.y == objPointer.transform.position.y - 1 && // * subtract 1 for some reason: is a unit higher than it should be.
                         actionModel.position.z == objPointer.transform.position.z
                         ){
                         matchingActionModel = actionModel;
@@ -307,12 +296,8 @@ public class MapOverwrites : MonoBehaviour
     }
     public void ReplaceNotesMesh(){
         foreach (Transform child in GameObject.Find("Automap/InteriorAutomap/UserMarkerNotes").transform){
-            // * Mesh Renderer Disabled: heuristic that it already has a CustomNote.
-            if (!child.GetComponent<MeshRenderer>().enabled){ continue; }
-
+            if (!child.GetComponent<MeshRenderer>().enabled){ continue; } // ! heuristic for if already has a CustomNote.
             child.GetComponent<MeshRenderer>().enabled = false;
-
-            // * Not CustomNote Found, child one to this:
             objPointer = Instantiate(NotePrefab);
             ChangeObjectLayer(objPointer, child.gameObject.layer);
             objPointer.transform.position = child.transform.position;
@@ -386,7 +371,7 @@ public class MapOverwrites : MonoBehaviour
         if (!GameManager.Instance.PlayerEnterExit.IsPlayerInside){
             return;
         }
-        // * Beacons/Markers:
+        // Beacons/Markers:
         foreach (Transform child in GameObject.Find("Automap/InteriorAutomap/Beacons").transform){
             if (child.name == "BeaconEntrancePosition"){
                 ReplaceInteriorExitDoor(child.gameObject);
@@ -445,7 +430,7 @@ public class MapOverwrites : MonoBehaviour
                 component.Enabled = false;
                 continue;
             }
-            // TODO: find better way to select these panels? 
+            // ? if there a better way to select these panels? 
             else if (component is Panel && $"{component.Size}".Equals("(320.0, 10.0)")){ // * panelCaption (map legend)
                 component.Enabled = false;
                 continue;
@@ -485,7 +470,7 @@ public class MapOverwrites : MonoBehaviour
         //         if (!$"{component.Size}".Equals($"({Screen.width}, {Screen.height})")){} // * panelRenderAutomap (map texture) (scales with DummyPanelAutomap)
         //     }
         // }
-        // TODO: find better way to select this panels?
+        // ? if there a better way to select these panels? 
         foreach (BaseScreenComponent component in ExteriorMapWindow.NativePanel.Components){
             if (component.Enabled && component is Panel){
                 if ($"{component.Size}".Equals("(318.0, 169.0)")){ // * is DummyPanelAutomap: buildingNamePlates
@@ -524,15 +509,16 @@ public class MapOverwrites : MonoBehaviour
     }
 
     public void ExteriorZoom(bool ZoomIn = true){
-        if (exteriorZoomSpeed == 0){ return; } // * no need to run extra code just to apply default zoom in.
+        if (exteriorZoomSpeed == 0){ return; } // ! no need to run extra code just to apply default zoom in.
         // * Get Data
         Camera cameraExteriorAutomap = ExteriorAutomap.instance.CameraExteriorAutomap;
         ExteriorAutomap exteriorAutomap = ExteriorAutomap.instance;
         // * Undo game's default zoom
         float maximumZoom = minimumExteriorZoom * exteriorAutomap.LayoutMultiplier;
         float minimumZoom = maximumExteriorZoom * exteriorAutomap.LayoutMultiplier;
-        float defaultZoom = defaultExteriorZoomSpeed;
-        if (!ZoomIn){ defaultZoom = -defaultZoom; } // * opposite direction (zoom in should zoom out)
+        float defaultZoom;
+        if (!ZoomIn){ defaultZoom = -defaultExteriorZoomSpeed; }
+        else { defaultZoom = defaultExteriorZoomSpeed; } 
         float zoomSpeedCompensatedDefault = defaultZoom * exteriorAutomap.LayoutMultiplier;
         cameraExteriorAutomap.orthographicSize += zoomSpeedCompensatedDefault;
         cameraExteriorAutomap.orthographicSize = Mathf.Clamp(cameraExteriorAutomap.orthographicSize, minimumZoom, maximumZoom);
@@ -547,16 +533,15 @@ public class MapOverwrites : MonoBehaviour
         // * Apply Zoom
         cameraExteriorAutomap.orthographicSize += exteriorZoom;
         cameraExteriorAutomap.orthographicSize = Mathf.Clamp(cameraExteriorAutomap.orthographicSize, minimumZoom, maximumZoom);
-        // CallNonPublicFunction(InteriorMapWindow, "UpdateAutomapView");
         ExteriorMapWindow.UpdateAutomapView();
     }
 
     public void InteriorZoom(bool ZoomIn = true){
-        if (interiorZoomSpeed == 0) { return; } // * no need to run extra code just to apply default zoom in.
+        if (interiorZoomSpeed == 0) { return; } // ! no need to run extra code just to apply default zoom in.
         // * Get Data
-        automapViewMode = (AutomapViewMode)GetNonPublicField(InteriorMapWindow, "automapViewMode"); // todo could this be made more optimal?
+        automapViewMode = (AutomapViewMode)GetNonPublicField(InteriorMapWindow, "automapViewMode"); // ? could this be made more optimal?
         Camera cameraAutomap = Automap.instance.CameraAutomap;
-        // ! Undo game's zoom.
+        // * Undo game's zoom.
         float interiorZoom = defaultInteriorZoomSpeed * Vector3.Magnitude(Camera.main.transform.position - cameraAutomap.transform.position);
         Vector3 translation = cameraAutomap.transform.forward * interiorZoom; 
         if (ZoomIn){ translation = -translation; }
@@ -603,7 +588,6 @@ public class MapOverwrites : MonoBehaviour
     private void RotateExteriorMap(float rotationAmount){
         ExteriorAutomap exteriorAutomap = ExteriorAutomap.instance;
         Camera cameraExteriorAutomap = exteriorAutomap.CameraExteriorAutomap;
-        // 
         cameraExteriorAutomap.transform.RotateAround(cameraExteriorAutomap.transform.position, -Vector3.up, -rotationAmount * Time.unscaledDeltaTime);
         exteriorAutomap.RotateBuildingNameplates(rotationAmount * Time.unscaledDeltaTime);
     }
@@ -613,7 +597,7 @@ public class MapOverwrites : MonoBehaviour
         Camera cameraAutomap = Automap.instance.CameraAutomap;
         Vector3 vecRotationCenter = automap.CameraAutomap.transform.position;
         Vector3 rotationPivotAxisPositionView3D = automap.RotationPivotAxisPosition;
-        automapViewMode = (AutomapViewMode)GetNonPublicField(InteriorMapWindow, "automapViewMode"); // todo could this be made more optimal?
+        automapViewMode = (AutomapViewMode)GetNonPublicField(InteriorMapWindow, "automapViewMode"); // ? could this be made more optimal?
         // 
         if (automapViewMode == AutomapViewMode.View2D){
             cameraAutomap.transform.RotateAround(vecRotationCenter, Vector3.up, -rotation2D * Time.unscaledDeltaTime);
@@ -671,7 +655,7 @@ public class MapOverwrites : MonoBehaviour
         if (interiorDragSpeed == 0){ return; }
         // * Get Data
         Camera cameraAutomap = Automap.instance.CameraAutomap;
-        automapViewMode = (AutomapViewMode)GetNonPublicField(InteriorMapWindow, "automapViewMode"); // todo could this be made more optimal?
+        automapViewMode = (AutomapViewMode)GetNonPublicField(InteriorMapWindow, "automapViewMode"); // ? could this be made more optimal?
         // * Undo Game's drag
         float dragSpeed;
         if (automapViewMode == AutomapViewMode.View2D){

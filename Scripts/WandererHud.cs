@@ -3,7 +3,9 @@ using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
 using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
-
+/// <summary>
+/// Entry Point for WandererHUD mod.
+/// <summary>
 namespace WandererHudMod{
     public class WandererHud : MonoBehaviour{
         public static WandererHud instance;
@@ -19,14 +21,14 @@ namespace WandererHudMod{
             mod = initParams.Mod;
             var go = new GameObject(mod.Title);
             instance = go.AddComponent<WandererHud>();
-            // Add other components:
+            // Add other mod components:
             mapOverwrites = go.AddComponent<MapOverwrites>();
             mapOverwrites.Initalize(instance);
             // 
             hudOverwrites = go.AddComponent<HudOverwrites>();
             hudOverwrites.Initalize(instance);
             // 
-            mod.LoadSettingsCallback = (ModSettings modSettings, ModSettingsChange change) => instance.LoadSettings(modSettings, change);
+            mod.LoadSettingsCallback = instance.LoadSettings;
             mod.LoadSettings();
             mod.IsReady = true;
         }
@@ -56,7 +58,6 @@ namespace WandererHudMod{
         }
         private void DebugInputs(){
             if (!Input.anyKey){ return; }
-            // Keycodes: https://docs.unity3d.com/6000.0/Documentation/ScriptReference/KeyCode.html
             if (Input.GetKeyDown(KeyCode.Slash)){
                 DebugAction();
             }

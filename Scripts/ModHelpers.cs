@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Reflection;
 using UnityEngine;
-
+/// <summary>
+/// Class for general use helper functions to create Daggerfall Unity mods.
+/// <summary>
 public static class ModHelpers{
     // * Non-Publics
     public static object GetNonPublicField(object targetObject, string fieldName){
@@ -46,7 +48,7 @@ public static class ModHelpers{
         return false;
     }
     public static int GetLastNonZeroDigit(float value){
-        string strValue = value.ToString("G"); // Convert float to string
+        string strValue = value.ToString("G");
         for (int i = strValue.Length - 1; i >= 0; i--){
             if (strValue[i] != '0'){
                 return strValue[i] - '0';
