@@ -18,7 +18,7 @@
                     "Max": 1.5,
                     "Value": 1.0,
                     "Name": "Scale",
-                    "Description": "Resizes all HUD elements. Odd number increments may lead to missalignments!",
+                    "Description": "Resizes all HUD elements. Certain values may lead to missalignments with vitals!",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 }
@@ -58,7 +58,7 @@
                 {
                     "Min": 10.0,
                     "Max": 40.0,
-                    "Value": 30.0,
+                    "Value": 10.0,
                     "Name": "RotationSpeed",
                     "Description": ">0 Replaces Game's Rotation Speed.",
                     "$version": "v1",

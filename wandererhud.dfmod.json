@@ -4,7 +4,7 @@
     "ModAuthor": "RamseySparrow & ArshvirGoraya",
     "ContactInfo": "Nexus Mods Page",
     "DFUnity_Version": "1.1.1",
-    "ModDescription": "UI changes: fullscreen map, compass + vitals.",
+    "ModDescription": "Modernization of Daggerfall's UI, strictly in the spirit of its classic style.",
     "GUID": "0563f166-1958-467b-a579-05d5ec9e5c4c",
     "Files": [
         "Assets/Game/Mods/WandererHud/modsettings.json",

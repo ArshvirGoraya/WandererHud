@@ -3,6 +3,7 @@ using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
 using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
+using DaggerfallWorkshop.Game.Utility;
 /// <summary>
 /// Entry Point for WandererHUD mod.
 /// <summary>
@@ -36,6 +37,8 @@ namespace WandererHudMod{
         private void Start(){
             DebugLog("Start");
             SaveLoadManager.OnLoad += (_) => SaveLoadManager_OnLoad();
+            StartGameBehaviour.OnStartGame += (sender, args) => SaveLoadManager_OnLoad();
+
             SetLastScreen();
        }
 

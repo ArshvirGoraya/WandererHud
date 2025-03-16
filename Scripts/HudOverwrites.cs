@@ -20,7 +20,7 @@ public class HudOverwrites : MonoBehaviour{
     public static HUDCompass wandererCompass;
     readonly static HorizontalAlignment wandererCompassHorizontalAlignment = HorizontalAlignment.Center;
     readonly static VerticalAlignment wandererCompassVerticalAlignment = VerticalAlignment.Bottom;
-    public static Vector2 defaultWandererCompassScale;
+    public static Vector2 defaultWandererCompassScale = new Vector2(3, 3); // ! real default is same as DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale and changes if screen size changes
     public static float wandererCompassScale = 1f;
     public static Vector2 compassBoxSize = Vector2.zero;
     // InteractionMode
@@ -614,10 +614,12 @@ public class HudOverwrites : MonoBehaviour{
         wandererCompass.Enabled = true;
         SetNonPublicField(wandererCompass, "compassBoxSize", compassBoxSize);
         // ! Round so dont have to deal with decimal imprecision when alligning vitals to compass.
-        defaultWandererCompassScale = new Vector2(
-            (float)Math.Round(DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Scale.x), 
-            (float)Math.Round(DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Scale.y)
-        );
+        wandererCompass.Update();
+        // defaultWandererCompassScale = new Vector2(
+        //     (float)Math.Round(DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Scale.x), 
+        //     (float)Math.Round(DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Scale.y)
+        // );
+        // defaultWandererCompassScale = DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale; // compass's scale is the same as this.
     }
 
     public static void SetVitalsHud(){
@@ -664,6 +666,7 @@ public class HudOverwrites : MonoBehaviour{
         // * On relevant settings changes
         WandererHud.DebugLog("set wanderer compass");
         // * Set size:
+        defaultWandererCompassScale = DaggerfallUI.Instance.DaggerfallHUD.NativePanel.LocalScale;
         wandererCompass.Scale = new Vector2(
             defaultWandererCompassScale.x * wandererCompassScale,
             defaultWandererCompassScale.y * wandererCompassScale
