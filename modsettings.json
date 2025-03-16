@@ -42,7 +42,7 @@
                     "Max": 100.0,
                     "Value": 30.0,
                     "Name": "DefaultMagnificationLevel",
-                    "Description": "How zoomed the map is when you first open it",
+                    "Description": "How zoomed out the interior map is when you first open it.",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
                 },

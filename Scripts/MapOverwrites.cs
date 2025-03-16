@@ -113,6 +113,8 @@ public class MapOverwrites : MonoBehaviour{
     public void SaveLoadManager_OnLoad(){
         if (GameManager.Instance.IsPlayerInside || GameManager.Instance.IsPlayerInsideDungeon || GameManager.Instance.IsPlayerInsideCastle){
             ResetInteriorMapObjects();
+        }else{
+            ResetExteriorMapObjects();
         }
     }
 
@@ -177,20 +179,19 @@ public class MapOverwrites : MonoBehaviour{
     }
     
     public void OnNewExteriorLocation(){
-        ExteriorMapComponentsReplacedAndDisabled = false;
+        ResetExteriorMapObjects();
     }
-
     public void OnTransitionToAnyInterior(){
         ResetInteriorMapObjects();
     }
 
     public void UIManager_OnWindowChangeHandler(object sender, EventArgs e){
         if (DaggerfallUI.UIManager.TopWindow is DaggerfallAutomapWindow){
-            BeaconRotationPivot = GameObject.Find("Automap/InteriorAutomap/Beacons/BeaconRotationPivotAxis").transform; // TODO: should set if is new dungeon.
-            ForceWireFrame(); // todo: only want to do this first time entering a dungeon and every time until player changes something about this.
-            if (!InteriorMapObjectsReplaced){ // ! if they are not disabled, disable them (needed on each iunterior entrance)
+            BeaconRotationPivot = GameObject.Find("Automap/InteriorAutomap/Beacons/BeaconRotationPivotAxis").transform; // ! cant do this on each dungeon entrance as is unreliable: object may be destroyed.
+            ForceWireFrame();
+            if (!InteriorMapObjectsReplaced){ // ! if they are not disabled, disable them (needed on each interior entrance)
                 ReplaceInteriorMapObjects();
-                SetInitialInteriorCameraZoom(); // todo: only happens once per save instead of each time entering a interior.
+                SetInitialInteriorCameraZoom();
                 InteriorMapObjectsReplaced = true;
             }
             if (!InteriorMapPanelsDisabled){ // ! if they are not disabled, disable them (only needed once per game).
@@ -201,7 +202,6 @@ public class MapOverwrites : MonoBehaviour{
         }
         else if (DaggerfallUI.UIManager.TopWindow is DaggerfallExteriorAutomapWindow){
             if (!ExteriorMapComponentsReplacedAndDisabled){ // ! if they are not disabled, disable them (on any new exterior location).
-                // todo: should this be set to false on new save load?
                 ReplaceExteriorPlayerMarker();
                 DisableExteriorMapPanels();
                 ExteriorMapComponentsReplacedAndDisabled = true;
@@ -209,6 +209,11 @@ public class MapOverwrites : MonoBehaviour{
             }
             ResizeExteriorMapPanels();
         }
+    }
+
+    public void ResetExteriorMapObjects(){
+        WandererHud.DebugLog("MapOverwrites: ResetExteriorMap Objects");
+        ExteriorMapComponentsReplacedAndDisabled = false;
     }
 
     public void ResetInteriorMapObjects(){
