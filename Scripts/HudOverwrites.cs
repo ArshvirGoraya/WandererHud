@@ -55,8 +55,6 @@ public class HudOverwrites : MonoBehaviour{
     public static bool activeSpellsHorizontalOrientation = true;
     readonly static HorizontalAlignment activeSpellsHorizontalAlignment = HorizontalAlignment.Center;
     readonly static VerticalAlignment activeSpellsVerticalAlignment = VerticalAlignment.Bottom;
-    public static Vector2 firstBuffPosition = Vector2.zero;
-    public static Vector2 firstDeBuffPosition = Vector2.zero;
     public static int enabledDeBuffCount = 0;
     public static int enabledBuffCount = 0;
     public static Rect spellEffectsBuffsRect = Rect.zero;
@@ -85,7 +83,7 @@ public class HudOverwrites : MonoBehaviour{
 
     public void LoadSettings(ModSettings modSettings, ModSettingsChange change){
         if (!hudElementsInitalized){ return; }
-        DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces.Enabled = facePanelsEnable;
+        // DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces.Enabled = facePanelsEnable; // ! not needed right now.
         // 
         if (change.HasChanged("Hud", "Scale")){
             float scale = modSettings.GetFloat("Hud", "Scale");
@@ -136,7 +134,7 @@ public class HudOverwrites : MonoBehaviour{
     }
 
     public void ScreenResizeChange(){
-        // PositionHUDElements(); // todo: test if hud elements reposition correctly on screen size change.
+        PositionHUDElements();
     }
 
     public void DebugAction(){
@@ -150,6 +148,7 @@ public class HudOverwrites : MonoBehaviour{
     void Start(){
         WandererHud.DebugLog("HudOverwrites Start");
         DaggerfallUI.Instance.DaggerfallHUD.ShowInteractionModeIcon = false;
+        DaggerfallUI.Instance.DaggerfallHUD.EscortingFaces.Enabled = false;
         Texture2D compassImage = mod.GetAsset<Texture2D>("COMPBOX.IMG", false);
         compassBoxSize = new Vector2(compassImage.width, compassImage.height);
         wandererCompass = new HUDCompass();
@@ -167,9 +166,8 @@ public class HudOverwrites : MonoBehaviour{
             DaggerfallUI.Instance.DaggerfallHUD.ActiveSpells.Enabled = true; // * Gets disabled when opening pause dropdown so must re-enable it here.
         }
         // Interaction mode:
-        if (interactionModeSize != interactionModeIcon.Size){
+        if (interactionModeIcon.Size != interactionModeSize){
             // * New size = new logo -> may need to allign with new center value.
-            interactionModeSize = interactionModeIcon.Size;
             SetInteractionModeIconValues();
         }
         interactionModeIcon.Position = interactionModeIconPosition; // ! Each update = must.
@@ -182,21 +180,17 @@ public class HudOverwrites : MonoBehaviour{
             }
         }
         // Spells Values & Positioning
-        if (firstBuffPosition != GetFirstSpellPosition(activeSelfList)){
-            if (GetEnabledSpellEffectsChanged(enabledBuffCount, activeSelfList)){
-                SetSpellEffectsValuesBuffs(activeSelfList);
-            } else {
-                SetSpellEffectsValuesPositions(activeSelfList);
-            }
+        if (GetEnabledSpellEffectsChanged(enabledBuffCount, activeSelfList)){
+            SetSpellEffectsValuesBuffs(activeSelfList);
+        }else{
+            SetSpellEffectsValuesPositions(activeSelfList); // ! Set positions each update: would have to loop through all of them anyway to determine if one is not in its correct position (may happen if one starts blinking)
         }
-        if (firstDeBuffPosition != GetFirstSpellPosition(activeOtherList)){
-            if (GetEnabledSpellEffectsChanged(enabledDeBuffCount, activeOtherList)){
-                SetSpellEffectsValuesBuffs(activeOtherList);
-            } else {
-                SetSpellEffectsValuesPositions(activeOtherList);
-            }
+        if (GetEnabledSpellEffectsChanged(enabledDeBuffCount, activeOtherList)){
+            SetSpellEffectsValuesBuffs(activeOtherList);
+        }else{
+            SetSpellEffectsValuesPositions(activeOtherList); // ! Set positions each update: would have to loop through all of them anyway to determine if one is not in its correct position (may happen if one starts blinking)
         }
-        // Compass & Spells: Aspect ratio changes during GAMEPAUSE (RetroModeAspectCorrection changes).
+        // ! Compass & Spells: Aspect ratio changes during GAMEPAUSE (RetroModeAspectCorrection changes).
         if (inGameAspectX != DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x){
             inGameAspectX = DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x;
             updateOnUnPause = true;
@@ -212,27 +206,26 @@ public class HudOverwrites : MonoBehaviour{
     public void OnGUI(){
         if (!DaggerfallUI.HasInstance || DaggerfallUI.Instance.DaggerfallHUD == null){ return; }
         // * Draw even when paused
-        if (
-            GameManager.IsGamePaused
-            && GameManager.Instance.StateManager.CurrentState == StateManager.StateTypes.UI
-        ){
-            wandererCompass.Draw();
-            wandererVitals.Draw();
-            interactionModeIcon.Draw();
-        }
-        // todo: cant everything here be moved into the gamepaused block?
-        if (GameManager.Instance.PlayerEnterExit.IsPlayerSubmerged & !GameManager.Instance.PlayerEntity.IsWaterBreathing){
-            wandererBreathBar.Draw();
-        }
-        if (facePanelsEnable && facePanels != null){
-            foreach (Panel facePanel in facePanels){
-                if (!facePanel.Enabled) { continue; }
-                facePanel.Draw();
+
+        if (GameManager.IsGamePaused){
+            if (GameManager.Instance.StateManager.CurrentState == StateManager.StateTypes.UI){
+                // ! Show when mod options are up.
+                wandererCompass.Draw();
+                wandererVitals.Draw();
+                interactionModeIcon.Draw();
+                if (activeSpellsPanel != null){ activeSpellsPanel.Draw(); }
+                // 
+                if (facePanelsEnable && facePanels != null){
+                    foreach (Panel facePanel in facePanels){
+                        if (!facePanel.Enabled) { continue; }
+                        facePanel.Draw();
+                    }
+                }
             }
         }
-
-        if (activeSpellsPanel != null){
-            activeSpellsPanel.Draw();
+        
+        if (GameManager.Instance.PlayerEnterExit.IsPlayerSubmerged & !GameManager.Instance.PlayerEntity.IsWaterBreathing){
+            wandererBreathBar.Draw(); // ! draw here instead of breathbar class: also draws even if game is paused.
         }
 
         // if (debugTexture != null){
@@ -318,8 +311,12 @@ public class HudOverwrites : MonoBehaviour{
         }
     }
 
-    public static float GetPanelHorizontalRight(BaseScreenComponent component){
-        return component.Position.x + component.Size.x;
+    // public static float GetPanelHorizontalRight(BaseScreenComponent component){
+    //     return component.Position.x + component.Size.x;
+    // }
+
+    public static float GetPanelHorizontalRight(Vector2 position, Vector2 size){
+        return position.x + size.x;
     }
 
     public static float GetPanelVerticalMiddle(BaseScreenComponent component){
@@ -343,8 +340,6 @@ public class HudOverwrites : MonoBehaviour{
         activeSelfList = (List<ActiveSpellIcon>)GetNonPublicField(activeSpellsPanel, "activeSelfList");
         activeOtherList = (List<ActiveSpellIcon>)GetNonPublicField(activeSpellsPanel, "activeOtherList");
         iconPool = (Panel[])GetNonPublicField(activeSpellsPanel, "iconPool");
-        firstBuffPosition = Vector2.zero;
-        firstDeBuffPosition = Vector2.zero;
     }
 
     public static void SetSpellEffectsValues(){
@@ -409,7 +404,7 @@ public class HudOverwrites : MonoBehaviour{
         }else{
             // * Position vertically along middle of compass if interaction icon is on.
             startingPosition.y = GetPanelVerticalMiddle(wandererCompass) - panelsAggregateSize.y / 2;
-            startingPosition.x = GetPanelHorizontalRight(interactionModeIcon);
+            startingPosition.x = GetPanelHorizontalRight(interactionModeIconPosition, interactionModeSize);
             startingPosition.x += 2f; // padding away from interaction mode
             // * horizontal correction for nativePanel's padding away from the screen edge.
             if (DaggerfallUI.Instance.DaggerfallHUD.NativePanel.AutoSize == AutoSizeModes.ScaleToFit){
@@ -425,7 +420,7 @@ public class HudOverwrites : MonoBehaviour{
                         startingPosition.y -= DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.y;
                         startingPosition.y -= (DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.y - DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.y);
                         startingPosition.x += (DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.x - DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x);
-                    }else if (DaggerfallUnity.Settings.RetroModeAspectCorrection == 2){ // todo: dont know if this else needs to be here. the startingPosition.x is in both blocks and we can just put it up a block?
+                    }else if (DaggerfallUnity.Settings.RetroModeAspectCorrection == 2){
                         startingPosition.x += (DaggerfallUI.Instance.DaggerfallHUD.NativePanel.Rectangle.x - DaggerfallUI.Instance.DaggerfallHUD.ParentPanel.Rectangle.x);
                     }
                 }
@@ -441,10 +436,8 @@ public class HudOverwrites : MonoBehaviour{
         // 
         List<Vector2> referenceList;
         if (activeSpellList == activeSelfList){
-            firstBuffPosition = startingPosition;
             referenceList = activeSelfListPositions;
         }else{
-            firstDeBuffPosition = startingPosition;
             referenceList = activeOtherListPositions;
         }
         referenceList.Clear();
@@ -487,10 +480,10 @@ public class HudOverwrites : MonoBehaviour{
     public static void SetSpellEffectsValuesPositions(List<ActiveSpellIcon> activeSpellList){
         List<Vector2> referenceList;
         if (activeSpellList == activeSelfList){
-            WandererHud.DebugLog("set Buffs positions");
+            // WandererHud.DebugLog("set Buffs positions");
             referenceList = activeSelfListPositions;
         }else{
-            WandererHud.DebugLog("set DeBuffs positions");
+            // WandererHud.DebugLog("set DeBuffs positions");
             referenceList = activeOtherListPositions;
         }
         Panel panelPointer;
@@ -502,14 +495,6 @@ public class HudOverwrites : MonoBehaviour{
             panelPointer.Position = referenceList[i];
             panelPointer.Size = activeSpellsScale;
         }
-    }
-
-    public Vector2 GetFirstSpellPosition(List<ActiveSpellIcon> activeSpellList){
-        foreach (ActiveSpellIcon spell in activeSpellList){
-            if (spell.poolIndex >= maxIconPool){ break; }
-            return iconPool[spell.poolIndex].Position;
-        }
-        return Vector2.zero;
     }
 
     public static void SetFacePanels(){
@@ -602,6 +587,7 @@ public class HudOverwrites : MonoBehaviour{
         WandererHud.DebugLog("set interaction mode position");
         // * Set size
         SetNonPublicField(interactionModeIcon, "displayScale", HUDInteractionModeIconScale);
+        interactionModeIcon.Enabled = HUDInteractionModeIconEnabled; // ! Enabled neccssary for .update()'s here.
         interactionModeIcon.Update();  // ! Ensure size is updated.
         interactionModeSize = interactionModeIcon.Size;
         // * Set position
@@ -723,9 +709,9 @@ public class HudOverwrites : MonoBehaviour{
         wandererVitals.CustomMagickaBarPosition = new Vector2(compassRight - vitalsMagickaXOffset,0);
         wandererBreathBar.CustomBreathBarPosition = new Vector2(
             compassRight - vitalsBreathXOffset, 
-            compassPos.y + vitalsYOffset
+            compassPos.y + vitalsYOffset // ! from top of compass and top of breath bar vital.
         );
-        float vitalsY = compassPos.y + compassHeight - vitalsYOffset; // todo: is this not the same as compass.y + vitalsYOffset?
+        float vitalsY = compassPos.y + compassHeight - vitalsYOffset; // ! from bottom of compass and bottom of vitals.
         wandererVitals.SetMargins(Margins.Bottom, (int)(screenRect.height - vitalsY));
     }
 }
